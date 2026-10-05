@@ -1,0 +1,304 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import { api } from '@/lib/api';
+import type { AvailableParticipant, Dashboard, DashboardShift, Movement } from '@/lib/types';
+import { CANCEL_REASONS } from '@/lib/types';
+import { AgregarParticipante } from './agregar-participante';
+import { CalendarioMes } from './calendario-mes';
+import { CancelarDialogo } from './cancelar-dialogo';
+import { fechaCorta, TurnoDetalle } from './turno-detalle';
+
+type Vista = 'calendario' | 'lista';
+type RangoLista = '7d' | '14d';
+
+const ETIQUETA_RANGO: Record<RangoLista, string> = {
+  '7d': 'Próximos 7 días',
+  '14d': 'Próximos 14 días',
+};
+
+function rangoDeLista(rango: RangoLista): { from: Date; to: Date } {
+  const desde = new Date();
+  desde.setHours(0, 0, 0, 0);
+  const hasta = new Date(desde);
+  hasta.setDate(hasta.getDate() + (rango === '7d' ? 7 : 14));
+  hasta.setHours(23, 59, 59, 0);
+  return { from: desde, to: hasta };
+}
+
+function rangoDeMes(year: number, month: number): { from: Date; to: Date } {
+  return {
+    from: new Date(year, month, 1),
+    to: new Date(year, month + 1, 0, 23, 59, 59),
+  };
+}
+
+export function Tablero({ locationId }: { locationId: string }) {
+  const hoy = new Date();
+  const [vista, setVista] = useState<Vista>('calendario');
+  const [mes, setMes] = useState({ year: hoy.getFullYear(), month: hoy.getMonth() });
+  const [rangoLista, setRangoLista] = useState<RangoLista>('7d');
+  const [diaAbierto, setDiaAbierto] = useState<string | null>(null);
+
+  const [datos, setDatos] = useState<Dashboard | null>(null);
+  const [movimientos, setMovimientos] = useState<Movement[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [cargando, setCargando] = useState(true);
+
+  const [cancelando, setCancelando] = useState<{
+    assignmentId: string;
+    nombre: string;
+    turno: string;
+  } | null>(null);
+  const [agregando, setAgregando] = useState<DashboardShift | null>(null);
+  const [historialDe, setHistorialDe] = useState<string | null>(null);
+
+  const cargar = useCallback(async () => {
+    setError(null);
+    try {
+      const { from, to } =
+        vista === 'calendario' ? rangoDeMes(mes.year, mes.month) : rangoDeLista(rangoLista);
+
+      const [tablero, actividad] = await Promise.all([
+        api<Dashboard>(
+          `/locations/${locationId}/dashboard?from=${from.toISOString()}&to=${to.toISOString()}`,
+        ),
+        api<Movement[]>(`/locations/${locationId}/movements?limit=8`),
+      ]);
+      setDatos(tablero);
+      setMovimientos(actividad);
+    } catch (problema) {
+      setError(problema instanceof Error ? problema.message : 'No se pudo cargar el tablero');
+    } finally {
+      setCargando(false);
+    }
+  }, [locationId, vista, mes, rangoLista]);
+
+  useEffect(() => {
+    void cargar();
+  }, [cargar]);
+
+  // Al abrir el mes en curso, se muestra el detalle de hoy sin tener que tocarlo.
+  useEffect(() => {
+    if (vista !== 'calendario' || diaAbierto) return;
+    const ahora = new Date();
+    if (ahora.getFullYear() === mes.year && ahora.getMonth() === mes.month) {
+      setDiaAbierto(
+        `${mes.year}-${String(mes.month + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')}`,
+      );
+    }
+  }, [vista, mes, diaAbierto]);
+
+  async function cancelar(reasonCode: string, reason: string) {
+    if (!cancelando) return;
+    await api(`/assignments/${cancelando.assignmentId}/cancel`, {
+      method: 'POST',
+      body: { reasonCode, reason: reason || undefined },
+    });
+    setCancelando(null);
+    await cargar();
+  }
+
+  async function agregar(participantId: string) {
+    if (!agregando) return;
+    await api(`/locations/${locationId}/shifts/${agregando.id}/assignments`, {
+      method: 'POST',
+      body: { participantId },
+    });
+    setAgregando(null);
+    await cargar();
+  }
+
+  function abrirCancelacion(turnoTexto: string) {
+    return (assignmentId: string, nombre: string) =>
+      setCancelando({ assignmentId, nombre, turno: turnoTexto });
+  }
+
+  const resumen = datos?.summary;
+  const diaDetalle = datos?.days.find((dia) => dia.date === diaAbierto) ?? null;
+
+  return (
+    <section>
+      {error && <div className="aviso error">{error}</div>}
+
+      <div className="tablero-barra">
+        <div className="segmentado" role="group" aria-label="Vista">
+          <button
+            onClick={() => setVista('calendario')}
+            className={vista === 'calendario' ? 'primario' : ''}
+            aria-pressed={vista === 'calendario'}
+          >
+            Calendario
+          </button>
+          <button
+            onClick={() => setVista('lista')}
+            className={vista === 'lista' ? 'primario' : ''}
+            aria-pressed={vista === 'lista'}
+          >
+            Lista
+          </button>
+        </div>
+
+        {vista === 'lista' && (
+          <div className="segmentado" role="group" aria-label="Periodo">
+            {(['7d', '14d'] as RangoLista[]).map((opcion) => (
+              <button
+                key={opcion}
+                onClick={() => setRangoLista(opcion)}
+                className={rangoLista === opcion ? 'primario' : ''}
+                aria-pressed={rangoLista === opcion}
+              >
+                {ETIQUETA_RANGO[opcion]}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <button onClick={() => void cargar()} disabled={cargando}>
+          Actualizar
+        </button>
+      </div>
+
+      {resumen && (
+        <div className="resumen">
+          <div className="metrica">
+            <span className="cifra">{resumen.totalShifts}</span>
+            <span className="rotulo">turnos en el periodo</span>
+          </div>
+          <div className={`metrica ${resumen.understaffed > 0 ? 'atencion' : ''}`}>
+            <span className="cifra">{resumen.understaffed}</span>
+            <span className="rotulo">les falta una persona</span>
+          </div>
+          <div className={`metrica ${resumen.critical > 0 ? 'alerta' : ''}`}>
+            <span className="cifra">{resumen.critical}</span>
+            <span className="rotulo">con una o menos</span>
+          </div>
+          <div className="metrica">
+            <span className="cifra">{resumen.cancellations}</span>
+            <span className="rotulo">cancelaciones</span>
+          </div>
+        </div>
+      )}
+
+      {movimientos.length > 0 && (
+        <details className="tarjeta actividad">
+          <summary>
+            Actividad reciente · lo último fue {movimientos[0].description.toLowerCase()}
+          </summary>
+          <ul className="lista-movimientos">
+            {movimientos.map((movimiento) => (
+              <li key={movimiento.id}>
+                <span>{movimiento.description}</span>
+                <span className="tenue">
+                  {fechaCorta(movimiento.at)} · registró {movimiento.by}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+
+      {cargando && <p className="tenue">Cargando…</p>}
+
+      {!cargando && vista === 'calendario' && datos && (
+        <div className="calendario-con-detalle">
+          <CalendarioMes
+            year={mes.year}
+            month={mes.month}
+            days={datos.days}
+            seleccionado={diaAbierto}
+            onSeleccionar={(fecha) => {
+              setDiaAbierto(fecha === diaAbierto ? null : fecha);
+              setHistorialDe(null);
+            }}
+            onCambiarMes={(year, month) => {
+              setMes({ year, month });
+              setDiaAbierto(null);
+            }}
+          />
+
+          <div className="detalle-dia">
+            {diaDetalle ? (
+              <div className="tarjeta dia">
+                <h3>{diaDetalle.label}</h3>
+                {diaDetalle.shifts.map((turno) => (
+                  <TurnoDetalle
+                    key={turno.id}
+                    turno={turno}
+                    etiquetaDia={diaDetalle.label}
+                    historialAbierto={historialDe === turno.id}
+                    onAlternarHistorial={() =>
+                      setHistorialDe(historialDe === turno.id ? null : turno.id)
+                    }
+                    onCancelar={abrirCancelacion(`${diaDetalle.label}, ${turno.range}`)}
+                    onAgregar={() => setAgregando(turno)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="tarjeta vacio">
+                <p className="tenue">
+                  Toca un día del calendario para ver sus turnos y a quién le toca.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!cargando && vista === 'lista' && (
+        <>
+          {datos?.days.length === 0 && (
+            <div className="aviso atencion">
+              No hay turnos generados en este periodo. Genera el calendario del mes desde la
+              pestaña Calendario.
+            </div>
+          )}
+
+          {datos?.days.map((dia) => (
+            <div key={dia.date} className="tarjeta dia">
+              <h3>{dia.label}</h3>
+              {dia.shifts.map((turno) => (
+                <TurnoDetalle
+                  key={turno.id}
+                  turno={turno}
+                  etiquetaDia={dia.label}
+                  historialAbierto={historialDe === turno.id}
+                  onAlternarHistorial={() =>
+                    setHistorialDe(historialDe === turno.id ? null : turno.id)
+                  }
+                  onCancelar={abrirCancelacion(`${dia.label}, ${turno.range}`)}
+                  onAgregar={() => setAgregando(turno)}
+                />
+              ))}
+            </div>
+          ))}
+        </>
+      )}
+
+      {cancelando && (
+        <CancelarDialogo
+          nombre={cancelando.nombre}
+          turno={cancelando.turno}
+          motivos={CANCEL_REASONS}
+          onCancelar={cancelar}
+          onCerrar={() => setCancelando(null)}
+        />
+      )}
+
+      {agregando && (
+        <AgregarParticipante
+          locationId={locationId}
+          shift={agregando}
+          cargarCandidatos={() =>
+            api<AvailableParticipant[]>(
+              `/locations/${locationId}/shifts/${agregando.id}/available-participants`,
+            )
+          }
+          onAgregar={agregar}
+          onCerrar={() => setAgregando(null)}
+        />
+      )}
+    </section>
+  );
+}
