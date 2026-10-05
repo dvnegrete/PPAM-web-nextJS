@@ -6,3 +6,6 @@ out/
 .env.*
 !.env.example
 next-env.d.ts
+
+# Caché incremental de TypeScript: se regenera en cada revisión de tipos
+*.tsbuildinfo

@@ -23,9 +23,10 @@ const ENCABEZADOS: Record<Tipo, string> = {
 
 const AYUDA: Record<Tipo, string> = {
   participants:
-    'Da de alta o actualiza a las personas del punto. Si un teléfono ya existe, la fila actualiza ' +
-    'ese registro en lugar de duplicarlo. Al importar declaras que estas personas ya participan y ' +
-    'aceptaron recibir mensajes; sin ese registro el sistema no puede avisarles de ninguna vacante.',
+    'Da de alta o actualiza a las personas del punto. El teléfono es la clave: si ya existe, la fila ' +
+    'actualiza ese registro en lugar de duplicarlo, y las columnas que no traigas se quedan como ' +
+    'estaban. Al importar declaras que estas personas ya participan y aceptaron recibir mensajes; ' +
+    'sin ese registro el sistema no puede avisarles de ninguna vacante.',
   assignments:
     'Asigna turnos fijos: en qué franja atiende habitualmente cada persona. Las personas deben ' +
     'existir ya en el padrón y la franja debe estar configurada en el punto. También puedes ' +
@@ -55,6 +56,7 @@ const GRUPOS: Record<Tipo, GrupoCampos[]> = {
           nombre: 'apellido_materno',
           alias: ['apellido materno', 'maternal_surname'],
           que: 'Segundo apellido. Déjalo vacío si no aplica.',
+          valores: 'Al reimportar, dejarlo vacío no borra el que ya estaba.',
         },
         {
           nombre: 'nombre_a_mostrar',
@@ -85,8 +87,9 @@ const GRUPOS: Record<Tipo, GrupoCampos[]> = {
           que: 'Qué hace esta persona en el punto.',
           valores: (
             <>
-              <code>participante</code>, <code>encargado</code> o <code>admin</code>. Vacío ={' '}
-              <code>participante</code>.
+              <code>participante</code>, <code>encargado</code> o <code>admin</code>. En un alta
+              nueva, vacío = <code>participante</code>; al reimportar, vacío no cambia el rol que ya
+              tenía.
             </>
           ),
         },
@@ -96,7 +99,8 @@ const GRUPOS: Record<Tipo, GrupoCampos[]> = {
           que: 'Si quiere recibir avisos cuando alguien cancela y hay que cubrir.',
           valores: (
             <>
-              <code>si</code> o <code>no</code>. Vacío = <code>si</code>.
+              <code>si</code> o <code>no</code>. En un alta nueva, vacío = <code>si</code>; al
+              reimportar, vacío no cambia la preferencia que ya tenía.
             </>
           ),
         },

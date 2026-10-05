@@ -65,6 +65,13 @@ export function GuiaCampos({
         . El separador puede ser coma, punto y coma o tabulador, y los acentos se detectan solos.
       </p>
 
+      <p className="tenue">
+        Puedes volver a subir el archivo cuando quieras: las filas cuyo teléfono ya existe actualizan
+        ese registro en lugar de duplicarlo, y las columnas que no traigas —o que vengan vacías— dejan
+        intacto lo que ya estaba. Para <strong>borrar</strong> un dato o cambiar un teléfono usa el
+        panel: un teléfono distinto se toma como otra persona.
+      </p>
+
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
         <button onClick={() => void copiar()}>
           {copiado ? 'Copiado ✓' : 'Copiar fila de encabezado'}
