@@ -68,8 +68,9 @@ export function GuiaCampos({
       <p className="tenue">
         Puedes volver a subir el archivo cuando quieras: las filas cuyo teléfono ya existe actualizan
         ese registro en lugar de duplicarlo, y las columnas que no traigas —o que vengan vacías— dejan
-        intacto lo que ya estaba. Para <strong>borrar</strong> un dato o cambiar un teléfono usa el
-        panel: un teléfono distinto se toma como otra persona.
+        intacto lo que ya estaba. Para <strong>borrar</strong> un dato o <strong>cambiar un
+        teléfono</strong>, usa el botón «Editar» del Padrón: por CSV, un teléfono distinto se toma
+        como otra persona.
       </p>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>

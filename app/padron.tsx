@@ -3,22 +3,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { Participant } from '@/lib/types';
-import { MARITAL_LABELS, ORGANIZATION_LABELS } from '@/lib/types';
-import type { OrganizationField, OrganizationValues } from '@/lib/types';
+import { MARITAL_LABELS, ORGANIZATION_LABELS, ROLE_LABELS, STATUS_LABELS } from '@/lib/types';
+import type {
+  OrganizationField,
+  OrganizationValues,
+  UpdateParticipantResult,
+} from '@/lib/types';
 import { nombreFormal, nombreVisible } from '@/lib/nombres';
-import { EstadoCivilDialogo } from './estado-civil-dialogo';
-import { OrganizacionDialogo } from './organizacion-dialogo';
-
-const ROLES: Record<Participant['role'], string> = {
-  PARTICIPANT: 'Participante',
-  SUPERVISOR: 'Encargado',
-  ADMIN: 'Administrador',
-};
+import { EditarParticipante } from './editar-participante';
 
 export function Padron({ locationId }: { locationId: string }) {
   const [participantes, setParticipantes] = useState<Participant[]>([]);
   const [editando, setEditando] = useState<Participant | null>(null);
-  const [editandoOrg, setEditandoOrg] = useState<Participant | null>(null);
   const [valores, setValores] = useState<OrganizationValues>({
     congregation: [],
     circuit: [],
@@ -100,6 +96,7 @@ export function Padron({ locationId }: { locationId: string }) {
   const sinConsentimiento = participantes.filter((p) => !p.optInAt).length;
   const sinEstadoCivil = participantes.filter((p) => p.maritalStatus === 'SIN_REGISTRAR').length;
   const sinCongregacion = participantes.filter((p) => !p.congregation).length;
+  const noActivos = participantes.filter((p) => p.status !== 'ACTIVE').length;
 
   return (
     <section>
@@ -215,6 +212,7 @@ export function Padron({ locationId }: { locationId: string }) {
               <th>Se muestra como</th>
               <th>Teléfono</th>
               <th>Rol</th>
+              <th>Estado</th>
               <th>Congregación</th>
               <th>Circuito</th>
               <th>Ciudad</th>
@@ -237,9 +235,20 @@ export function Padron({ locationId }: { locationId: string }) {
                 <td style={{ fontVariantNumeric: 'tabular-nums' }}>{p.phoneE164}</td>
                 <td>
                   {p.role === 'PARTICIPANT' ? (
-                    ROLES[p.role]
+                    ROLE_LABELS[p.role]
                   ) : (
-                    <span className="etiqueta completo">{ROLES[p.role]}</span>
+                    <span className="etiqueta completo">{ROLE_LABELS[p.role]}</span>
+                  )}
+                </td>
+                <td>
+                  {p.status === 'ACTIVE' ? (
+                    <span className="tenue">{STATUS_LABELS[p.status]}</span>
+                  ) : (
+                    <span
+                      className={`etiqueta ${p.status === 'PAUSED' ? 'faltante' : 'critico'}`}
+                    >
+                      {STATUS_LABELS[p.status]}
+                    </span>
                   )}
                 </td>
                 <td>{p.congregation ?? <span className="tenue">—</span>}</td>
@@ -268,11 +277,8 @@ export function Padron({ locationId }: { locationId: string }) {
                   )}
                 </td>
                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                  <button className="accion" onClick={() => setEditandoOrg(p)}>
-                    Congregación
-                  </button>{' '}
                   <button className="accion" onClick={() => setEditando(p)}>
-                    Estado civil
+                    Editar
                   </button>
                 </td>
               </tr>
@@ -287,23 +293,37 @@ export function Padron({ locationId }: { locationId: string }) {
         )}
       </div>
 
-      {editandoOrg && (
-        <OrganizacionDialogo
-          participante={editandoOrg}
-          valores={valores}
-          onGuardado={cargar}
-          onCerrar={() => setEditandoOrg(null)}
-        />
-      )}
-
       {editando && (
-        <EstadoCivilDialogo
+        <EditarParticipante
           locationId={locationId}
           participante={editando}
-          onGuardado={cargar}
+          valores={valores}
+          onGuardado={async (resultado) => {
+            await cargar();
+            setAviso(resumenDeGuardado(resultado));
+          }}
           onCerrar={() => setEditando(null)}
         />
       )}
     </section>
   );
+}
+
+/**
+ * Qué contar después de guardar.
+ *
+ * Los turnos liberados y los mensajes descartados no se ven en la tabla, así que
+ * si no se dicen aquí el administrador no se enteraría de que ocurrieron.
+ */
+function resumenDeGuardado(resultado: UpdateParticipantResult): string {
+  const partes = [`${nombreVisible(resultado)}: cambios guardados.`];
+  if (resultado.cancelledShifts > 0) {
+    partes.push(
+      resultado.cancelledShifts === 1
+        ? 'Se liberó 1 turno futuro, sin convocar a nadie.'
+        : `Se liberaron ${resultado.cancelledShifts} turnos futuros, sin convocar a nadie.`,
+    );
+  }
+  partes.push(...resultado.warnings);
+  return partes.join(' ');
 }

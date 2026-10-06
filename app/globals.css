@@ -529,3 +529,44 @@ pre.bloque {
 @media (max-width: 560px) {
   .campo { grid-template-columns: 1fr; }
 }
+
+/* ------------------------------------------------------------------ */
+/* Diálogo de edición de participante: secciones y pares de campos     */
+/* ------------------------------------------------------------------ */
+
+/* Más ancho que los demás diálogos: aquí caben cuatro secciones y
+   apretarlas en una columna obligaría a desplazarse todo el tiempo. */
+.dialogo.dialogo-ancho { width: min(620px, 100%); }
+
+.grupo {
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 0.7rem 0.85rem 0.3rem;
+  margin: 0 0 0.9rem;
+}
+.grupo legend {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--texto-tenue);
+  padding: 0 0.35rem;
+}
+.grupo > .tenue { display: block; margin-bottom: 0.7rem; }
+.grupo .opciones-conyuge { margin-top: 0.2rem; }
+
+/* Dos columnas en pantalla cómoda, una sola en móvil. */
+.campos-par {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0 0.7rem;
+}
+
+.casilla {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin-bottom: 0.75rem;
+}
+.casilla input { width: auto; flex: none; margin-top: 0.15rem; }
+.casilla span { display: inline; margin: 0; font-size: 0.9rem; line-height: 1.4; }

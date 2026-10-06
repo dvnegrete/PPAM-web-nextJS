@@ -20,6 +20,32 @@ export interface CalendarShift {
 
 export type MaritalStatus = 'SIN_REGISTRAR' | 'SOLTERO' | 'CASADO' | 'VIUDO' | 'SEPARADO';
 
+/** El rol es del vínculo con el punto, no de la persona. */
+export type ParticipantRole = 'PARTICIPANT' | 'SUPERVISOR' | 'ADMIN';
+
+/** El estado sí es de la persona: una baja lo es en todos los puntos. */
+export type ParticipantStatus = 'ACTIVE' | 'PAUSED' | 'INACTIVE';
+
+export const ROLE_LABELS: Record<ParticipantRole, string> = {
+  PARTICIPANT: 'Participante',
+  SUPERVISOR: 'Encargado',
+  ADMIN: 'Administrador',
+};
+
+/** Qué significa cada estado, en los términos del grupo. */
+export const STATUS_LABELS: Record<ParticipantStatus, string> = {
+  ACTIVE: 'Activo',
+  PAUSED: 'Pausado',
+  INACTIVE: 'Dado de baja',
+};
+
+/** Lo que el rol recibe en el cuerpo del PATCH, que el servidor traduce. */
+export const ROLE_VALUES: Record<ParticipantRole, string> = {
+  PARTICIPANT: 'participante',
+  SUPERVISOR: 'encargado',
+  ADMIN: 'admin',
+};
+
 export interface Participant {
   id: string;
   firstName: string;
@@ -27,8 +53,8 @@ export interface Participant {
   maternalSurname: string | null;
   displayName: string | null;
   phoneE164: string;
-  role: 'PARTICIPANT' | 'SUPERVISOR' | 'ADMIN';
-  status: string;
+  role: ParticipantRole;
+  status: ParticipantStatus;
   coverageAlerts: boolean;
   optInAt: string | null;
   maritalStatus: MaritalStatus;
@@ -294,4 +320,12 @@ export interface RecurringCandidate {
   id: string;
   name: string;
   formalName: string;
+}
+
+/** Respuesta de la edición: la fila actualizada más lo que hay que contar. */
+export interface UpdateParticipantResult extends Participant {
+  /** Turnos futuros que se liberaron al pausar o dar de baja. */
+  cancelledShifts: number;
+  /** Avisos que no impidieron guardar pero el administrador debe leer. */
+  warnings: string[];
 }
