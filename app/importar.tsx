@@ -12,7 +12,11 @@ const EJEMPLOS: Record<Tipo, string> = {
     'nombre,apellido_paterno,apellido_materno,telefono,rol,congregacion,circuito,ciudad,estado_civil,conyuge\n' +
     'Ana María,López,Pérez,55 1234 5678,participante,Centro,12,Guadalajara,casado,Luis Ramírez\n' +
     'Elena,Mora,,55 9988 7766,encargado,Centro,12,Guadalajara,soltero,',
-  assignments: 'telefono,dia,inicio,semana\n55 1234 5678,lunes,7:00,\n55 1234 5678,sabado,9:00,5',
+  assignments:
+    'telefono,dia,inicio,semana\n' +
+    '55 1234 5678,lunes,7:00,\n' +
+    '55 1234 5678,miercoles,15:00,\n' +
+    '55 1234 5678,sabado,9:00,5',
 };
 
 const ENCABEZADOS: Record<Tipo, string> = {
@@ -28,9 +32,10 @@ const AYUDA: Record<Tipo, string> = {
     'estaban. Al importar declaras que estas personas ya participan y aceptaron recibir mensajes; ' +
     'sin ese registro el sistema no puede avisarles de ninguna vacante.',
   assignments:
-    'Asigna turnos fijos: en qué franja atiende habitualmente cada persona. Las personas deben ' +
-    'existir ya en el padrón y la franja debe estar configurada en el punto. También puedes ' +
-    'capturarlos uno por uno en la pestaña «Turnos fijos».',
+    'Asigna turnos fijos: en qué franja atiende habitualmente cada persona. Una fila por franja, ' +
+    'así que el mismo teléfono se repite tantas veces como turnos tenga. Las horas van en reloj de ' +
+    '24 horas (las tres de la tarde son 15:00). Las personas deben existir ya en el padrón y la ' +
+    'franja debe estar configurada en el punto; puedes ver las que hay en la pestaña «Turnos fijos».',
 };
 
 /** Las columnas que entiende cada importación, para la guía visual. */
@@ -189,11 +194,14 @@ const GRUPOS: Record<Tipo, GrupoCampos[]> = {
           nombre: 'inicio',
           alias: ['hora', 'start'],
           requerido: true,
-          que: 'Hora en que empieza la franja.',
+          que: 'Hora en que empieza la franja, en reloj de 24 horas.',
           valores: (
             <>
-              <code>7:00</code>, <code>07:00</code> o <code>7</code> a secas; también con minutos,{' '}
-              <code>11:30</code>. Tiene que coincidir con una franja configurada en el punto.
+              <strong>En reloj de 24 horas</strong>: la una de la tarde es <code>13:00</code> y las
+              tres de la tarde son <code>15:00</code>. Escribir <code>1:00</code> o <code>3:00</code>{' '}
+              apunta a la madrugada y la fila falla. Se acepta sin minutos (<code>7</code>), con cero
+              a la izquierda (<code>07:00</code>) y con media hora (<code>11:30</code>). Tiene que
+              coincidir con una franja configurada en el punto.
             </>
           ),
         },
