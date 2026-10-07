@@ -141,8 +141,7 @@ const GRUPOS: Record<Tipo, GrupoCampos[]> = {
           valores: (
             <>
               <code>soltero</code>, <code>casado</code>, <code>viudo</code>, <code>separado</code> o{' '}
-              <code>divorciado</code>, en masculino o femenino. <code>divorciado</code> se guarda como{' '}
-              «separado». Vacío = sin registrar.
+              <code>divorciado</code>, en masculino o femenino. Vacío = sin registrar.
             </>
           ),
         },

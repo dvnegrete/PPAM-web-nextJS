@@ -18,7 +18,13 @@ export interface CalendarShift {
   participants: Array<{ id: string; name: string; origin: string; confirmed: boolean }>;
 }
 
-export type MaritalStatus = 'SIN_REGISTRAR' | 'SOLTERO' | 'CASADO' | 'VIUDO' | 'SEPARADO';
+export type MaritalStatus =
+  | 'SIN_REGISTRAR'
+  | 'SOLTERO'
+  | 'CASADO'
+  | 'VIUDO'
+  | 'SEPARADO'
+  | 'DIVORCIADO';
 
 /** El rol es del vínculo con el punto, no de la persona. */
 export type ParticipantRole = 'PARTICIPANT' | 'SUPERVISOR' | 'ADMIN';
@@ -87,6 +93,7 @@ export const MARITAL_LABELS: Record<MaritalStatus, string> = {
   CASADO: 'Casado',
   VIUDO: 'Viudo',
   SEPARADO: 'Separado',
+  DIVORCIADO: 'Divorciado',
 };
 
 /** Congregación, circuito y ciudad: para reportes y filtros. */
