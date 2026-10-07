@@ -67,10 +67,14 @@ export function GuiaCampos({
 
       <p className="tenue">
         Puedes volver a subir el archivo cuando quieras: las filas cuyo teléfono ya existe actualizan
-        ese registro en lugar de duplicarlo, y las columnas que no traigas —o que vengan vacías— dejan
-        intacto lo que ya estaba. Para <strong>borrar</strong> un dato o <strong>cambiar un
-        teléfono</strong>, usa el botón «Editar» del Padrón: por CSV, un teléfono distinto se toma
-        como otra persona.
+        ese registro en lugar de duplicarlo, y las columnas <strong>opcionales</strong> que no traigas
+        —o que vengan vacías— dejan intacto lo que ya estaba. Las obligatorias sí hacen falta en todas
+        las filas, también al actualizar: una fila sin ellas se rechaza.
+      </p>
+
+      <p className="tenue">
+        Para <strong>borrar</strong> un dato o <strong>cambiar un teléfono</strong>, usa el botón
+        «Editar» del Padrón: por CSV, un teléfono distinto se toma como otra persona.
       </p>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>

@@ -87,9 +87,9 @@ const GRUPOS: Record<Tipo, GrupoCampos[]> = {
           que: 'Qué hace esta persona en el punto.',
           valores: (
             <>
-              <code>participante</code>, <code>encargado</code> o <code>admin</code>. En un alta
-              nueva, vacío = <code>participante</code>; al reimportar, vacío no cambia el rol que ya
-              tenía.
+              <code>participante</code>, <code>encargado</code> o <code>encargada</code>,{' '}
+              <code>admin</code> o <code>administrador</code>. En un alta nueva, vacío ={' '}
+              <code>participante</code>; al reimportar, vacío no cambia el rol que ya tenía.
             </>
           ),
         },
@@ -140,8 +140,9 @@ const GRUPOS: Record<Tipo, GrupoCampos[]> = {
           que: 'Estado civil de la persona.',
           valores: (
             <>
-              <code>soltero</code>, <code>casado</code>, <code>viudo</code> o <code>separado</code>, en
-              masculino o femenino. Vacío = sin registrar.
+              <code>soltero</code>, <code>casado</code>, <code>viudo</code>, <code>separado</code> o{' '}
+              <code>divorciado</code>, en masculino o femenino. <code>divorciado</code> se guarda como{' '}
+              «separado». Vacío = sin registrar.
             </>
           ),
         },
@@ -192,7 +193,8 @@ const GRUPOS: Record<Tipo, GrupoCampos[]> = {
           que: 'Hora en que empieza la franja.',
           valores: (
             <>
-              Formato <code>7:00</code>. Tiene que coincidir con una franja configurada en el punto.
+              <code>7:00</code>, <code>07:00</code> o <code>7</code> a secas; también con minutos,{' '}
+              <code>11:30</code>. Tiene que coincidir con una franja configurada en el punto.
             </>
           ),
         },
