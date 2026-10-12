@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { CalendarShift } from '@/lib/types';
+import { ocupacionTexto } from '@/lib/turnos';
 import { RegenerarDialogo } from './regenerar-dialogo';
 
 const MESES = [
@@ -182,7 +183,7 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
                               : 'faltante'
                       }`}
                     >
-                      {shift.occupied}/{shift.capacity}
+                      {ocupacionTexto(shift.occupied, shift.capacity)}
                     </span>
                   </td>
                   <td>

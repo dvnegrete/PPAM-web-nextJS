@@ -209,7 +209,13 @@ export interface DashboardShift {
   status: 'PLANNED' | 'OPEN' | 'FULL' | 'CANCELLED';
   capacity: number;
   occupied: number;
+  /** Lugares que faltan para la meta del turno; es lo que se convoca. */
   freeSlots: number;
+  /**
+   * Lugares extra que admite por encima de la meta, hasta el tope del punto.
+   * No es una carencia: no se convoca para llenarlos ni cambian el color.
+   */
+  extraSlots: number;
   need: NeedLevel;
   participants: DashboardParticipant[];
   cancellations: DashboardCancellation[];

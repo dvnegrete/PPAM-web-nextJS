@@ -1,6 +1,7 @@
 'use client';
 
 import type { DashboardShift, NeedLevel } from '@/lib/types';
+import { ocupacionTexto } from '@/lib/turnos';
 import { MovimientosTurno } from './movimientos-turno';
 
 /** «18 sep, 19:05» */
@@ -52,7 +53,9 @@ export function TurnoDetalle({
       <div className="turno-cabecera">
         <strong>{turno.range}</strong>
         <span className={`etiqueta ${claseNecesidad(turno.need)}`}>
-          {turno.status === 'CANCELLED' ? 'Turno cancelado' : `${turno.occupied}/${turno.capacity}`}
+          {turno.status === 'CANCELLED'
+            ? 'Turno cancelado'
+            : ocupacionTexto(turno.occupied, turno.capacity)}
         </span>
       </div>
 
@@ -104,9 +107,13 @@ export function TurnoDetalle({
       </ul>
 
       <div className="turno-pie">
-        {turno.freeSlots > 0 && turno.status !== 'CANCELLED' && (
+        {(turno.freeSlots > 0 || turno.extraSlots > 0) && turno.status !== 'CANCELLED' && (
           <button onClick={onAgregar}>
-            Agregar {turno.freeSlots === 1 ? 'participante' : `(faltan ${turno.freeSlots})`}
+            {turno.freeSlots === 0
+              ? 'Agregar un extra'
+              : turno.freeSlots === 1
+                ? 'Agregar participante'
+                : `Agregar (faltan ${turno.freeSlots})`}
           </button>
         )}
         {hayMovimientos && (

@@ -73,7 +73,12 @@ export function AgregarParticipante({
       <div className="dialogo">
         <h3>Agregar al turno</h3>
         <p className="tenue">
-          {shift.range} · {shift.freeSlots === 1 ? 'queda 1 lugar' : `quedan ${shift.freeSlots} lugares`}
+          {shift.range} ·{' '}
+          {shift.freeSlots === 0
+            ? 'el turno ya está completo; esta persona entra como lugar extra'
+            : shift.freeSlots === 1
+              ? 'queda 1 lugar'
+              : `quedan ${shift.freeSlots} lugares`}
         </p>
 
         {error && <div className="aviso error">{error}</div>}
