@@ -570,3 +570,42 @@ pre.bloque {
 }
 .casilla input { width: auto; flex: none; margin-top: 0.15rem; }
 .casilla span { display: inline; margin: 0; font-size: 0.9rem; line-height: 1.4; }
+
+/* ------------------------------------------------------------------ */
+/* Advertencia antes de regenerar un mes                               */
+/* ------------------------------------------------------------------ */
+
+.consecuencias {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.consecuencias li {
+  display: grid;
+  grid-template-columns: 1.35rem 1fr;
+  gap: 0.45rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+/* El signo hace legible de un vistazo si la línea suma, conserva o advierte;
+   el color por sí solo no se lo diría a quien no distingue los tonos. */
+.consecuencias .marca {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.8rem;
+  flex: none;
+}
+.consecuencias .marca.suma { background: var(--acento-suave); color: var(--acento); }
+.consecuencias .marca.igual { background: var(--fondo); color: var(--texto-tenue); }
+.consecuencias .marca.resta { background: var(--aviso-suave); color: var(--aviso); }
+
+.dialogo h4 { color: var(--texto); font-weight: 600; }

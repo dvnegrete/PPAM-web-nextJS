@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { CalendarShift } from '@/lib/types';
+import { RegenerarDialogo } from './regenerar-dialogo';
 
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -26,6 +27,7 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
   const [aviso, setAviso] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
   const [soloIncompletos, setSoloIncompletos] = useState(false);
+  const [confirmando, setConfirmando] = useState(false);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -47,7 +49,23 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
     void cargar();
   }, [cargar]);
 
+  /**
+   * Un mes ya publicado no se regenera sin avisar.
+   *
+   * Regenerar no borra nada, pero sienta gente en turnos sin notificarle y
+   * puede crear turnos si las franjas del punto cambiaron. Hacerlo de un clic,
+   * sin decir qué cambia, es lo que convierte un botón útil en uno temido.
+   */
+  function pedirGenerar() {
+    if (shifts.length > 0) {
+      setConfirmando(true);
+      return;
+    }
+    void generar();
+  }
+
   async function generar() {
+    setConfirmando(false);
     setError(null);
     setAviso(null);
     try {
@@ -112,7 +130,9 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
             max={2100}
           />
         </label>
-        <button onClick={() => void generar()}>Generar calendario</button>
+        <button onClick={pedirGenerar}>
+          {shifts.length > 0 ? 'Volver a generar' : 'Generar calendario'}
+        </button>
         <label style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', width: 'auto' }}>
           <input
             type="checkbox"
@@ -188,6 +208,15 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
           No hay turnos generados para este mes. Usa «Generar calendario» para crearlos a partir
           de las plantillas.
         </div>
+      )}
+
+      {confirmando && (
+        <RegenerarDialogo
+          mes={`${MESES[month - 1]} de ${year}`}
+          shifts={shifts}
+          onConfirmar={generar}
+          onCerrar={() => setConfirmando(false)}
+        />
       )}
     </section>
   );
