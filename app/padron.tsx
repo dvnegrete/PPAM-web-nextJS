@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
 import type { Participant } from '@/lib/types';
 import { MARITAL_LABELS, ORGANIZATION_LABELS, ROLE_LABELS, STATUS_LABELS } from '@/lib/types';
@@ -9,7 +9,8 @@ import type {
   OrganizationValues,
   UpdateParticipantResult,
 } from '@/lib/types';
-import { nombreFormal, nombreVisible } from '@/lib/nombres';
+import { nombreCompleto, nombreFormal, nombreVisible } from '@/lib/nombres';
+import { clave, coincide, digitos, terminos, type Buscable } from '@/lib/texto';
 import { EditarParticipante } from './editar-participante';
 
 export function Padron({ locationId }: { locationId: string }) {
@@ -25,6 +26,7 @@ export function Padron({ locationId }: { locationId: string }) {
     circuit: '',
     city: '',
   });
+  const [busqueda, setBusqueda] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [nombre, setNombre] = useState('');
@@ -85,12 +87,52 @@ export function Padron({ locationId }: { locationId: string }) {
     }
   }
 
-  const visibles = participantes.filter((p) =>
-    (Object.keys(filtros) as OrganizationField[]).every(
-      (campo) => !filtros[campo] || p[campo] === filtros[campo],
-    ),
-  );
+  /**
+   * Lo buscable de cada persona, preparado una sola vez.
+   *
+   * Normalizar ciento treinta filas en cada tecla sería trabajo tirado: el
+   * padrón solo cambia al recargarlo, así que el índice se arma con él.
+   *
+   * El cónyuge entra por sus **dos** vías —el nombre anotado de quien no
+   * participa y el nombre compuesto de quien sí—, porque lo contrario sería que
+   * buscar a una pareja funcione solo cuando no está en el padrón.
+   */
+  const indice = useMemo(() => {
+    const mapa = new Map<string, Buscable>();
+    for (const p of participantes) {
+      mapa.set(p.id, {
+        texto: clave(
+          [
+            p.firstName,
+            p.paternalSurname,
+            p.maternalSurname,
+            p.displayName,
+            p.congregation,
+            p.spouseName,
+            p.spouse ? nombreCompleto(p.spouse) : null,
+          ]
+            .filter(Boolean)
+            .join(' '),
+        ),
+        digitos: digitos(p.phoneE164),
+      });
+    }
+    return mapa;
+  }, [participantes]);
+
+  const terms = useMemo(() => terminos(busqueda), [busqueda]);
+  const hayBusqueda = terms.length > 0;
   const hayFiltro = Object.values(filtros).some(Boolean);
+
+  // La búsqueda acota dentro del filtro, no lo sustituye: son dos preguntas
+  // distintas y combinarlas es lo que permite «de esta congregación, ¿quién...?».
+  const visibles = participantes
+    .filter((p) =>
+      (Object.keys(filtros) as OrganizationField[]).every(
+        (campo) => !filtros[campo] || p[campo] === filtros[campo],
+      ),
+    )
+    .filter((p) => !hayBusqueda || coincide(terms, indice.get(p.id)!));
 
   const encargados = participantes.filter((p) => p.role !== 'PARTICIPANT').length;
   const sinConsentimiento = participantes.filter((p) => !p.optInAt).length;
@@ -102,6 +144,24 @@ export function Padron({ locationId }: { locationId: string }) {
     <section>
       {error && <div className="aviso error">{error}</div>}
       {aviso && <div className="aviso exito">{aviso}</div>}
+
+      <div className="buscador">
+        <label>
+          <span className="oculto-visualmente">Buscar en el padrón</span>
+          <input
+            type="search"
+            value={busqueda}
+            onChange={(evento) => setBusqueda(evento.target.value)}
+            placeholder="Buscar por nombre, apellido, teléfono o congregación"
+            autoFocus
+          />
+        </label>
+        {hayBusqueda && (
+          <span className="coincidencias" aria-live="polite">
+            {visibles.length === 1 ? '1 coincidencia' : `${visibles.length} coincidencias`}
+          </span>
+        )}
+      </div>
 
       <div className="tarjeta" style={{ marginBottom: '1rem' }}>
         <h3>Dar de alta</h3>
@@ -171,12 +231,14 @@ export function Padron({ locationId }: { locationId: string }) {
         </form>
       </div>
 
+      {/* Los contadores son del padrón entero: dicen qué falta por capturar, y
+          eso no cambia porque se esté buscando a alguien. */}
       <p className="tenue">
         {participantes.length} registrado(s) · {encargados} encargado(s)
+        {noActivos > 0 && ` · ${noActivos} pausado(s) o de baja`}
         {sinConsentimiento > 0 && ` · ${sinConsentimiento} sin primer contacto`}
         {sinEstadoCivil > 0 && ` · ${sinEstadoCivil} sin estado civil`}
         {sinCongregacion > 0 && ` · ${sinCongregacion} sin congregación`}
-        {hayFiltro && ` · ${visibles.length} con el filtro aplicado`}
       </p>
 
       <div className="tarjeta filtros-padron">
@@ -289,7 +351,13 @@ export function Padron({ locationId }: { locationId: string }) {
           <p className="tenue">Aún no hay nadie registrado. Usa la pestaña «Importar».</p>
         )}
         {participantes.length > 0 && visibles.length === 0 && (
-          <p className="tenue">Nadie coincide con el filtro aplicado.</p>
+          <p className="tenue">
+            {hayBusqueda && hayFiltro
+              ? 'Nadie coincide con la búsqueda dentro del filtro aplicado.'
+              : hayBusqueda
+                ? `Nadie coincide con «${busqueda.trim()}».`
+                : 'Nadie coincide con el filtro aplicado.'}
+          </p>
         )}
       </div>
 
