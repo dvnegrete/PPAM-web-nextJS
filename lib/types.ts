@@ -263,7 +263,8 @@ export interface AvailableParticipant {
   paternalSurname: string;
   maternalSurname: string | null;
   displayName: string | null;
-  role: string;
+  /** Ya formateado por el servidor: «+52 55 1234 5678». */
+  phone: string;
 }
 
 // ---------------------------------------------------------------------------

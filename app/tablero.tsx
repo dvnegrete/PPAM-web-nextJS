@@ -112,6 +112,20 @@ export function Tablero({ locationId }: { locationId: string }) {
     await cargar();
   }
 
+  /**
+   * Los candidatos del turno abierto.
+   *
+   * Va en `useCallback` porque es dependencia del efecto que los carga en el
+   * diálogo: como lambda suelta se recreaba en cada repintado del Tablero y
+   * volvía a pedir el padrón entero cada vez.
+   */
+  const cargarCandidatos = useCallback(async () => {
+    if (!agregando) return [];
+    return api<AvailableParticipant[]>(
+      `/locations/${locationId}/shifts/${agregando.id}/available-participants`,
+    );
+  }, [locationId, agregando]);
+
   async function agregar(participantId: string) {
     if (!agregando) return;
     await api(`/locations/${locationId}/shifts/${agregando.id}/assignments`, {
@@ -316,11 +330,7 @@ export function Tablero({ locationId }: { locationId: string }) {
         <AgregarParticipante
           locationId={locationId}
           shift={agregando}
-          cargarCandidatos={() =>
-            api<AvailableParticipant[]>(
-              `/locations/${locationId}/shifts/${agregando.id}/available-participants`,
-            )
-          }
+          cargarCandidatos={cargarCandidatos}
           onAgregar={agregar}
           onCerrar={() => setAgregando(null)}
         />

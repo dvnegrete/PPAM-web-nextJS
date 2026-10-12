@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { nombreFormal } from '@/lib/nombres';
+import { useEffect, useMemo, useState } from 'react';
+import { nombreCompleto, nombreFormal } from '@/lib/nombres';
+import { clave, coincide, digitos, terminos, type Buscable } from '@/lib/texto';
 import type { AvailableParticipant, DashboardShift } from '@/lib/types';
 
 interface Props {
@@ -50,11 +51,33 @@ export function AgregarParticipante({
     };
   }, [cargarCandidatos]);
 
-  const visibles = busqueda.trim()
-    ? candidatos.filter((persona) =>
-        nombreFormal(persona).toLowerCase().includes(busqueda.trim().toLowerCase()),
-      )
-    : candidatos;
+  /**
+   * Lo buscable de cada candidato: su nombre y su teléfono.
+   *
+   * Quien se ofrece para cubrir lo hace desde su número por WhatsApp, así que
+   * ese es el dato que el administrador tiene delante; buscar solo por nombre lo
+   * obligaba a adivinar cómo está escrito en el padrón.
+   *
+   * Se usa `nombreCompleto` y no `nombreFormal`: el formal devuelve «López
+   * Pérez, Ana María», y con la coma en medio escribir «Ana López» no
+   * encontraba a Ana López.
+   */
+  const indice = useMemo(() => {
+    const mapa = new Map<string, Buscable>();
+    for (const persona of candidatos) {
+      mapa.set(persona.id, {
+        texto: clave(`${nombreCompleto(persona)} ${persona.displayName ?? ''}`),
+        digitos: digitos(persona.phone),
+      });
+    }
+    return mapa;
+  }, [candidatos]);
+
+  const terms = useMemo(() => terminos(busqueda), [busqueda]);
+  const visibles =
+    terms.length === 0
+      ? candidatos
+      : candidatos.filter((persona) => coincide(terms, indice.get(persona.id)!));
 
   async function confirmar() {
     if (!elegido) return;
@@ -86,9 +109,10 @@ export function AgregarParticipante({
         <label>
           <span>Buscar</span>
           <input
+            type="search"
             value={busqueda}
             onChange={(evento) => setBusqueda(evento.target.value)}
-            placeholder="Nombre del participante"
+            placeholder="Nombre o teléfono"
             autoFocus
           />
         </label>
@@ -109,7 +133,10 @@ export function AgregarParticipante({
               onClick={() => setElegido(persona.id)}
               aria-pressed={elegido === persona.id}
             >
-              {nombreFormal(persona)}
+              <span className="nombre">{nombreFormal(persona)}</span>
+              {/* El teléfono a la vista: al buscar por número hay que poder
+                  comprobar que el elegido es de quien se creía. */}
+              <span className="telefono tenue">{persona.phone}</span>
             </button>
           ))}
         </div>

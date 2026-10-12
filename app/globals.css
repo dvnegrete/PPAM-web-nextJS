@@ -650,3 +650,13 @@ pre.bloque {
   .buscador { flex-wrap: wrap; }
   .buscador label { flex-basis: 100%; }
 }
+
+/* Candidato con su teléfono: al buscar por número hay que poder comprobar
+   que el elegido es de quien se creía. */
+.candidato .nombre { display: block; }
+.candidato .telefono {
+  display: block;
+  margin-top: 0.1rem;
+  font-variant-numeric: tabular-nums;
+}
+.candidato.elegido .telefono { color: inherit; opacity: 0.75; }
