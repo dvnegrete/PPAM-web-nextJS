@@ -348,7 +348,22 @@ export function Importar({ locationId }: { locationId: string }) {
           <p>
             {resultado.processed} fila(s) procesada(s) · {resultado.created} nueva(s) ·{' '}
             {resultado.updated} actualizada(s) · {resultado.errors.length} con error
+            {resultado.skipped > 0 && (
+              <>
+                {' '}
+                ·{' '}
+                <span className="tenue">
+                  {resultado.skipped} vacía(s) ignorada(s)
+                </span>
+              </>
+            )}
           </p>
+          {resultado.skipped > 0 && (
+            <p className="tenue">
+              Las filas vacías son normales: Excel escribe un renglón por cada línea de su «rango
+              usado», aunque no tenga datos. No hay nada que corregir en el archivo.
+            </p>
+          )}
 
           {resultado.errors.length > 0 && (
             <>
