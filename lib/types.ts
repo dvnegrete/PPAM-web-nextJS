@@ -186,6 +186,8 @@ export interface DashboardParticipant {
   assignmentId: string;
   participantId: string;
   name: string;
+  /** Cónyuge que también participa; sirve para emparejarlos dentro del turno. */
+  spouseId: string | null;
   origin: 'FIXED' | 'SIGNUP' | 'COVERAGE' | 'MANUAL';
   confirmed: boolean;
   assignedAt: string | null;

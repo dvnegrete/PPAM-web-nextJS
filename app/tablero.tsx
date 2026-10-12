@@ -43,12 +43,15 @@ export function Tablero({ locationId }: { locationId: string }) {
   const [datos, setDatos] = useState<Dashboard | null>(null);
   const [movimientos, setMovimientos] = useState<Movement[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
 
   const [cancelando, setCancelando] = useState<{
     assignmentId: string;
     nombre: string;
     turno: string;
+    /** Su cónyuge, si atiende este mismo turno. */
+    conyuge: string | null;
   } | null>(null);
   const [agregando, setAgregando] = useState<DashboardShift | null>(null);
   const [historialDe, setHistorialDe] = useState<string | null>(null);
@@ -89,12 +92,22 @@ export function Tablero({ locationId }: { locationId: string }) {
     }
   }, [vista, mes, diaAbierto]);
 
-  async function cancelar(reasonCode: string, reason: string) {
+  async function cancelar(reasonCode: string, reason: string, tambienConyuge: boolean) {
     if (!cancelando) return;
-    await api(`/assignments/${cancelando.assignmentId}/cancel`, {
-      method: 'POST',
-      body: { reasonCode, reason: reason || undefined },
-    });
+    const { spouseCancelled } = await api<{ ok: true; spouseCancelled: string | null }>(
+      `/assignments/${cancelando.assignmentId}/cancel`,
+      {
+        method: 'POST',
+        body: { reasonCode, reason: reason || undefined, cancelSpouse: tambienConyuge },
+      },
+    );
+    // Se confirma a quién alcanzó la baja: el segundo nombre no se ve en el
+    // diálogo, y sin decirlo quedaría la duda de si entró.
+    setAviso(
+      spouseCancelled
+        ? `Se cancelaron los turnos de ${cancelando.nombre} y ${spouseCancelled}.`
+        : `Se canceló el turno de ${cancelando.nombre}.`,
+    );
     setCancelando(null);
     await cargar();
   }
@@ -109,9 +122,20 @@ export function Tablero({ locationId }: { locationId: string }) {
     await cargar();
   }
 
-  function abrirCancelacion(turnoTexto: string) {
-    return (assignmentId: string, nombre: string) =>
-      setCancelando({ assignmentId, nombre, turno: turnoTexto });
+  /**
+   * Abre la cancelación sabiendo si su cónyuge atiende **este mismo** turno.
+   *
+   * No hace falta consultar nada: si los dos están en el turno, los dos vienen
+   * en `turno.participants`, y cada uno trae su `spouseId`.
+   */
+  function abrirCancelacion(turno: DashboardShift, turnoTexto: string) {
+    return (assignmentId: string, nombre: string) => {
+      const persona = turno.participants.find((p) => p.assignmentId === assignmentId);
+      const conyuge = persona?.spouseId
+        ? (turno.participants.find((p) => p.participantId === persona.spouseId)?.name ?? null)
+        : null;
+      setCancelando({ assignmentId, nombre, turno: turnoTexto, conyuge });
+    };
   }
 
   const resumen = datos?.summary;
@@ -120,6 +144,7 @@ export function Tablero({ locationId }: { locationId: string }) {
   return (
     <section>
       {error && <div className="aviso error">{error}</div>}
+      {aviso && <div className="aviso exito">{aviso}</div>}
 
       <div className="tablero-barra">
         <div className="segmentado" role="group" aria-label="Vista">
@@ -230,7 +255,7 @@ export function Tablero({ locationId }: { locationId: string }) {
                     onAlternarHistorial={() =>
                       setHistorialDe(historialDe === turno.id ? null : turno.id)
                     }
-                    onCancelar={abrirCancelacion(`${diaDetalle.label}, ${turno.range}`)}
+                    onCancelar={abrirCancelacion(turno, `${diaDetalle.label}, ${turno.range}`)}
                     onAgregar={() => setAgregando(turno)}
                   />
                 ))}
@@ -267,7 +292,7 @@ export function Tablero({ locationId }: { locationId: string }) {
                   onAlternarHistorial={() =>
                     setHistorialDe(historialDe === turno.id ? null : turno.id)
                   }
-                  onCancelar={abrirCancelacion(`${dia.label}, ${turno.range}`)}
+                  onCancelar={abrirCancelacion(turno, `${dia.label}, ${turno.range}`)}
                   onAgregar={() => setAgregando(turno)}
                 />
               ))}
@@ -279,6 +304,7 @@ export function Tablero({ locationId }: { locationId: string }) {
       {cancelando && (
         <CancelarDialogo
           nombre={cancelando.nombre}
+          conyuge={cancelando.conyuge}
           turno={cancelando.turno}
           motivos={CANCEL_REASONS}
           onCancelar={cancelar}
