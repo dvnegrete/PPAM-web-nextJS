@@ -51,12 +51,26 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
     setError(null);
     setAviso(null);
     try {
-      const resultado = await api<{ shiftsCreated: number; assignmentsCreated: number }>(
-        `/locations/${locationId}/calendar/generate`,
-        { method: 'POST', body: { year, month } },
-      );
+      const resultado = await api<{
+        shiftsCreated: number;
+        shiftsExisting: number;
+        shiftsFilled: number;
+        assignmentsCreated: number;
+      }>(`/locations/${locationId}/calendar/generate`, { method: 'POST', body: { year, month } });
+
+      // Volver a generar un mes ya publicado no crea turnos, pero sí completa
+      // los que les faltaba un titular. Decir solo «0 turnos creados» hacía
+      // parecer que no había pasado nada.
+      const partes = [`${resultado.shiftsCreated} turno(s) nuevo(s)`];
+      if (resultado.shiftsFilled > 0) {
+        partes.push(`${resultado.shiftsFilled} turno(s) ya publicado(s) completado(s)`);
+      }
+      partes.push(`${resultado.assignmentsCreated} asignación(es) fija(s)`);
       setAviso(
-        `Se crearon ${resultado.shiftsCreated} turno(s) y ${resultado.assignmentsCreated} asignación(es) fija(s).`,
+        `${partes.join(' · ')}.` +
+          (resultado.assignmentsCreated === 0 && resultado.shiftsCreated === 0
+            ? ' Todo estaba al día: no había titulares pendientes de sentar.'
+            : ''),
       );
       await cargar();
     } catch (problem) {
