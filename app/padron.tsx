@@ -163,8 +163,10 @@ export function Padron({ locationId }: { locationId: string }) {
         )}
       </div>
 
-      <div className="tarjeta" style={{ marginBottom: '1rem' }}>
-        <h3>Dar de alta</h3>
+      {/* Plegado: el padrón entra por CSV y dar de alta a mano es la excepción.
+          Diez campos abiertos empujaban el buscador y la tabla fuera de la vista. */}
+      <details className="tarjeta plegable">
+        <summary>Dar de alta a alguien nuevo</summary>
         <form onSubmit={agregar} className="forma-alta">
           <label style={{ marginBottom: 0 }}>
             <span>Nombre</span>
@@ -229,7 +231,7 @@ export function Padron({ locationId }: { locationId: string }) {
           ))}
           <button className="primario" type="submit">Agregar</button>
         </form>
-      </div>
+      </details>
 
       {/* Los contadores son del padrón entero: dicen qué falta por capturar, y
           eso no cambia porque se esté buscando a alguien. */}
@@ -241,7 +243,16 @@ export function Padron({ locationId }: { locationId: string }) {
         {sinCongregacion > 0 && ` · ${sinCongregacion} sin congregación`}
       </p>
 
-      <div className="tarjeta filtros-padron">
+      <details className="tarjeta plegable">
+        <summary>
+          Filtros
+          {hayFiltro && (
+            <span className="etiqueta completo">
+              {Object.values(filtros).filter(Boolean).join(' · ')}
+            </span>
+          )}
+        </summary>
+        <div className="filtros-padron">
         {(Object.keys(ORGANIZATION_LABELS) as OrganizationField[]).map((campo) => (
           <label key={campo} style={{ marginBottom: 0 }}>
             <span>{ORGANIZATION_LABELS[campo]}</span>
@@ -258,28 +269,29 @@ export function Padron({ locationId }: { locationId: string }) {
             </select>
           </label>
         ))}
-        <button
-          onClick={() => setFiltros({ congregation: '', circuit: '', city: '' })}
-          disabled={!hayFiltro}
-        >
-          Quitar filtros
-        </button>
-      </div>
+          <button
+            onClick={() => setFiltros({ congregation: '', circuit: '', city: '' })}
+            disabled={!hayFiltro}
+          >
+            Quitar filtros
+          </button>
+        </div>
+      </details>
 
       <div className="tarjeta">
-        <table>
+        <table className="padron-tabla">
           <thead>
             <tr>
               <th>Nombre</th>
-              <th>Se muestra como</th>
+              <th className="secundaria">Se muestra como</th>
               <th>Teléfono</th>
               <th>Rol</th>
               <th>Estado</th>
               <th>Congregación</th>
-              <th>Circuito</th>
-              <th>Ciudad</th>
-              <th>Estado civil</th>
-              <th>Cónyuge</th>
+              <th className="secundaria">Circuito</th>
+              <th className="secundaria">Ciudad</th>
+              <th className="secundaria">Estado civil</th>
+              <th className="secundaria">Cónyuge</th>
               <th></th>
             </tr>
           </thead>
@@ -287,7 +299,7 @@ export function Padron({ locationId }: { locationId: string }) {
             {visibles.map((p) => (
               <tr key={p.id}>
                 <td>{nombreFormal(p)}</td>
-                <td>
+                <td className="secundaria">
                   {p.displayName ? (
                     p.displayName
                   ) : (
@@ -314,16 +326,16 @@ export function Padron({ locationId }: { locationId: string }) {
                   )}
                 </td>
                 <td>{p.congregation ?? <span className="tenue">—</span>}</td>
-                <td>{p.circuit ?? <span className="tenue">—</span>}</td>
-                <td>{p.city ?? <span className="tenue">—</span>}</td>
-                <td>
+                <td className="secundaria">{p.circuit ?? <span className="tenue">—</span>}</td>
+                <td className="secundaria">{p.city ?? <span className="tenue">—</span>}</td>
+                <td className="secundaria">
                   {p.maritalStatus === 'SIN_REGISTRAR' ? (
                     <span className="tenue">Sin registrar</span>
                   ) : (
                     MARITAL_LABELS[p.maritalStatus]
                   )}
                 </td>
-                <td>
+                <td className="secundaria">
                   {p.spouse ? (
                     <>
                       {nombreVisible(p.spouse)}

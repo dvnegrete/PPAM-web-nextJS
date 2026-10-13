@@ -228,7 +228,26 @@ export function Tablero({ locationId }: { locationId: string }) {
       </div>
 
       {resumen && (
-        <div className="resumen">
+        /* Colapsado por omisión, también en pantalla de PC: al entrar, lo que
+           tiene que verse es el calendario, no cuatro tarjetas de cifras. El
+           propio resumen lleva los números, así que no hay que abrirlo para
+           saber si algo va mal. */
+        <details className="tarjeta resumen-plegable">
+          <summary>
+            <span className="titulo">Resumen del periodo</span>
+            <span className="cifras-resumen">
+              {resumen.totalShifts} turnos
+              {resumen.understaffed > 0 && (
+                <span className="etiqueta faltante">{resumen.understaffed} incompletos</span>
+              )}
+              {resumen.critical > 0 && (
+                <span className="etiqueta critico">{resumen.critical} críticos</span>
+              )}
+              {resumen.cancellations > 0 && <span>{resumen.cancellations} cancelaciones</span>}
+            </span>
+          </summary>
+
+          <div className="resumen">
           <div className="metrica">
             <span className="cifra">{resumen.totalShifts}</span>
             <span className="rotulo">turnos en el periodo</span>
@@ -245,7 +264,8 @@ export function Tablero({ locationId }: { locationId: string }) {
             <span className="cifra">{resumen.cancellations}</span>
             <span className="rotulo">cancelaciones</span>
           </div>
-        </div>
+          </div>
+        </details>
       )}
 
       {movimientos.length > 0 && (

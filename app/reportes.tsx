@@ -84,8 +84,16 @@ export function Reportes({ locationId }: { locationId: string }) {
       {error && <div className="aviso error">{error}</div>}
 
       {resumen && (
-        <div className="tarjeta" style={{ marginBottom: '1rem' }}>
-          <h3>Resumen de {MESES[resumen.month - 1]} de {resumen.year}</h3>
+        <details className="tarjeta plegable">
+          <summary>
+            Resumen de {MESES[resumen.month - 1]} de {resumen.year}
+            <span className="etiqueta completo">{resumen.totalShifts} turnos</span>
+            {resumen.understaffedShifts > 0 && (
+              <span className="etiqueta faltante">
+                {resumen.understaffedShifts} bajo el mínimo
+              </span>
+            )}
+          </summary>
           <table>
             <tbody>
               <tr><td>Turnos programados</td><td className="numero">{resumen.totalShifts}</td></tr>
@@ -104,7 +112,7 @@ export function Reportes({ locationId }: { locationId: string }) {
               </tr>
             </tbody>
           </table>
-        </div>
+        </details>
       )}
 
       <div className="tarjeta" style={{ marginBottom: '1rem' }}>

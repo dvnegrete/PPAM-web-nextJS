@@ -10,6 +10,7 @@ import { Tablero } from './tablero';
 import { Encargados } from './encargados';
 import { Importar } from './importar';
 import { LoginForm } from './login-form';
+import { Navegacion } from './navegacion';
 import { Padron } from './padron';
 import { Reportes } from './reportes';
 import { TurnosFijos } from './turnos-fijos';
@@ -65,58 +66,29 @@ export default function Page() {
   const location = locations.find((item) => item.id === locationId);
 
   return (
-    <div style={{ maxWidth: 1080, margin: '0 auto', padding: '1.5rem 1rem 4rem' }}>
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '1rem',
-          flexWrap: 'wrap',
-          marginBottom: '1rem',
-        }}
-      >
+    <div className="panel">
+      <header className="cabecera">
         <div>
           <h1>Horarios del exhibidor</h1>
           <p className="tenue" style={{ margin: 0 }}>
             {location ? `${location.name} · ${location.timezone}` : 'Cargando punto…'}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          {locations.length > 1 && (
-            <select
-              value={locationId ?? ''}
-              onChange={(event) => setLocationId(event.target.value)}
-              style={{ width: 'auto' }}
-            >
-              {locations.map((item) => (
-                <option key={item.id} value={item.id}>{item.name}</option>
-              ))}
-            </select>
-          )}
-          <span className="tenue">{session.name}</span>
-          <button
-            onClick={() => {
-              clearSession();
-              setSession(null);
-            }}
-          >
-            Salir
-          </button>
-        </div>
       </header>
 
-      <nav style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-        {PESTANAS.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setPestana(item.id)}
-            className={pestana === item.id ? 'primario' : ''}
-          >
-            {item.etiqueta}
-          </button>
-        ))}
-      </nav>
+      <Navegacion
+        pestanas={PESTANAS}
+        activa={pestana}
+        onElegir={(id) => setPestana(id as PestanaId)}
+        locations={locations}
+        locationId={locationId}
+        onElegirLocation={setLocationId}
+        nombre={session.name}
+        onSalir={() => {
+          clearSession();
+          setSession(null);
+        }}
+      />
 
       {error && <div className="aviso error">{error}</div>}
 

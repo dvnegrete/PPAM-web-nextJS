@@ -107,20 +107,32 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
     <section>
       {error && <div className="aviso error">{error}</div>}
 
-      <div className="resumen" style={{ marginBottom: '1rem' }}>
-        <div className="metrica">
-          <span className="cifra">{totalTitulares}</span>
-          <span className="rotulo">de {totalLugares} lugares con titular</span>
+      <details className="tarjeta resumen-plegable">
+        <summary>
+          <span className="titulo">Resumen de titulares</span>
+          <span className="cifras-resumen">
+            {totalTitulares} de {totalLugares} lugares
+            {sinTurno.length > 0 && (
+              <span className="etiqueta faltante">{sinTurno.length} sin turno fijo</span>
+            )}
+          </span>
+        </summary>
+
+        <div className="resumen">
+          <div className="metrica">
+            <span className="cifra">{totalTitulares}</span>
+            <span className="rotulo">de {totalLugares} lugares con titular</span>
+          </div>
+          <div className={`metrica ${sinTurno.length > 0 ? 'atencion' : ''}`}>
+            <span className="cifra">{sinTurno.length}</span>
+            <span className="rotulo">sin ningún turno fijo</span>
+          </div>
+          <div className="metrica">
+            <span className="cifra">{datos?.padron.length ?? 0}</span>
+            <span className="rotulo">en el padrón del punto</span>
+          </div>
         </div>
-        <div className={`metrica ${sinTurno.length > 0 ? 'atencion' : ''}`}>
-          <span className="cifra">{sinTurno.length}</span>
-          <span className="rotulo">sin ningún turno fijo</span>
-        </div>
-        <div className="metrica">
-          <span className="cifra">{datos?.padron.length ?? 0}</span>
-          <span className="rotulo">en el padrón del punto</span>
-        </div>
-      </div>
+      </details>
 
       <p className="tenue" style={{ marginBottom: '1rem' }}>
         Al generar el calendario de un mes, cada titular queda sentado en todas las ocurrencias de su

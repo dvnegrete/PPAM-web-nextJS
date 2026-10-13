@@ -673,3 +673,160 @@ pre.bloque {
   color: var(--texto-tenue);
 }
 .grupo-candidatos:first-child { margin-top: 0; }
+
+/* ================================================================== */
+/* Navegación: fila de pestañas en pantalla cómoda, menú en el móvil   */
+/* ================================================================== */
+
+.panel { max-width: 1080px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.cabecera { margin-bottom: 1rem; }
+
+.navegacion { position: relative; margin-bottom: 1.25rem; }
+
+/* En pantalla cómoda el menú está siempre desplegado y el botón no existe:
+   es el mismo marcado, decidido por CSS, para no mantener dos árboles. */
+.hamburguesa { display: none; }
+
+.navegacion .menu {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.navegacion .pestanas { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.navegacion .sesion { display: flex; gap: 0.5rem; align-items: center; }
+.navegacion .sesion select { width: auto; }
+
+@media (max-width: 760px) {
+  .hamburguesa {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    justify-content: flex-start;
+    font-weight: 600;
+  }
+  .hamburguesa .barras {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 1.05rem;
+    height: 0.8rem;
+    flex: none;
+  }
+  .hamburguesa .barras span {
+    display: block;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+  }
+  .hamburguesa[aria-expanded='true'] { border-color: var(--acento); color: var(--acento); }
+
+  /* Cerrado no ocupa sitio ni es alcanzable con el tabulador; abierto flota
+     sobre el contenido para no empujar el calendario hacia abajo. */
+  .navegacion .menu {
+    display: none;
+    position: absolute;
+    z-index: 40;
+    top: calc(100% + 0.4rem);
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.8rem;
+    padding: 0.8rem;
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    box-shadow: 0 10px 30px rgb(0 0 0 / 12%);
+  }
+  .navegacion .menu.abierto { display: flex; }
+
+  /* Dos columnas: ocho pestañas en una sola harían un menú más alto que la
+     pantalla, y habría que desplazarse dentro del propio menú. */
+  .navegacion .pestanas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+  }
+  .navegacion .sesion {
+    border-top: 1px solid var(--borde);
+    padding-top: 0.8rem;
+    flex-wrap: wrap;
+  }
+  .navegacion .sesion select { flex: 1; width: auto; }
+  .navegacion .sesion button { margin-left: auto; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Tarjetas de información, plegadas por omisión                       */
+/* ------------------------------------------------------------------ */
+
+.resumen-plegable { margin-bottom: 1rem; padding: 0.7rem 1rem; }
+
+/* El resumen lleva las cifras que importan, para no tener que abrirlo. */
+.resumen-plegable > summary {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.resumen-plegable > summary .titulo { font-weight: 600; font-size: 0.95rem; }
+.resumen-plegable > summary .cifras-resumen {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: var(--texto-tenue);
+}
+.resumen-plegable > summary .etiqueta { font-size: 0.75rem; }
+.resumen-plegable[open] > summary { margin-bottom: 0.9rem; }
+.resumen-plegable .resumen { margin-bottom: 0; }
+
+/* ------------------------------------------------------------------ */
+/* Bloques plegables de una vista (alta, filtros)                      */
+/* ------------------------------------------------------------------ */
+
+.plegable { padding: 0.7rem 1rem; margin-bottom: 1rem; }
+.plegable > summary {
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.plegable > summary .etiqueta { font-weight: 400; font-size: 0.75rem; }
+.plegable[open] > summary { margin-bottom: 0.9rem; }
+.plegable .forma-alta,
+.plegable .filtros-padron { margin-bottom: 0; }
+
+/* ------------------------------------------------------------------ */
+/* El padrón en el teléfono: menos columnas, sin romper la tabla       */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 760px) {
+  /* Se esconden las columnas de consulta —cómo se muestra, circuito, ciudad,
+     estado civil y cónyuge— y quedan las de identificación y aviso: nombre,
+     teléfono, rol, estado y congregación. Lo escondido no se pierde: está
+     completo en «Editar», que es la vía para verlo y cambiarlo. */
+  .padron-tabla .secundaria { display: none; }
+
+  .padron-tabla th,
+  .padron-tabla td { padding: 0.45rem 0.35rem; font-size: 0.86rem; }
+  .padron-tabla td:first-child { font-weight: 600; }
+  /* El teléfono, en su propio renglón bajo el nombre, para que ninguna de las
+     dos columnas tenga que partirse a media palabra. */
+  .padron-tabla { table-layout: auto; }
+}
+
+/* Red de seguridad: ninguna tabla desborda su tarjeta. Si en pantalla chica no
+   cabe, la tarjeta se desplaza de lado en lugar de empujar el ancho de toda la
+   página, que es lo que rompía la vista. */
+@media (max-width: 760px) {
+  .tarjeta { overflow-x: auto; }
+}
