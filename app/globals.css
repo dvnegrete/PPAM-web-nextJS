@@ -660,3 +660,16 @@ pre.bloque {
   font-variant-numeric: tabular-nums;
 }
 .candidato.elegido .telefono { color: inherit; opacity: 0.75; }
+
+/* Encabezado que separa los grupos de candidatos: el padrón de quienes ya
+   cubrieron sin pertenecer a él. Sin la separación, un invitado pasaría por
+   participante del punto. */
+.grupo-candidatos {
+  margin: 0.5rem 0 0.15rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--texto-tenue);
+}
+.grupo-candidatos:first-child { margin-top: 0; }

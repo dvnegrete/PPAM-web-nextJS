@@ -188,6 +188,8 @@ export interface DashboardParticipant {
   name: string;
   /** Cónyuge que también participa; sirve para emparejarlos dentro del turno. */
   spouseId: string | null;
+  /** Nota de esa vez, si se capturó al registrarlo. */
+  note: string | null;
   origin: 'FIXED' | 'SIGNUP' | 'COVERAGE' | 'MANUAL';
   confirmed: boolean;
   assignedAt: string | null;
@@ -265,6 +267,16 @@ export interface AvailableParticipant {
   displayName: string | null;
   /** Ya formateado por el servidor: «+52 55 1234 5678». */
   phone: string;
+  /** Viene de otro punto: ya cubrió aquí, pero no está en el padrón. */
+  external: boolean;
+}
+
+/** Lo que se captura de quien cubre sin estar en el padrón. */
+export interface ExternalCover {
+  firstName: string;
+  paternalSurname: string;
+  phone: string;
+  note: string;
 }
 
 // ---------------------------------------------------------------------------

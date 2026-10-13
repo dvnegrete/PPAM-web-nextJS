@@ -76,6 +76,9 @@ export function TurnoDetalle({
                 cubre
                 {persona.assignedAt && ` · registrado el ${fechaCorta(persona.assignedAt)}`}
                 {persona.assignedByName && ` por ${persona.assignedByName}`}
+                {/* La nota va en esta misma línea, no como distintivo aparte:
+                    quien cubre sin estar en el padrón cuenta como cualquiera. */}
+                {persona.note && ` · «${persona.note}»`}
               </span>
             )}
             <button

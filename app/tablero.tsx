@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import type { AvailableParticipant, Dashboard, DashboardShift, Movement } from '@/lib/types';
+import type {
+  AvailableParticipant,
+  Dashboard,
+  DashboardShift,
+  ExternalCover,
+  Movement,
+} from '@/lib/types';
 import { CANCEL_REASONS } from '@/lib/types';
 import { AgregarParticipante } from './agregar-participante';
 import { CalendarioMes } from './calendario-mes';
@@ -128,9 +134,32 @@ export function Tablero({ locationId }: { locationId: string }) {
 
   async function agregar(participantId: string) {
     if (!agregando) return;
+    await registrarCobertura({ participantId });
+  }
+
+  /**
+   * Registra a quien cubre sin estar en el padrón de este punto.
+   *
+   * El servidor resuelve si hay que crear su registro mínimo o reutilizar el que
+   * ya tenga, por su teléfono; aquí solo se mandan los datos capturados.
+   */
+  async function agregarExterno(datos: ExternalCover) {
+    if (!agregando) return;
+    await registrarCobertura({
+      external: {
+        firstName: datos.firstName.trim(),
+        paternalSurname: datos.paternalSurname.trim(),
+        phone: datos.phone.trim(),
+        note: datos.note.trim() || undefined,
+      },
+    });
+  }
+
+  async function registrarCobertura(body: Record<string, unknown>) {
+    if (!agregando) return;
     await api(`/locations/${locationId}/shifts/${agregando.id}/assignments`, {
       method: 'POST',
-      body: { participantId },
+      body,
     });
     setAgregando(null);
     await cargar();
@@ -332,6 +361,7 @@ export function Tablero({ locationId }: { locationId: string }) {
           shift={agregando}
           cargarCandidatos={cargarCandidatos}
           onAgregar={agregar}
+          onAgregarExterno={agregarExterno}
           onCerrar={() => setAgregando(null)}
         />
       )}
