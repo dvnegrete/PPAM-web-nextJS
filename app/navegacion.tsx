@@ -6,6 +6,8 @@ import type { Location } from '@/lib/types';
 export interface Pestana {
   id: string;
   etiqueta: string;
+  /** Declarado en `page.tsx`; aquí solo se pinta lo que llega filtrado. */
+  soloAdmin?: boolean;
 }
 
 interface Props {
@@ -16,6 +18,7 @@ interface Props {
   locationId: string | null;
   onElegirLocation: (id: string) => void;
   nombre: string;
+  onCambiarContrasena: () => void;
   onSalir: () => void;
 }
 
@@ -40,6 +43,7 @@ export function Navegacion({
   locationId,
   onElegirLocation,
   nombre,
+  onCambiarContrasena,
   onSalir,
 }: Props) {
   const [abierto, setAbierto] = useState(false);
@@ -116,6 +120,16 @@ export function Navegacion({
             </select>
           )}
           <span className="tenue">{nombre}</span>
+          {/* Aquí y no solo en la pestaña Usuarios: cambiar la propia
+              contraseña es de cualquiera, incluido quien no ve esa pestaña. */}
+          <button
+            onClick={() => {
+              onCambiarContrasena();
+              setAbierto(false);
+            }}
+          >
+            Mi contraseña
+          </button>
           <button onClick={onSalir}>Salir</button>
         </div>
       </div>

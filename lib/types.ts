@@ -357,3 +357,40 @@ export interface UpdateParticipantResult extends Participant {
   /** Avisos que no impidieron guardar pero el administrador debe leer. */
   warnings: string[];
 }
+
+// ---------------------------------------------------------------------------
+// Cuentas del panel
+// ---------------------------------------------------------------------------
+
+export type AdminRole = 'ADMIN' | 'SUPERVISOR';
+
+export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {
+  ADMIN: 'Administrador',
+  SUPERVISOR: 'Encargado',
+};
+
+/** Nombre, teléfono y organización efectivos de una cuenta. */
+export interface PerfilDeCuenta {
+  firstName: string;
+  paternalSurname: string;
+  maternalSurname: string | null;
+  fullName: string;
+  formalName: string;
+  phone: string | null;
+  congregation: string | null;
+  circuit: string | null;
+  city: string | null;
+  /** Si vienen del padrón, y por tanto se editan allí. */
+  fromPadron: boolean;
+}
+
+export interface CuentaDelPanel {
+  id: string;
+  email: string;
+  role: AdminRole;
+  active: boolean;
+  mustChangePassword: boolean;
+  lastLoginAt: string | null;
+  participantId: string | null;
+  perfil: PerfilDeCuenta;
+}

@@ -830,3 +830,21 @@ pre.bloque {
 @media (max-width: 760px) {
   .tarjeta { overflow-x: auto; }
 }
+
+/* ------------------------------------------------------------------ */
+/* Tabla de cuentas del panel                                          */
+/* ------------------------------------------------------------------ */
+
+.cuentas-tabla .etiqueta { margin-left: 0.4rem; font-size: 0.72rem; }
+.cuentas-tabla .telefono { font-variant-numeric: tabular-nums; }
+/* Una cuenta sin acceso se lee atenuada, pero el nombre sigue legible. */
+.cuentas-tabla tr.inactiva td { opacity: 0.6; }
+.cuentas-tabla tr.inactiva .etiqueta { opacity: 1; }
+
+@media (max-width: 760px) {
+  /* Mismo criterio que el padrón: se esconde lo de consulta y quedan el correo,
+     el nombre, el nivel y el botón. Lo escondido está en «Editar». */
+  .cuentas-tabla .secundaria { display: none; }
+  .cuentas-tabla th,
+  .cuentas-tabla td { padding: 0.45rem 0.35rem; font-size: 0.86rem; }
+}

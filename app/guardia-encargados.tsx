@@ -32,7 +32,14 @@ function aMinutos(valor: string): number {
   return horas * 60 + (minutos || 0);
 }
 
-export function Encargados({ locationId }: { locationId: string }) {
+/**
+ * Las franjas de guardia de cada encargado.
+ *
+ * Se conserva igual que estaba: es la configuración de **cuándo** recibe
+ * solicitudes, distinta de quién tiene cuenta. Queda plegada porque se toca una
+ * vez y luego casi nunca.
+ */
+export function GuardiaDeEncargados({ locationId }: { locationId: string }) {
   const [supervisores, setSupervisores] = useState<Supervisor[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [nueva, setNueva] = useState<Record<string, { weekday: number; desde: string; hasta: string }>>({});
@@ -78,7 +85,12 @@ export function Encargados({ locationId }: { locationId: string }) {
   }
 
   return (
-    <section>
+    <details className="tarjeta plegable" style={{ marginTop: '1rem' }}>
+      <summary>
+        Franjas de guardia
+        <span className="etiqueta">{supervisores.length} encargado(s)</span>
+      </summary>
+
       {error && <div className="aviso error">{error}</div>}
 
       <p className="tenue">
@@ -169,10 +181,10 @@ export function Encargados({ locationId }: { locationId: string }) {
 
       {supervisores.length === 0 && (
         <div className="aviso atencion">
-          No hay encargados registrados. Marca a alguien con el rol «encargado» en la pestaña
-          Padrón.
+          Todavía no hay encargados. Da de alta una cuenta de encargado vinculada a alguien del
+          padrón y aparecerá aquí.
         </div>
       )}
-    </section>
+    </details>
   );
 }

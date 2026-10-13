@@ -55,6 +55,17 @@ export async function api<T>(
     throw new ApiError('Tu sesión expiró. Vuelve a entrar.', 401);
   }
 
+  if (response.status === 403) {
+    // El mensaje del servidor dice el motivo real —falta de nivel, o una
+    // contraseña pendiente de cambiar— y es más útil que uno genérico.
+    const detalle = (await response.json().catch(() => null)) as { message?: string } | null;
+    throw new ApiError(detalle?.message ?? 'No tienes permiso para esto', 403);
+  }
+
+  if (response.status === 429) {
+    throw new ApiError('Demasiados intentos. Espera un minuto y vuelve a probar.', 429);
+  }
+
   const data = (await response.json().catch(() => null)) as
     | { message?: string | string[] }
     | null;
