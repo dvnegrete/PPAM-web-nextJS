@@ -145,13 +145,36 @@ td.numero, th.numero { text-align: right; font-variant-numeric: tabular-nums; }
 .dia { margin-bottom: 0.9rem; }
 .dia h3 { text-transform: capitalize; margin-bottom: 0.7rem; }
 
-.turno {
-  border-top: 1px solid var(--borde);
-  padding: 0.7rem 0 0.4rem;
-}
-.turno:first-of-type { border-top: 0; padding-top: 0; }
+/* La separación entre turnos la pone la línea de color de su cabecera; un
+   borde gris encima dividiría dos veces lo mismo. */
+.turno { padding: 0 0 0.4rem; }
 
-.turno-cabecera { display: flex; justify-content: space-between; align-items: center; gap: 0.7rem; border-top: 0.2rem solid var(--acento);  padding-top: 0.7rem; }
+/* La cabecera es el `summary` del turno: siempre visible y la que se pulsa. */
+.turno-cabecera {
+  display: flex; align-items: center; gap: 0.7rem;
+  border-top: 0.2rem solid var(--borde); padding-top: 0.7rem;
+  cursor: pointer; list-style: none;
+}
+.turno-cabecera::-webkit-details-marker { display: none; }
+.turno-cabecera > strong { margin-right: auto; }
+.turno-cabecera:hover .chevron { color: var(--texto); }
+
+/* La línea de división lleva el color de la necesidad del turno, el mismo que
+   los puntos del calendario: cerrado, el color es toda la información. */
+.turno.ok > .turno-cabecera { border-top-color: var(--acento); }
+.turno.bajoCupo > .turno-cabecera { border-top-color: var(--aviso); }
+.turno.bajoMinimo > .turno-cabecera,
+.turno.cancelado > .turno-cabecera { border-top-color: var(--alerta); }
+
+.chevron {
+  flex: none; width: 0.45rem; height: 0.45rem;
+  border-right: 0.12rem solid currentColor;
+  border-bottom: 0.12rem solid currentColor;
+  color: var(--texto-tenue);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+.turno[open] > .turno-cabecera .chevron { transform: rotate(45deg); }
 
 .personas { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
 .personas li {

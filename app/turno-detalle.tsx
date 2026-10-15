@@ -49,15 +49,21 @@ export function TurnoDetalle({
     turno.cancellations.length > 0 || turno.participants.some((p) => p.origin === 'COVERAGE');
 
   return (
-    <div className={`turno ${turno.need}`}>
-      <div className="turno-cabecera">
+    // `details` en vez de estado propio: el navegador se encarga del teclado y
+    // del anuncio de «contraído/expandido», y cada turno recuerda si está
+    // abierto sin que el tablero tenga que llevar la cuenta.
+    <details className={`turno ${turno.need}`}>
+      <summary className="turno-cabecera">
         <strong>{turno.range}</strong>
         <span className={`etiqueta ${claseNecesidad(turno.need)}`}>
           {turno.status === 'CANCELLED'
             ? 'Turno cancelado'
             : ocupacionTexto(turno.occupied, turno.capacity)}
         </span>
-      </div>
+        {/* El día va aquí dentro: cerrado, la cabecera es lo único que se lee. */}
+        <span className="oculto-visualmente">{etiquetaDia}</span>
+        <span className="chevron" aria-hidden="true" />
+      </summary>
 
       <ul className="personas">
         {turno.participants.map((persona) => (
@@ -127,8 +133,6 @@ export function TurnoDetalle({
       </div>
 
       {historialAbierto && <MovimientosTurno shiftId={turno.id} />}
-
-      <span className="oculto-visualmente">{etiquetaDia}</span>
-    </div>
+    </details>
   );
 }
