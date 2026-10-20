@@ -177,13 +177,27 @@ export function Encuesta({ locationId }: { locationId: string }) {
                 ))}
               </div>
 
-              <div className="tarjeta">
+              <div className="tarjeta" style={{ marginBottom: '1rem' }}>
                 <h3>¿Prefieres un mensaje normal?</h3>
                 <p className="tenue">
                   Todo junto en un bloque, para pegarlo como mensaje de texto en vez de encuesta.
                 </p>
                 <pre className="bloque">{borrador.plainText}</pre>
                 <BotonCopiar texto={borrador.plainText} etiqueta="Copiar todo el mensaje" />
+              </div>
+
+              <div className="tarjeta">
+                <h3>Mensaje para el grupo Suplencias</h3>
+                <p className="tenue">
+                  Los mismos turnos, pedidos como apoyo y diciendo dónde está el exhibidor: en ese
+                  grupo hay participantes de otros puntos, que no sabrían a dónde llegar. La
+                  ubicación sale del nombre y la dirección registrados en este punto.
+                </p>
+                <pre className="bloque">{borrador.substitutesText}</pre>
+                <BotonCopiar
+                  texto={borrador.substitutesText}
+                  etiqueta="Copiar mensaje de suplencias"
+                />
               </div>
             </>
           )}

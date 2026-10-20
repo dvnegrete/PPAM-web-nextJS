@@ -324,6 +324,8 @@ export interface PollDraft {
   question: string;
   options: PollOption[];
   plainText: string;
+  /** Petición de apoyo para el grupo de suplencias, con la ubicación del punto. */
+  substitutesText: string;
   totalNeeded: number;
   truncated: boolean;
   maxOptions: number;
