@@ -29,7 +29,17 @@ interface Filtros {
   persona: string;
 }
 
-const SIN_FILTROS: Filtros = { desde: '', hasta: '', categoria: '', persona: '' };
+/**
+ * Lo que se ve al abrir la pestaña. La categoría **no** arranca vacía: lo que
+ * más se consulta son los movimientos de turno, y el resto del histórico queda
+ * a un clic en el selector.
+ */
+const FILTROS_INICIALES: Filtros = {
+  desde: '',
+  hasta: '',
+  categoria: 'turnos',
+  persona: '',
+};
 
 function construirRuta(filtros: Filtros, cursor: string | null): string {
   const params = new URLSearchParams({ limit: String(POR_PAGINA) });
@@ -49,7 +59,7 @@ function construirRuta(filtros: Filtros, cursor: string | null): string {
  * lugar de desplazarse.
  */
 export function Bitacora({ esAdmin }: { esAdmin: boolean }) {
-  const [filtros, setFiltros] = useState<Filtros>(SIN_FILTROS);
+  const [filtros, setFiltros] = useState<Filtros>(FILTROS_INICIALES);
   // Lo que se teclea va aparte de lo que se consulta: sin esto, buscar «López»
   // lanzaría cinco peticiones, una por letra.
   const [personaTecleada, setPersonaTecleada] = useState('');
@@ -113,8 +123,8 @@ export function Bitacora({ esAdmin }: { esAdmin: boolean }) {
     }
   }
 
-  const hayFiltros = Boolean(
-    filtros.desde || filtros.hasta || filtros.categoria || filtros.persona,
+  const hayFiltros = (Object.keys(filtros) as (keyof Filtros)[]).some(
+    (campo) => filtros[campo] !== FILTROS_INICIALES[campo],
   );
 
   return (
@@ -122,8 +132,9 @@ export function Bitacora({ esAdmin }: { esAdmin: boolean }) {
       <div className="tarjeta" style={{ marginBottom: '1rem' }}>
         <h3>Histórico de actividad</h3>
         <p className="tenue">
-          Todo lo que queda registrado, de lo más reciente hacia atrás. Es el registro de todo el
-          sistema, no de un punto en particular.
+          Lo que queda registrado, de lo más reciente hacia atrás. Empieza por los movimientos de
+          turno; en «Actividad» está el resto. Es el registro de todo el sistema, no de un punto en
+          particular.
         </p>
 
         <div className="filtros-bitacora">
@@ -175,10 +186,10 @@ export function Bitacora({ esAdmin }: { esAdmin: boolean }) {
             <button
               onClick={() => {
                 setPersonaTecleada('');
-                setFiltros(SIN_FILTROS);
+                setFiltros(FILTROS_INICIALES);
               }}
             >
-              Quitar filtros
+              Restablecer filtros
             </button>
           </div>
         )}
@@ -190,7 +201,7 @@ export function Bitacora({ esAdmin }: { esAdmin: boolean }) {
         <div className="aviso atencion">
           {hayFiltros
             ? 'No hay actividad que cumpla estos filtros.'
-            : 'Todavía no hay actividad registrada.'}
+            : 'No hay movimientos de turnos registrados. Elige «Toda» en Actividad para ver el resto del histórico.'}
         </div>
       )}
 
