@@ -2,32 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import type { AttendanceRow, AuditEntry, MonthlySummary } from '@/lib/types';
+import type { AttendanceRow, MonthlySummary } from '@/lib/types';
 
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
 ];
-
-const ACCIONES: Record<string, string> = {
-  'assignment.cancelled': 'Cancelación de turno',
-  'assignment.confirmed': 'Confirmación de asistencia',
-  'coverage.opened': 'Vacante abierta',
-  'coverage.broadcast': 'Vacante difundida',
-  'coverage.offered': 'Ofrecimiento recibido',
-  'coverage.approved': 'Cobertura aprobada',
-  'coverage.auto_approved': 'Cobertura aprobada por el sistema',
-  'coverage.declined': 'Ofrecimiento descartado',
-  'coverage.expired': 'Vacante vencida',
-  'task.auto_resolved': 'Solicitud resuelta por el sistema',
-  'task.escalated': 'Solicitud escalada',
-  'task.resolved': 'Solicitud atendida',
-  'shift.cancelled': 'Turno cancelado',
-  'shift.kept': 'Turno sostenido',
-  'supervisor.available': 'Encargado disponible',
-  'supervisor.unavailable': 'Encargado no disponible',
-  'import.run': 'Importación',
-};
 
 export function Reportes({ locationId }: { locationId: string }) {
   const hoy = new Date();
@@ -35,7 +15,6 @@ export function Reportes({ locationId }: { locationId: string }) {
   const [month, setMonth] = useState(hoy.getMonth() + 1);
   const [resumen, setResumen] = useState<MonthlySummary | null>(null);
   const [asistencia, setAsistencia] = useState<AttendanceRow[]>([]);
-  const [bitacora, setBitacora] = useState<AuditEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
@@ -44,17 +23,15 @@ export function Reportes({ locationId }: { locationId: string }) {
       const desde = new Date(Date.UTC(year, month - 1, 1)).toISOString();
       const hasta = new Date(Date.UTC(year, month, 0, 23, 59, 59)).toISOString();
 
-      const [resumenData, asistenciaData, bitacoraData] = await Promise.all([
+      const [resumenData, asistenciaData] = await Promise.all([
         api<MonthlySummary>(`/locations/${locationId}/reports/monthly?year=${year}&month=${month}`),
         api<AttendanceRow[]>(
           `/locations/${locationId}/reports/attendance?from=${desde}&to=${hasta}`,
         ),
-        api<AuditEntry[]>('/audit?limit=40'),
       ]);
 
       setResumen(resumenData);
       setAsistencia(asistenciaData);
-      setBitacora(bitacoraData);
     } catch (problem) {
       setError(problem instanceof Error ? problem.message : 'No se pudieron cargar los reportes');
     }
@@ -140,40 +117,6 @@ export function Reportes({ locationId }: { locationId: string }) {
           </tbody>
         </table>
         {asistencia.length === 0 && <p className="tenue">Sin datos en el periodo.</p>}
-      </div>
-
-      <div className="tarjeta">
-        <h3>Bitácora</h3>
-        <table>
-          <thead>
-            <tr>
-              <th style={{ width: 160 }}>Cuándo</th>
-              <th>Acción</th>
-              <th>Quién</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bitacora.map((entrada) => (
-              <tr key={entrada.id}>
-                <td className="tenue">
-                  {new Date(entrada.createdAt).toLocaleString('es-MX', {
-                    dateStyle: 'short',
-                    timeStyle: 'short',
-                  })}
-                </td>
-                <td>{ACCIONES[entrada.action] ?? entrada.action}</td>
-                <td>
-                  {entrada.actorType === 'SYSTEM' ? (
-                    <span className="etiqueta">Sistema</span>
-                  ) : (
-                    (entrada.actorName ?? entrada.actorType)
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {bitacora.length === 0 && <p className="tenue">Sin movimientos registrados.</p>}
       </div>
     </section>
   );

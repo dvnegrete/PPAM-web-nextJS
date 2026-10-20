@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, clearSession, getSession, Session } from '@/lib/api';
 import type { CuentaDelPanel, Location } from '@/lib/types';
 import { Ajustes } from './ajustes';
+import { Bitacora } from './bitacora';
 import { Calendario } from './calendario';
 import { Encuesta } from './encuesta';
 import { Tablero } from './tablero';
@@ -30,6 +31,7 @@ const PESTANAS = [
   { id: 'padron', etiqueta: 'Padrón' },
   { id: 'turnos-fijos', etiqueta: 'Turnos fijos' },
   { id: 'reportes', etiqueta: 'Reportes' },
+  { id: 'bitacora', etiqueta: 'Bitácora' },
   { id: 'usuarios', etiqueta: 'Usuarios', soloAdmin: true },
   { id: 'importar', etiqueta: 'Importar', soloAdmin: true },
   { id: 'ajustes', etiqueta: 'Ajustes', soloAdmin: true },
@@ -157,6 +159,7 @@ export default function Page() {
           {pestana === 'usuarios' && <Usuarios locationId={location.id} />}
           {pestana === 'importar' && <Importar locationId={location.id} />}
           {pestana === 'reportes' && <Reportes locationId={location.id} />}
+          {pestana === 'bitacora' && <Bitacora esAdmin={cuenta?.role === 'ADMIN'} />}
           {pestana === 'ajustes' && <Ajustes locationId={location.id} />}
         </>
       )}

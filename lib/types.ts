@@ -164,15 +164,45 @@ export interface LocationSettings {
   autoResolveUrgent: boolean;
 }
 
-export interface AuditEntry {
+/**
+ * Las categorías del filtro de la bitácora. El servidor las define en
+ * `audit-catalog.ts` y valida la que llega; aquí solo se guardan sus etiquetas
+ * para pintar el selector. Los nombres de las 39 acciones **no** se duplican:
+ * vienen ya redactados en cada entrada.
+ */
+export const CATEGORIAS_BITACORA = [
+  { id: 'turnos', etiqueta: 'Turnos y asignaciones' },
+  { id: 'cobertura', etiqueta: 'Coberturas' },
+  { id: 'encargados', etiqueta: 'Encargados y solicitudes' },
+  { id: 'padron', etiqueta: 'Padrón' },
+  { id: 'turnos_fijos', etiqueta: 'Turnos fijos' },
+  { id: 'mensajes', etiqueta: 'Preguntas por WhatsApp' },
+  { id: 'importaciones', etiqueta: 'Importaciones' },
+  { id: 'cuentas', etiqueta: 'Accesos y cuentas', soloAdmin: true },
+] as const;
+
+export type CategoriaBitacora = (typeof CATEGORIAS_BITACORA)[number]['id'];
+
+export interface AuditHistoryEntry {
   id: string;
-  actorType: string;
-  actorName: string | null;
+  at: string;
   action: string;
-  entity: string;
-  entityId: string | null;
-  metadata: unknown;
-  createdAt: string;
+  /** Nombre legible de la acción. */
+  label: string;
+  category: CategoriaBitacora | null;
+  by: string;
+  actorType: string;
+  /** Frase contextual si la acción la tiene; si no, repite `label`. */
+  description: string;
+  participantName: string | null;
+  shiftLabel: string | null;
+  reason: string | null;
+}
+
+export interface AuditHistoryPage {
+  entries: AuditHistoryEntry[];
+  /** Con qué pedir la página siguiente; `null` cuando no hay más. */
+  nextCursor: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -294,6 +324,8 @@ export interface PollDraft {
   question: string;
   options: PollOption[];
   plainText: string;
+  /** Petición de apoyo para el grupo de suplencias, con la ubicación del punto. */
+  substitutesText: string;
   totalNeeded: number;
   truncated: boolean;
   maxOptions: number;
