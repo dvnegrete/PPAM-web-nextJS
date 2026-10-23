@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Horarios del exhibidor',
-  description: 'Panel de administración de turnos del punto de exhibición',
+  title: 'Horarios PPAM Cuernavaca',
+  description: 'Panel de turnos PPAM punto 3 de Chipitlán',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

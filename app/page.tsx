@@ -126,9 +126,11 @@ export default function Page() {
     <div className="panel">
       <header className="cabecera">
         <div>
-          <h1>Horarios del exhibidor</h1>
+          <h1>{location ? `Horarios ${location.name}` : 'Horarios del exhibidor'}</h1>
           <p className="tenue" style={{ margin: 0 }}>
-            {location ? `${location.name} · ${location.timezone}` : 'Cargando punto…'}
+            {location
+              ? [location.address, location.timezone].filter(Boolean).join(' · ')
+              : 'Cargando punto…'}
           </p>
         </div>
       </header>
@@ -160,7 +162,9 @@ export default function Page() {
           {pestana === 'importar' && <Importar locationId={location.id} />}
           {pestana === 'reportes' && <Reportes locationId={location.id} />}
           {pestana === 'bitacora' && <Bitacora esAdmin={cuenta?.role === 'ADMIN'} />}
-          {pestana === 'ajustes' && <Ajustes locationId={location.id} />}
+          {pestana === 'ajustes' && (
+            <Ajustes location={location} onPuntoActualizado={cargarLocations} />
+          )}
         </>
       )}
     </div>

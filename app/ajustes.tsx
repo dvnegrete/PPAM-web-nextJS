@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import type { LocationSettings } from '@/lib/types';
+import type { Location, LocationSettings } from '@/lib/types';
 
 const CAMPOS: Array<{ clave: keyof LocationSettings; etiqueta: string; ayuda: string }> = [
   {
@@ -52,7 +52,13 @@ const CAMPOS: Array<{ clave: keyof LocationSettings; etiqueta: string; ayuda: st
   },
 ];
 
-export function Ajustes({ locationId }: { locationId: string }) {
+export function Ajustes({
+  location,
+  onPuntoActualizado,
+}: {
+  location: Location;
+  onPuntoActualizado: () => void;
+}) {
   const [settings, setSettings] = useState<LocationSettings | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -61,11 +67,11 @@ export function Ajustes({ locationId }: { locationId: string }) {
   const cargar = useCallback(async () => {
     setError(null);
     try {
-      setSettings(await api<LocationSettings>(`/locations/${locationId}/settings`));
+      setSettings(await api<LocationSettings>(`/locations/${location.id}/settings`));
     } catch (problem) {
       setError(problem instanceof Error ? problem.message : 'No se pudieron cargar los ajustes');
     }
-  }, [locationId]);
+  }, [location.id]);
 
   useEffect(() => {
     void cargar();
@@ -79,7 +85,7 @@ export function Ajustes({ locationId }: { locationId: string }) {
     setAviso(null);
     try {
       setSettings(
-        await api<LocationSettings>(`/locations/${locationId}/settings`, {
+        await api<LocationSettings>(`/locations/${location.id}/settings`, {
           method: 'PATCH',
           body: settings,
         }),
@@ -101,7 +107,10 @@ export function Ajustes({ locationId }: { locationId: string }) {
       {error && <div className="aviso error">{error}</div>}
       {aviso && <div className="aviso exito">{aviso}</div>}
 
+      <IdentidadDelPunto location={location} onGuardado={onPuntoActualizado} />
+
       <form onSubmit={guardar} className="tarjeta" style={{ maxWidth: 620 }}>
+        <h3>Operación del punto</h3>
         {CAMPOS.map((campo) => (
           <label key={campo.clave}>
             <span>{campo.etiqueta}</span>
@@ -203,5 +212,97 @@ export function Ajustes({ locationId }: { locationId: string }) {
         </button>
       </form>
     </section>
+  );
+}
+
+/**
+ * Nombre y dirección del punto. Van aparte de los ajustes operativos porque no
+ * viven en `Location.settings` sino en sus propias columnas, y porque es lo
+ * único de esta pantalla que la gente del grupo acaba leyendo.
+ */
+function IdentidadDelPunto({
+  location,
+  onGuardado,
+}: {
+  location: Location;
+  onGuardado: () => void;
+}) {
+  const [nombre, setNombre] = useState(location.name);
+  const [direccion, setDireccion] = useState(location.address ?? '');
+  const [error, setError] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  // Al elegir otro punto arriba, el formulario tiene que mostrar el elegido.
+  useEffect(() => {
+    setNombre(location.name);
+    setDireccion(location.address ?? '');
+  }, [location.id, location.name, location.address]);
+
+  async function guardar(event: React.FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    setAviso(null);
+    try {
+      await api<Location>(`/locations/${location.id}`, {
+        method: 'PATCH',
+        body: { name: nombre.trim(), address: direccion.trim() === '' ? null : direccion.trim() },
+      });
+      setAviso('Datos del punto guardados.');
+      onGuardado();
+    } catch (problem) {
+      setError(problem instanceof Error ? problem.message : 'No se pudo guardar el punto');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const comoSeLee = [nombre.trim(), direccion.trim()].filter(Boolean).join(', ');
+
+  return (
+    <form onSubmit={guardar} className="tarjeta" style={{ maxWidth: 620, marginBottom: '1rem' }}>
+      <h3>Datos del punto</h3>
+
+      <label>
+        <span>Nombre</span>
+        <input
+          value={nombre}
+          onChange={(event) => setNombre(event.target.value)}
+          maxLength={120}
+          required
+        />
+        <span className="tenue" style={{ marginTop: '0.2rem' }}>
+          Encabeza el panel y el mensaje que se publica en el grupo de suplencias.
+        </span>
+      </label>
+
+      <label>
+        <span>Dirección</span>
+        <input
+          value={direccion}
+          onChange={(event) => setDireccion(event.target.value)}
+          maxLength={200}
+          placeholder="Secundaria #4"
+        />
+        <span className="tenue" style={{ marginTop: '0.2rem' }}>
+          Opcional. Se escribe después del nombre, separada por coma; si se deja en blanco, el
+          mensaje nombra solo el punto.
+        </span>
+      </label>
+
+      {comoSeLee && (
+        <p className="tenue" style={{ margin: '0 0 0.75rem' }}>
+          En el mensaje del grupo se lee: <strong>{comoSeLee}</strong>
+        </p>
+      )}
+
+      {error && <div className="aviso error">{error}</div>}
+      {aviso && <div className="aviso exito">{aviso}</div>}
+
+      <button className="primario" type="submit" disabled={busy || nombre.trim().length === 0}>
+        {busy ? 'Guardando…' : 'Guardar datos del punto'}
+      </button>
+    </form>
   );
 }

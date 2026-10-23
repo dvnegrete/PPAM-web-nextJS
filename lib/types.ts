@@ -1,6 +1,8 @@
 export interface Location {
   id: string;
   name: string;
+  /** Dónde está el exhibidor; se nombra junto al punto en el mensaje del grupo. */
+  address: string | null;
   timezone: string;
   defaultCapacity: number;
   minCapacity: number;
