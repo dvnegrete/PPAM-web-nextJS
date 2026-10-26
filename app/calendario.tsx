@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { CalendarShift } from '@/lib/types';
+import { rangoTurno } from '@/lib/horas';
 import { ocupacionTexto } from '@/lib/turnos';
 import { RegenerarDialogo } from './regenerar-dialogo';
 
@@ -162,7 +163,7 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
           <table>
             <thead>
               <tr>
-                <th style={{ width: 130 }}>Horario</th>
+                <th style={{ width: 170 }}>Horario</th>
                 <th className="numero" style={{ width: 80 }}>Cupo</th>
                 <th>Participantes</th>
               </tr>
@@ -170,7 +171,7 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
             <tbody>
               {turnos.map((shift) => (
                 <tr key={shift.id}>
-                  <td>{shift.range}</td>
+                  <td>{rangoTurno(shift)}</td>
                   <td className="numero">
                     <span
                       className={`etiqueta ${

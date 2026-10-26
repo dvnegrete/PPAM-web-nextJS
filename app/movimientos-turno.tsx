@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { Movement } from '@/lib/types';
-import { fechaCorta } from './turno-detalle';
+import { fechaCorta } from '@/lib/horas';
 
 /**
  * Recorrido completo de un turno.

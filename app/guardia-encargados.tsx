@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { rango12h } from '@/lib/horas';
 
 interface Window {
   id: string;
@@ -23,10 +24,8 @@ interface Supervisor {
 
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 
-function horaTexto(minutos: number): string {
-  return `${Math.floor(minutos / 60)}:${String(minutos % 60).padStart(2, '0')}`;
-}
-
+// El `<input type="time">` siempre entrega «HH:mm» en 24 horas, al margen de
+// cómo lo pinte el navegador, así que esto no cambia con el formato que se lee.
 function aMinutos(valor: string): number {
   const [horas, minutos] = valor.split(':').map(Number);
   return horas * 60 + (minutos || 0);
@@ -122,7 +121,7 @@ export function GuardiaDeEncargados({ locationId }: { locationId: string }) {
                   {supervisor.windows.map((window) => (
                     <tr key={window.id}>
                       <td style={{ textTransform: 'capitalize' }}>{DIAS[window.weekday]}</td>
-                      <td>{horaTexto(window.startMinute)} a {horaTexto(window.endMinute)}</td>
+                      <td>{rango12h(window.startMinute, window.endMinute)}</td>
                       <td style={{ textAlign: 'right' }}>
                         <button onClick={() => void quitarFranja(window.id)}>Quitar</button>
                       </td>

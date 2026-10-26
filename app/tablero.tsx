@@ -10,10 +10,11 @@ import type {
   Movement,
 } from '@/lib/types';
 import { CANCEL_REASONS } from '@/lib/types';
+import { fechaCorta, rangoTurno } from '@/lib/horas';
 import { AgregarParticipante } from './agregar-participante';
 import { CalendarioMes } from './calendario-mes';
 import { CancelarDialogo } from './cancelar-dialogo';
-import { fechaCorta, TurnoDetalle } from './turno-detalle';
+import { TurnoDetalle } from './turno-detalle';
 
 type Vista = 'calendario' | 'lista';
 type RangoLista = '7d' | '14d';
@@ -318,7 +319,10 @@ export function Tablero({ locationId }: { locationId: string }) {
                     onAlternarHistorial={() =>
                       setHistorialDe(historialDe === turno.id ? null : turno.id)
                     }
-                    onCancelar={abrirCancelacion(turno, `${diaDetalle.label}, ${turno.range}`)}
+                    onCancelar={abrirCancelacion(
+                      turno,
+                      `${diaDetalle.label}, ${rangoTurno(turno)}`,
+                    )}
                     onAgregar={() => setAgregando(turno)}
                   />
                 ))}
@@ -355,7 +359,7 @@ export function Tablero({ locationId }: { locationId: string }) {
                   onAlternarHistorial={() =>
                     setHistorialDe(historialDe === turno.id ? null : turno.id)
                   }
-                  onCancelar={abrirCancelacion(turno, `${dia.label}, ${turno.range}`)}
+                  onCancelar={abrirCancelacion(turno, `${dia.label}, ${rangoTurno(turno)}`)}
                   onAgregar={() => setAgregando(turno)}
                 />
               ))}

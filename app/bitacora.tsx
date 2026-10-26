@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { fechaLarga } from '@/lib/horas';
 import {
   CATEGORIAS_BITACORA,
   type AuditHistoryEntry,
@@ -10,17 +11,6 @@ import {
 } from '@/lib/types';
 
 const POR_PAGINA = 50;
-
-/** «19 oct 2026, 14:05» */
-function cuando(iso: string): string {
-  return new Date(iso).toLocaleString('es-MX', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 interface Filtros {
   desde: string;
@@ -210,7 +200,7 @@ export function Bitacora({ esAdmin }: { esAdmin: boolean }) {
           <ol className="bitacora">
             {entradas.map((entrada) => (
               <li key={entrada.id}>
-                <span className="tenue momento">{cuando(entrada.at)}</span>
+                <span className="tenue momento">{fechaLarga(entrada.at)}</span>
                 <span className="accion">{entrada.label}</span>
                 <span className="detalle">
                   {/* Para las acciones sin frase propia, `description` repite la

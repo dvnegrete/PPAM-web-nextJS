@@ -7,6 +7,7 @@ import type {
   RecurringOverview,
   RecurringSlot,
 } from '@/lib/types';
+import { rango12h } from '@/lib/horas';
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -247,9 +248,11 @@ function Rejilla({
   const dias = [...new Set(slots.map((slot) => slot.weekday))].sort(
     (a, b) => ((a + 6) % 7) - ((b + 6) % 7),
   );
-  const franjas = [...new Map(slots.map((slot) => [slot.startMinute, slot.range])).entries()].sort(
-    (a, b) => a[0] - b[0],
-  );
+  const franjas = [
+    ...new Map(
+      slots.map((slot) => [slot.startMinute, rango12h(slot.startMinute, slot.endMinute)]),
+    ).entries(),
+  ].sort((a, b) => a[0] - b[0]);
 
   if (slots.length === 0) {
     return <p className="tenue">No hay franjas configuradas para esta semana.</p>;
@@ -260,7 +263,7 @@ function Rejilla({
       <table className="rejilla-fijos">
         <thead>
           <tr>
-            <th style={{ width: '7.5rem' }}>Horario</th>
+            <th style={{ width: '10.5rem' }}>Horario</th>
             {dias.map((dia) => (
               <th key={dia}>
                 <abbr title={DIAS[dia]}>{DIAS_CORTOS[dia]}</abbr>
@@ -390,10 +393,11 @@ function ElegirTitular({
     }
   }
 
+  const horario = rango12h(slot.startMinute, slot.endMinute);
   const cuando =
     slot.weekOfMonth === 0
-      ? `${DIAS[slot.weekday]} · ${slot.range} · todas las semanas`
-      : `${DIAS[slot.weekday]} · ${slot.range} · ${ORDINALES[slot.weekOfMonth]} semana del mes`;
+      ? `${DIAS[slot.weekday]} · ${horario} · todas las semanas`
+      : `${DIAS[slot.weekday]} · ${horario} · ${ORDINALES[slot.weekOfMonth]} semana del mes`;
 
   return (
     <div className="telon" role="dialog" aria-modal="true" aria-label="Asignar turno fijo">

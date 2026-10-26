@@ -12,7 +12,10 @@ export interface Location {
 export interface CalendarShift {
   id: string;
   date: string;
-  range: string;
+  /** Texto en 24 h que redacta el servidor; aquí solo sirve de respaldo. */
+  range?: string;
+  startMinute?: number;
+  endMinute?: number;
   status: 'PLANNED' | 'OPEN' | 'FULL' | 'CANCELLED';
   capacity: number;
   occupied: number;
@@ -240,7 +243,11 @@ export interface DashboardCancellation {
 export interface DashboardShift {
   id: string;
   date: string;
-  range: string;
+  /** Texto en 24 h que redacta el servidor; aquí solo sirve de respaldo. */
+  range?: string;
+  /** Minutos desde la medianoche local; es con lo que el panel escribe la hora. */
+  startMinute?: number;
+  endMinute?: number;
   startsAt: string;
   status: 'PLANNED' | 'OPEN' | 'FULL' | 'CANCELLED';
   capacity: number;
