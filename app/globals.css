@@ -145,26 +145,39 @@ td.numero, th.numero { text-align: right; font-variant-numeric: tabular-nums; }
 .dia { margin-bottom: 0.9rem; }
 .dia h3 { text-transform: capitalize; margin-bottom: 0.7rem; }
 
-/* La separación entre turnos la pone la línea de color de su cabecera; un
-   borde gris encima dividiría dos veces lo mismo. */
-.turno { padding: 0 0 0.4rem; }
+/* La separación entre turnos la da el bloque de color de su cabecera; un borde
+   gris encima dividiría dos veces lo mismo. */
+.turno { padding: 0 0 0.4rem; margin-top: 0.6rem; }
 
 /* La cabecera es el `summary` del turno: siempre visible y la que se pulsa. */
 .turno-cabecera {
   display: flex; align-items: center; gap: 0.7rem;
-  border-top: 0.2rem solid var(--borde); padding-top: 0.7rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radio);
+  background: var(--fondo);
   cursor: pointer; list-style: none;
 }
 .turno-cabecera::-webkit-details-marker { display: none; }
 .turno-cabecera > strong { margin-right: auto; }
 .turno-cabecera:hover .chevron { color: var(--texto); }
 
-/* La línea de división lleva el color de la necesidad del turno, el mismo que
-   los puntos del calendario: cerrado, el color es toda la información. */
-.turno.ok > .turno-cabecera { border-top-color: var(--acento); }
-.turno.bajoCupo > .turno-cabecera { border-top-color: var(--aviso); }
+/* El fondo de la cabecera lleva el color de la necesidad del turno, el mismo
+   que los puntos del calendario: cerrado, el color es toda la información, y
+   ocupando el bloque entero se ve sin buscarlo. La lista de personas que cuelga
+   debajo se queda sin fondo: lo que se señala es el estado del turno. */
+.turno.ok > .turno-cabecera { background: var(--acento-suave); }
+.turno.bajoCupo > .turno-cabecera { background: var(--aviso-suave); }
 .turno.bajoMinimo > .turno-cabecera,
-.turno.cancelado > .turno-cabecera { border-top-color: var(--alerta); }
+.turno.cancelado > .turno-cabecera { background: var(--alerta-suave); }
+
+/* Dentro de la cabecera, la pastilla ya no necesita fondo propio —sería un
+   color sobre otro del mismo tono—: le basta el texto en el color del estado. */
+.turno-cabecera .etiqueta {
+  background: none;
+  border-color: transparent;
+  padding-inline: 0;
+  font-weight: 600;
+}
 
 .chevron {
   flex: none; width: 0.45rem; height: 0.45rem;
