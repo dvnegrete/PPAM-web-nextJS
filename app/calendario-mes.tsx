@@ -1,6 +1,7 @@
 'use client';
 
 import type { DashboardDay, NeedLevel } from '@/lib/types';
+import { rangoTurno } from '@/lib/horas';
 import { ocupacionTexto } from '@/lib/turnos';
 
 const DIAS_CABECERA = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
@@ -136,7 +137,7 @@ export function CalendarioMes({
                   <i
                     key={turno.id}
                     className={`punto ${turno.need}`}
-                    title={`${turno.range} · ${ocupacionTexto(
+                    title={`${rangoTurno(turno)} · ${ocupacionTexto(
                       turno.occupied,
                       turno.capacity,
                     )} · ${NOMBRE_ESTADO[turno.need]}`}

@@ -1,19 +1,9 @@
 'use client';
 
 import type { DashboardShift, NeedLevel } from '@/lib/types';
+import { fechaCorta, rangoTurno } from '@/lib/horas';
 import { ocupacionTexto } from '@/lib/turnos';
 import { MovimientosTurno } from './movimientos-turno';
-
-/** «18 sep, 19:05» */
-export function fechaCorta(iso: string | null): string {
-  if (!iso) return '';
-  return new Date(iso).toLocaleString('es-MX', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 export function claseNecesidad(need: NeedLevel): string {
   if (need === 'bajoMinimo' || need === 'cancelado') return 'critico';
@@ -54,7 +44,7 @@ export function TurnoDetalle({
     // abierto sin que el tablero tenga que llevar la cuenta.
     <details className={`turno ${turno.need}`}>
       <summary className="turno-cabecera">
-        <strong>{turno.range}</strong>
+        <strong>{rangoTurno(turno)}</strong>
         <span className={`etiqueta ${claseNecesidad(turno.need)}`}>
           {turno.status === 'CANCELLED'
             ? 'Turno cancelado'

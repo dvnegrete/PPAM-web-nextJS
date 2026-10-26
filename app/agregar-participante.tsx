@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { rangoTurno } from '@/lib/horas';
 import { nombreCompleto, nombreFormal } from '@/lib/nombres';
 import { clave, coincide, digitos, terminos, type Buscable } from '@/lib/texto';
 import type { AvailableParticipant, DashboardShift, ExternalCover } from '@/lib/types';
@@ -115,7 +116,7 @@ export function AgregarParticipante({
       <div className="dialogo">
         <h3>Agregar al turno</h3>
         <p className="tenue">
-          {shift.range} ·{' '}
+          {rangoTurno(shift)} ·{' '}
           {shift.freeSlots === 0
             ? 'el turno ya está completo; esta persona entra como lugar extra'
             : shift.freeSlots === 1
