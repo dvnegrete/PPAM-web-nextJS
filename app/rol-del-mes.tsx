@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { toBlob } from 'html-to-image';
 import { api } from '@/lib/api';
-import type { PersonaDelRol, RolMensual } from '@/lib/types';
+import type { DiaDelRol, PersonaDelRol, RolMensual } from '@/lib/types';
 
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -234,109 +234,82 @@ function Persona({ persona }: { persona: PersonaDelRol }) {
   );
 }
 
-function Faltan({ cuantos }: { cuantos: number }) {
-  if (cuantos <= 0) return null;
-  return (
-    <div className="rol-falta">
-      {cuantos === 1 ? '1 lugar disponible' : `${cuantos} lugares disponibles`}
-    </div>
-  );
-}
-
 function PieDeImagen() {
   const fecha = new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
   return <footer className="rol-pie">Actualizado el {fecha}</footer>;
 }
 
+/**
+ * Columnas de personas por turno: tres, que es el cupo de siempre, salvo que en
+ * esta imagen algún turno lleve más gente.
+ */
+function columnasPara(dias: DiaDelRol[]): number {
+  return Math.max(3, ...dias.flatMap((dia) => dia.slots.map((turno) => turno.people.length)));
+}
+
+/** Un día con una fila por turno y una columna por persona. */
+function BloqueDia({ dia, columnas }: { dia: DiaDelRol; columnas: number }) {
+  return (
+    <table className="rol-tabla">
+      {/* Con `table-layout: fixed` los anchos salen de aquí, no del encabezado. */}
+      <colgroup>
+        <col className="rol-col-hora" />
+        {Array.from({ length: columnas }, (_, indice) => (
+          <col key={indice} />
+        ))}
+      </colgroup>
+      <thead>
+        <tr>
+          <th colSpan={columnas + 1}>
+            {dia.title}
+            {dia.subtitle && <span className="rol-fecha"> · {dia.subtitle}</span>}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {dia.slots.map((turno) => (
+          <tr key={turno.startMinute}>
+            <td className="rol-hora">{turno.range}</td>
+            {Array.from({ length: columnas }, (_, indice) => {
+              const persona = turno.people[indice];
+              const libre = indice - turno.people.length < turno.missing;
+              return (
+                <td key={indice}>
+                  {persona ? (
+                    <Persona persona={persona} />
+                  ) : (
+                    libre && <div className="rol-falta">Lugar disponible</div>
+                  )}
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 function ImagenEntreSemana({ rol }: { rol: RolMensual }) {
+  const columnas = columnasPara(rol.weekdays);
   return (
     <>
       <Encabezado rol={rol} subtitulo="Lunes a viernes · se repite todas las semanas" />
-      <table className="rol-tabla">
-        <thead>
-          <tr>
-            <th className="rol-hora">Horario</th>
-            {DIAS_HABILES.map((dia) => (
-              <th key={dia.numero}>{dia.nombre}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rol.weekdays.map((franja) => (
-            <tr key={franja.startMinute}>
-              <td className="rol-hora">{franja.range}</td>
-              {DIAS_HABILES.map((dia) => {
-                const celda = franja.days[dia.numero];
-                return (
-                  <td key={dia.numero}>
-                    {celda?.people.map((persona) => (
-                      <Persona key={persona.phone} persona={persona} />
-                    ))}
-                    {celda ? <Faltan cuantos={celda.missing} /> : <span className="rol-falta">Sin turno</span>}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {rol.weekdayChanges.length > 0 && (
-        <div className="rol-cambios">
-          <div className="rol-cambios-titulo">Fechas con cambios · ese día van:</div>
-          {rol.weekdayChanges.map((cambio) => (
-            <div key={`${cambio.date}-${cambio.range}`} className="rol-cambio">
-              <div className="rol-cambio-fecha">
-                {cambio.label}
-                <span>{cambio.range}</span>
-              </div>
-              <div className="rol-fila-personas">
-                {cambio.cancelled ? (
-                  <div className="rol-falta">Turno cancelado</div>
-                ) : (
-                  <>
-                    {cambio.attendees.map((persona) => (
-                      <Persona key={persona.phone} persona={persona} />
-                    ))}
-                    <Faltan cuantos={cambio.missing} />
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {rol.weekdays.map((dia) => (
+        <BloqueDia key={dia.title} dia={dia} columnas={columnas} />
+      ))}
       <PieDeImagen />
     </>
   );
 }
 
 function ImagenFinDeSemana({ rol }: { rol: RolMensual }) {
+  const columnas = columnasPara(rol.weekends);
   return (
     <>
       <Encabezado rol={rol} subtitulo="Sábados y domingos" />
-      {rol.weekends.map((finde) => (
-        <div key={finde.label} className="rol-finde">
-          <div className="rol-finde-titulo">{finde.label}</div>
-          <div className="rol-finde-dias">
-            {finde.days.map((dia) => (
-              <div key={dia.date} className="rol-finde-dia">
-                <div className="rol-finde-dia-titulo">{dia.label}</div>
-                {dia.slots.map((franja) => (
-                  <div key={franja.startMinute} className="rol-finde-franja">
-                    <div className="rol-hora">{franja.range}</div>
-                    <div className="rol-fila-personas">
-                      {franja.people.map((persona) => (
-                        <Persona key={persona.phone} persona={persona} />
-                      ))}
-                      <Faltan cuantos={franja.missing} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
+      {rol.weekends.map((dia) => (
+        <BloqueDia key={dia.title} dia={dia} columnas={columnas} />
       ))}
       <PieDeImagen />
     </>

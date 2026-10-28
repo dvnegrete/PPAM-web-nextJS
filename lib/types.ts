@@ -477,33 +477,27 @@ export interface PersonaDelRol {
   phone: string;
 }
 
+/** Un turno del rol: el horario, quién va y cuántos lugares faltan. */
+export interface TurnoDelRol {
+  startMinute: number;
+  range: string;
+  people: PersonaDelRol[];
+  missing: number;
+}
+
+/** «Lunes» (vale todo el mes) o «Primer sábado» con su fecha. */
+export interface DiaDelRol {
+  title: string;
+  subtitle: string | null;
+  slots: TurnoDelRol[];
+}
+
 /** Rol del mes para compartir en el grupo; lo arma `GET /locations/:id/roster`. */
 export interface RolMensual {
   locationName: string;
   year: number;
   month: number;
   monthLabel: string;
-  /** Franjas de L-V; `days` va por día de la semana, 1 = lunes … 5 = viernes. */
-  weekdays: Array<{
-    startMinute: number;
-    range: string;
-    days: Record<number, { people: PersonaDelRol[]; missing: number }>;
-  }>;
-  /** Fechas entre semana en que no va la gente de la tabla. */
-  weekdayChanges: Array<{
-    date: string;
-    label: string;
-    range: string;
-    attendees: PersonaDelRol[];
-    missing: number;
-    cancelled: boolean;
-  }>;
-  weekends: Array<{
-    label: string;
-    days: Array<{
-      date: string;
-      label: string;
-      slots: Array<{ startMinute: number; range: string; people: PersonaDelRol[]; missing: number }>;
-    }>;
-  }>;
+  weekdays: DiaDelRol[];
+  weekends: DiaDelRol[];
 }
