@@ -16,6 +16,7 @@ import { LoginForm } from './login-form';
 import { Navegacion } from './navegacion';
 import { Padron } from './padron';
 import { Reportes } from './reportes';
+import { RolDelMes } from './rol-del-mes';
 import { TurnosFijos } from './turnos-fijos';
 
 /**
@@ -29,6 +30,7 @@ const PESTANAS = [
   { id: 'tablero', etiqueta: 'Tablero' },
   { id: 'encuesta', etiqueta: 'Encuesta', whatsapp: true },
   { id: 'confirmaciones', etiqueta: 'Mensaje Confirmación', whatsapp: true },
+  { id: 'rol', etiqueta: 'Rol del mes', whatsapp: true },
   { id: 'calendario', etiqueta: 'Calendario' },
   { id: 'padron', etiqueta: 'Padrón' },
   { id: 'turnos-fijos', etiqueta: 'Turnos fijos' },
@@ -156,6 +158,7 @@ export default function Page() {
           {pestana === 'tablero' && <Tablero locationId={location.id} />}
           {pestana === 'encuesta' && <Encuesta locationId={location.id} />}
           {pestana === 'confirmaciones' && <Confirmaciones locationId={location.id} />}
+          {pestana === 'rol' && <RolDelMes locationId={location.id} />}
           {pestana === 'calendario' && (
             <Calendario locationId={location.id} minCapacity={location.minCapacity} />
           )}

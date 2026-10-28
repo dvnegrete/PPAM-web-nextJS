@@ -931,3 +931,127 @@ pre.bloque {
   .cuentas-tabla th,
   .cuentas-tabla td { padding: 0.45rem 0.35rem; font-size: 0.86rem; }
 }
+
+/* ---------------------------------------------------------------------------
+ * Rol del mes. El lienzo es la imagen que se comparte en WhatsApp: ancho fijo,
+ * fondo blanco y colores propios, para que salga igual sin importar el panel.
+ * ------------------------------------------------------------------------- */
+
+.rol-tarjeta { margin-bottom: 1.25rem; }
+.rol-acciones {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+.rol-marco { overflow: hidden; border: 1px solid var(--borde); border-radius: var(--radio); }
+
+.rol-lienzo {
+  width: 1080px;
+  padding: 32px;
+  background: #ffffff;
+  color: #1c2430;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.rol-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 4px solid var(--acento);
+}
+.rol-punto { color: #5b6775; font-size: 18px; }
+.rol-titulo { font-size: 34px; font-weight: 700; text-transform: capitalize; }
+.rol-subtitulo { color: var(--acento); font-weight: 600; font-size: 18px; text-align: right; }
+
+.rol-persona { padding: 4px 0; }
+.rol-nombre { font-weight: 600; }
+.rol-telefono {
+  color: #5b6775;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.rol-falta { color: #7a6200; font-size: 15px; font-style: italic; padding: 4px 0; }
+
+.rol-hora {
+  color: var(--acento);
+  font-weight: 700;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.rol-tabla { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.rol-tabla th {
+  background: var(--acento);
+  color: #ffffff;
+  font-size: 17px;
+  padding: 10px 8px;
+  text-align: left;
+}
+.rol-tabla th.rol-hora { width: 112px; }
+.rol-tabla td {
+  border-bottom: 1px solid #dfe3e8;
+  padding: 10px 8px;
+  vertical-align: top;
+  word-break: break-word;
+}
+.rol-tabla tbody tr:nth-child(even) td { background: #f6f7f9; }
+
+.rol-cambios {
+  margin-top: 24px;
+  padding: 16px;
+  background: #fff9c2;
+  border-radius: 8px;
+}
+.rol-cambios-titulo { font-weight: 700; margin-bottom: 8px; }
+.rol-cambio {
+  display: flex;
+  gap: 16px;
+  padding: 8px 0;
+  border-top: 1px solid #e8dc8a;
+}
+.rol-cambio-fecha { width: 170px; flex-shrink: 0; font-weight: 700; }
+.rol-cambio-fecha span { display: block; font-weight: 400; font-size: 15px; color: #5b6775; }
+
+.rol-fila-personas { display: flex; flex-wrap: wrap; column-gap: 24px; row-gap: 4px; align-items: baseline; }
+
+.rol-finde {
+  margin-bottom: 20px;
+  border: 1px solid #dfe3e8;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.rol-finde-titulo {
+  background: var(--acento);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 20px;
+  padding: 10px 16px;
+}
+.rol-finde-dias { display: flex; }
+.rol-finde-dia { flex: 1; min-width: 0; padding: 8px 16px 12px; }
+.rol-finde-dia + .rol-finde-dia { border-left: 1px solid #dfe3e8; }
+.rol-finde-dia-titulo {
+  font-weight: 700;
+  font-size: 18px;
+  padding: 6px 0 8px;
+  border-bottom: 2px solid var(--acento-suave);
+}
+.rol-finde-franja {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eef0f3;
+}
+.rol-finde-franja:last-child { border-bottom: none; }
+.rol-finde-franja .rol-hora { width: 96px; flex-shrink: 0; padding-top: 4px; white-space: normal; }
+
+.rol-pie { margin-top: 20px; color: #5b6775; font-size: 14px; text-align: right; }
