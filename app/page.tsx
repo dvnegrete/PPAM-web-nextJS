@@ -27,8 +27,8 @@ import { TurnosFijos } from './turnos-fijos';
  */
 const PESTANAS = [
   { id: 'tablero', etiqueta: 'Tablero' },
-  { id: 'encuesta', etiqueta: 'Encuesta' },
-  { id: 'confirmaciones', etiqueta: 'Confirmaciones' },
+  { id: 'encuesta', etiqueta: 'Encuesta', whatsapp: true },
+  { id: 'confirmaciones', etiqueta: 'Mensaje Confirmación', whatsapp: true },
   { id: 'calendario', etiqueta: 'Calendario' },
   { id: 'padron', etiqueta: 'Padrón' },
   { id: 'turnos-fijos', etiqueta: 'Turnos fijos' },
