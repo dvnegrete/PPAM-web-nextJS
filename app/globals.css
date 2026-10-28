@@ -762,6 +762,25 @@ pre.bloque {
 .navegacion .sesion { display: flex; gap: 0.5rem; align-items: center; }
 .navegacion .sesion select { width: auto; }
 
+/* Las pestañas que preparan algo para el grupo llevan el glifo de WhatsApp al
+   final de su nombre: el verde de la marca es lo que las distingue de un vistazo
+   de las que solo se consultan en el panel. */
+.navegacion button.con-icono,
+.hamburguesa .rotulo-activo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.icono-whatsapp {
+  width: 1em;
+  height: 1em;
+  flex: none;
+  color: #25d366;
+}
+/* En la pestaña activa el fondo ya es verde oscuro, así que el icono hereda el
+   blanco del texto en vez de fundirse con el fondo. */
+.navegacion button.primario .icono-whatsapp { color: inherit; }
+
 @media (max-width: 760px) {
   .hamburguesa {
     display: flex;

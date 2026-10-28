@@ -2,12 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Location } from '@/lib/types';
+import { IconoWhatsApp } from './icono-whatsapp';
 
 export interface Pestana {
   id: string;
   etiqueta: string;
   /** Declarado en `page.tsx`; aquí solo se pinta lo que llega filtrado. */
   soloAdmin?: boolean;
+  /** Lo que se prepara aquí termina pegado en el grupo de WhatsApp. */
+  whatsapp?: boolean;
 }
 
 interface Props {
@@ -69,7 +72,8 @@ export function Navegacion({
     };
   }, [abierto]);
 
-  const etiquetaActiva = pestanas.find((item) => item.id === activa)?.etiqueta ?? '';
+  const pestanaActiva = pestanas.find((item) => item.id === activa);
+  const etiquetaActiva = pestanaActiva?.etiqueta ?? '';
 
   return (
     <div className="navegacion" ref={panel}>
@@ -85,7 +89,10 @@ export function Navegacion({
           <span />
           <span />
         </span>
-        <span className="rotulo-activo">{etiquetaActiva}</span>
+        <span className="rotulo-activo">
+          {etiquetaActiva}
+          {pestanaActiva?.whatsapp && <IconoWhatsApp />}
+        </span>
       </button>
 
       <div id="menu-panel" className={`menu ${abierto ? 'abierto' : ''}`}>
@@ -97,10 +104,13 @@ export function Navegacion({
                 onElegir(item.id);
                 setAbierto(false);
               }}
-              className={activa === item.id ? 'primario' : ''}
+              className={[activa === item.id ? 'primario' : '', item.whatsapp ? 'con-icono' : '']
+                .filter(Boolean)
+                .join(' ')}
               aria-current={activa === item.id ? 'page' : undefined}
             >
               {item.etiqueta}
+              {item.whatsapp && <IconoWhatsApp />}
             </button>
           ))}
         </nav>
