@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { PollDraft } from '@/lib/types';
+import { BotonCopiar } from './boton-copiar';
 
 type Nivel = 'cupo' | 'minimo';
 
@@ -11,51 +12,6 @@ function enDias(dias: number): string {
   const fecha = new Date();
   fecha.setDate(fecha.getDate() + dias);
   return fecha.toISOString().slice(0, 10);
-}
-
-/**
- * Copia al portapapeles con respaldo, porque `navigator.clipboard` no existe en
- * contextos sin HTTPS ni en algunos navegadores de escritorio antiguos.
- */
-async function copiar(texto: string): Promise<boolean> {
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(texto);
-      return true;
-    }
-  } catch {
-    // Se intenta el respaldo de abajo.
-  }
-
-  try {
-    const area = document.createElement('textarea');
-    area.value = texto;
-    area.style.position = 'fixed';
-    area.style.opacity = '0';
-    document.body.appendChild(area);
-    area.select();
-    const ok = document.execCommand('copy');
-    document.body.removeChild(area);
-    return ok;
-  } catch {
-    return false;
-  }
-}
-
-function BotonCopiar({ texto, etiqueta }: { texto: string; etiqueta?: string }) {
-  const [estado, setEstado] = useState<'listo' | 'copiado' | 'error'>('listo');
-
-  async function alCopiar() {
-    const ok = await copiar(texto);
-    setEstado(ok ? 'copiado' : 'error');
-    window.setTimeout(() => setEstado('listo'), 2000);
-  }
-
-  return (
-    <button className={estado === 'copiado' ? 'primario' : ''} onClick={() => void alCopiar()}>
-      {estado === 'copiado' ? '¡Copiado!' : estado === 'error' ? 'Copia manual' : (etiqueta ?? 'Copiar')}
-    </button>
-  );
 }
 
 export function Encuesta({ locationId }: { locationId: string }) {

@@ -340,6 +340,41 @@ export interface PollDraft {
   maxOptions: number;
 }
 
+/**
+ * Una persona que cubre un turno y a la que todavía no se le ha confirmado en el
+ * grupo. El nombre viene completo porque es lo que va entre corchetes, y ahí
+ * tiene que quedar claro a quién hay que etiquetar.
+ */
+export interface ConfirmationRow {
+  /** `${shiftId}:${participantId}`; es lo que se devuelve al confirmar. */
+  key: string;
+  shiftId: string;
+  participantId: string;
+  date: string;
+  /** «Sáb. 31» */
+  dayLabel: string;
+  /** «09:00 a 11:00 am» */
+  range: string;
+  startMinute: number;
+  endMinute: number;
+  name: string;
+  assignedAt: string | null;
+  assignedByName: string | null;
+}
+
+export interface ConfirmationsDraft {
+  rows: ConfirmationRow[];
+  /** El mensaje tal como lo redacta el servidor, con todas las filas. */
+  text: string;
+}
+
+export interface AnnounceResult {
+  announced: string[];
+  /** Las que ya había marcado otro encargado. */
+  alreadyAnnounced: string[];
+  draft: ConfirmationsDraft;
+}
+
 /** Motivos frecuentes de cancelación, alineados con el backend. */
 export const CANCEL_REASONS: Array<{ code: string; label: string }> = [
   { code: 'enfermedad', label: 'Enfermedad' },

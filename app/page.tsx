@@ -6,6 +6,7 @@ import type { CuentaDelPanel, Location } from '@/lib/types';
 import { Ajustes } from './ajustes';
 import { Bitacora } from './bitacora';
 import { Calendario } from './calendario';
+import { Confirmaciones } from './confirmaciones';
 import { Encuesta } from './encuesta';
 import { Tablero } from './tablero';
 import { Usuarios } from './usuarios';
@@ -27,6 +28,7 @@ import { TurnosFijos } from './turnos-fijos';
 const PESTANAS = [
   { id: 'tablero', etiqueta: 'Tablero' },
   { id: 'encuesta', etiqueta: 'Encuesta' },
+  { id: 'confirmaciones', etiqueta: 'Confirmaciones' },
   { id: 'calendario', etiqueta: 'Calendario' },
   { id: 'padron', etiqueta: 'Padrón' },
   { id: 'turnos-fijos', etiqueta: 'Turnos fijos' },
@@ -153,6 +155,7 @@ export default function Page() {
         <>
           {pestana === 'tablero' && <Tablero locationId={location.id} />}
           {pestana === 'encuesta' && <Encuesta locationId={location.id} />}
+          {pestana === 'confirmaciones' && <Confirmaciones locationId={location.id} />}
           {pestana === 'calendario' && (
             <Calendario locationId={location.id} minCapacity={location.minCapacity} />
           )}
