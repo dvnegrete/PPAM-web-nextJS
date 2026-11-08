@@ -194,7 +194,10 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
                       <span className="tenue">Sin asignar</span>
                     ) : (
                       shift.participants
-                        .map((p) => `${p.name}${p.confirmed ? ' ✓' : ''}${p.origin === 'COVERAGE' ? ' (cubre)' : ''}`)
+                        .map(
+                          (p) =>
+                            `${p.name}${p.isCaptain ? ' (capitán)' : ''}${p.confirmed ? ' ✓' : ''}${p.origin === 'COVERAGE' ? ' (cubre)' : ''}`,
+                        )
                         .join(' · ')
                     )}
                   </td>

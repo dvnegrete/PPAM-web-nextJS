@@ -60,6 +60,7 @@ export function TurnoDetalle({
           <li key={persona.assignmentId}>
             <span className="nombre">
               {persona.name}
+              {persona.isCaptain && <span className="insignia-capitan">Capitán</span>}
               {persona.confirmed && (
                 <span className="marca" title="Confirmó su asistencia">
                   {' '}

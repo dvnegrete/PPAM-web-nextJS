@@ -228,7 +228,10 @@ function Encabezado({ rol, subtitulo }: { rol: RolMensual; subtitulo: string }) 
 function Persona({ persona }: { persona: PersonaDelRol }) {
   return (
     <div className="rol-persona">
-      <div className="rol-nombre">{persona.name}</div>
+      <div className="rol-nombre">
+        {persona.name}
+        {persona.isCaptain && <span className="rol-capitan">Capitán</span>}
+      </div>
       <div className="rol-telefono">{persona.phone}</div>
     </div>
   );
