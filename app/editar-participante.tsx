@@ -95,7 +95,7 @@ export function EditarParticipante({
       })
       .catch((problema: unknown) => {
         if (vigente) {
-          setError(problema instanceof Error ? problema.message : 'No se pudo cargar el padrón');
+          setError(problema instanceof Error ? problema.message : 'No se pudieron cargar los participantes');
         }
       });
     return () => {
@@ -302,7 +302,7 @@ export function EditarParticipante({
                     checked={modo === 'participante'}
                     onChange={() => setModo('participante')}
                   />
-                  <span>Sí, está en el padrón</span>
+                  <span>Sí, está entre los participantes</span>
                 </label>
                 <label className="opcion">
                   <input

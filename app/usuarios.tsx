@@ -69,7 +69,7 @@ export function Usuarios({ locationId }: { locationId: string }) {
               <th>Correo</th>
               <th>Nombre</th>
               <th>Nivel</th>
-              <th className="secundaria">Del padrón</th>
+              <th className="secundaria">Participante</th>
               <th className="secundaria">Último acceso</th>
               <th></th>
             </tr>

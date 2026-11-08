@@ -47,7 +47,7 @@ export function Padron({ locationId }: { locationId: string }) {
       setParticipantes(padron);
       setValores(conocidos);
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudo cargar el padrón');
+      setError(problem instanceof Error ? problem.message : 'No se pudieron cargar los participantes');
     }
   }, [locationId]);
 
@@ -147,7 +147,7 @@ export function Padron({ locationId }: { locationId: string }) {
 
       <div className="buscador">
         <label>
-          <span className="oculto-visualmente">Buscar en el padrón</span>
+          <span className="oculto-visualmente">Buscar participantes</span>
           <input
             type="search"
             value={busqueda}

@@ -20,7 +20,14 @@ export interface CalendarShift {
   capacity: number;
   occupied: number;
   weekOfMonth: number;
-  participants: Array<{ id: string; name: string; origin: string; confirmed: boolean }>;
+  participants: Array<{
+    id: string;
+    name: string;
+    /** Capitán del turno: viene primero, y su cónyuge (si está) en segundo lugar. */
+    isCaptain: boolean;
+    origin: string;
+    confirmed: boolean;
+  }>;
 }
 
 export type MaritalStatus =
@@ -179,7 +186,7 @@ export const CATEGORIAS_BITACORA = [
   { id: 'turnos', etiqueta: 'Turnos y asignaciones' },
   { id: 'cobertura', etiqueta: 'Coberturas' },
   { id: 'encargados', etiqueta: 'Encargados y solicitudes' },
-  { id: 'padron', etiqueta: 'Padrón' },
+  { id: 'padron', etiqueta: 'Participantes' },
   { id: 'turnos_fijos', etiqueta: 'Turnos fijos' },
   { id: 'mensajes', etiqueta: 'Preguntas por WhatsApp' },
   { id: 'importaciones', etiqueta: 'Importaciones' },
@@ -223,6 +230,8 @@ export interface DashboardParticipant {
   name: string;
   /** Cónyuge que también participa; sirve para emparejarlos dentro del turno. */
   spouseId: string | null;
+  /** Capitán del turno: viene primero, y su cónyuge (si está) en segundo lugar. */
+  isCaptain: boolean;
   /** Nota de esa vez, si se capturó al registrarlo. */
   note: string | null;
   origin: 'FIXED' | 'SIGNUP' | 'COVERAGE' | 'MANUAL';
@@ -391,6 +400,8 @@ export interface RecurringHolder {
   recurringId: string;
   participantId: string;
   name: string;
+  /** A lo más uno por franja; el servidor lo manda primero. */
+  isCaptain: boolean;
 }
 
 export interface RecurringSlot {
@@ -469,4 +480,37 @@ export interface CuentaDelPanel {
   lastLoginAt: string | null;
   participantId: string | null;
   perfil: PerfilDeCuenta;
+}
+
+/** Una persona en el rol del mes: «Ana María López», «55 1234 5678». */
+export interface PersonaDelRol {
+  name: string;
+  phone: string;
+  /** Capitán del turno; siempre llega primero. */
+  isCaptain: boolean;
+}
+
+/** Un turno del rol: el horario, quién va y cuántos lugares faltan. */
+export interface TurnoDelRol {
+  startMinute: number;
+  range: string;
+  people: PersonaDelRol[];
+  missing: number;
+}
+
+/** «Lunes» (vale todo el mes) o «Primer sábado» con su fecha. */
+export interface DiaDelRol {
+  title: string;
+  subtitle: string | null;
+  slots: TurnoDelRol[];
+}
+
+/** Rol del mes para compartir en el grupo; lo arma `GET /locations/:id/roster`. */
+export interface RolMensual {
+  locationName: string;
+  year: number;
+  month: number;
+  monthLabel: string;
+  weekdays: DiaDelRol[];
+  weekends: DiaDelRol[];
 }

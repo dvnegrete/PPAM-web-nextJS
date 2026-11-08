@@ -74,7 +74,7 @@ export function GuiaCampos({
 
       <p className="tenue">
         Para <strong>borrar</strong> un dato o <strong>cambiar un teléfono</strong>, usa el botón
-        «Editar» del Padrón: por CSV, un teléfono distinto se toma como otra persona.
+        «Editar» de Participantes: por CSV, un teléfono distinto se toma como otra persona.
       </p>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
