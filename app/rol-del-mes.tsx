@@ -93,10 +93,18 @@ export function RolDelMes({ locationId }: { locationId: string }) {
 
       {rol && !vacio && (
         <>
-          <Lienzo titulo="Entre semana" archivo={`rol-entre-semana-${sufijo}.png`}>
+          <Lienzo
+            titulo="Entre semana"
+            archivo={`rol-entre-semana-${sufijo}.png`}
+            abiertoAlInicio={false}
+          >
             <ImagenEntreSemana rol={rol} />
           </Lienzo>
-          <Lienzo titulo="Fines de semana" archivo={`rol-fin-de-semana-${sufijo}.png`}>
+          <Lienzo
+            titulo="Fines de semana"
+            archivo={`rol-fin-de-semana-${sufijo}.png`}
+            variante="fin-de-semana"
+          >
             <ImagenFinDeSemana rol={rol} />
           </Lienzo>
         </>
@@ -109,10 +117,16 @@ export function RolDelMes({ locationId }: { locationId: string }) {
 function Lienzo({
   titulo,
   archivo,
+  variante,
+  abiertoAlInicio = true,
   children,
 }: {
   titulo: string;
   archivo: string;
+  /** Clase extra del lienzo; cambia el color de la imagen. */
+  variante?: 'fin-de-semana';
+  /** El fin de semana, que es el que más se busca, arranca abierto. */
+  abiertoAlInicio?: boolean;
   children: ReactNode;
 }) {
   const nodo = useRef<HTMLDivElement>(null);
@@ -121,6 +135,7 @@ function Lienzo({
   const [alto, setAlto] = useState(0);
   const [trabajando, setTrabajando] = useState(false);
   const [fallo, setFallo] = useState<string | null>(null);
+  const [abierto, setAbierto] = useState(abiertoAlInicio);
 
   useLayoutEffect(() => {
     const medir = () => {
@@ -189,7 +204,15 @@ function Lienzo({
   return (
     <div className="tarjeta rol-tarjeta">
       <div className="rol-acciones">
-        <h2 style={{ margin: 0 }}>{titulo}</h2>
+        <button
+          type="button"
+          className={`rol-plegar ${abierto ? 'abierto' : ''}`}
+          onClick={() => setAbierto((valor) => !valor)}
+          aria-expanded={abierto}
+        >
+          <span className="chevron" aria-hidden="true" />
+          <h2 style={{ margin: 0 }}>{titulo}</h2>
+        </button>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           {puedeCompartir && (
             <button onClick={() => void compartir()} disabled={trabajando}>
@@ -202,9 +225,17 @@ function Lienzo({
         </div>
       </div>
       {fallo && <p className="aviso">{fallo}</p>}
-      <div ref={marco} className="rol-marco" style={{ height: alto || undefined }}>
+      {/* Cerrado se pliega a altura cero y no con `display: none`: la imagen se
+          genera de este mismo nodo, y sin maquetar saldría en blanco. Así se
+          puede descargar o compartir sin abrirla. */}
+      <div
+        ref={marco}
+        className={`rol-marco ${abierto ? '' : 'cerrado'}`}
+        style={{ height: abierto ? alto || undefined : 0 }}
+        aria-hidden={!abierto}
+      >
         <div style={{ transform: `scale(${escala})`, transformOrigin: 'top left', width: ANCHO_LIENZO }}>
-          <div ref={nodo} className="rol-lienzo">
+          <div ref={nodo} className={`rol-lienzo ${variante ?? ''}`}>
             {children}
           </div>
         </div>

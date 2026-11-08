@@ -961,6 +961,21 @@ pre.bloque {
   margin-bottom: 0.75rem;
 }
 .rol-marco { overflow: hidden; border: 1px solid var(--borde); border-radius: var(--radio); }
+.rol-marco.cerrado { border-width: 0; }
+
+.rol-plegar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.2rem 0.3rem;
+  background: none;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rol-plegar:hover .chevron { color: var(--texto); }
+.rol-plegar.abierto .chevron { transform: rotate(45deg); }
 
 .rol-lienzo {
   width: 1080px;
@@ -970,6 +985,15 @@ pre.bloque {
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 17px;
   line-height: 1.3;
+  /* Color de la imagen; el fin de semana lleva el suyo para distinguirla. */
+  --rol-color: var(--acento);
+  --rol-franja: #f6f7f9;
+}
+/* Azul para sábados y domingos: es la imagen que más se busca en el grupo, y
+   con otro color se reconoce entre los archivos sin abrirla. */
+.rol-lienzo.fin-de-semana {
+  --rol-color: #1d4f91;
+  --rol-franja: #eef3fb;
 }
 
 .rol-encabezado {
@@ -979,11 +1003,11 @@ pre.bloque {
   gap: 16px;
   padding-bottom: 16px;
   margin-bottom: 20px;
-  border-bottom: 4px solid var(--acento);
+  border-bottom: 4px solid var(--rol-color);
 }
 .rol-punto { color: #5b6775; font-size: 18px; }
 .rol-titulo { font-size: 34px; font-weight: 700; text-transform: capitalize; }
-.rol-subtitulo { color: var(--acento); font-weight: 600; font-size: 18px; text-align: right; }
+.rol-subtitulo { color: var(--rol-color); font-weight: 600; font-size: 18px; text-align: right; }
 
 .rol-persona {
   /* Nombre y teléfono en una línea: la imagen sale más corta y se lee de un
@@ -1008,7 +1032,7 @@ pre.bloque {
 .rol-falta { color: #7a6200; font-size: 15px; font-style: italic; padding: 2px 0; }
 
 .rol-hora {
-  color: var(--acento);
+  color: var(--rol-color);
   font-weight: 700;
   font-size: 14px;
   white-space: nowrap;
@@ -1022,7 +1046,7 @@ pre.bloque {
   border: 1px solid #dfe3e8;
 }
 .rol-tabla th {
-  background: var(--acento);
+  background: var(--rol-color);
   color: #ffffff;
   font-size: 18px;
   padding: 7px 12px;
@@ -1037,6 +1061,6 @@ pre.bloque {
 }
 .rol-col-hora { width: 116px; }
 .rol-tabla td.rol-hora { padding: 8px 8px 6px 12px; }
-.rol-tabla tbody tr:nth-child(even) td { background: #f6f7f9; }
+.rol-tabla tbody tr:nth-child(even) td { background: var(--rol-franja); }
 
 .rol-pie { margin-top: 20px; color: #5b6775; font-size: 14px; text-align: right; }
