@@ -20,7 +20,14 @@ export interface CalendarShift {
   capacity: number;
   occupied: number;
   weekOfMonth: number;
-  participants: Array<{ id: string; name: string; origin: string; confirmed: boolean }>;
+  participants: Array<{
+    id: string;
+    name: string;
+    /** Capitán del turno: viene primero, y su cónyuge (si está) en segundo lugar. */
+    isCaptain: boolean;
+    origin: string;
+    confirmed: boolean;
+  }>;
 }
 
 export type MaritalStatus =
@@ -223,6 +230,8 @@ export interface DashboardParticipant {
   name: string;
   /** Cónyuge que también participa; sirve para emparejarlos dentro del turno. */
   spouseId: string | null;
+  /** Capitán del turno: viene primero, y su cónyuge (si está) en segundo lugar. */
+  isCaptain: boolean;
   /** Nota de esa vez, si se capturó al registrarlo. */
   note: string | null;
   origin: 'FIXED' | 'SIGNUP' | 'COVERAGE' | 'MANUAL';
@@ -391,6 +400,8 @@ export interface RecurringHolder {
   recurringId: string;
   participantId: string;
   name: string;
+  /** A lo más uno por franja; el servidor lo manda primero. */
+  isCaptain: boolean;
 }
 
 export interface RecurringSlot {
@@ -475,6 +486,8 @@ export interface CuentaDelPanel {
 export interface PersonaDelRol {
   name: string;
   phone: string;
+  /** Capitán del turno; siempre llega primero. */
+  isCaptain: boolean;
 }
 
 /** Un turno del rol: el horario, quién va y cuántos lugares faltan. */
