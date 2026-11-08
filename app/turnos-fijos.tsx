@@ -156,6 +156,14 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
         materialice de ahora en adelante.
       </p>
 
+      <p className="aviso leyenda-capitan" style={{ marginBottom: '1rem' }}>
+        <input type="checkbox" checked readOnly tabIndex={-1} aria-hidden="true" />
+        <span>
+          La casilla antes de cada nombre marca al <strong>capitán del turno</strong>. Marca solo a
+          un participante por turno: si marcas a otro, el anterior deja de ser capitán.
+        </span>
+      </p>
+
       {bloques.semanales.length > 0 && (
         <div className="tarjeta" style={{ marginBottom: '1rem' }}>
           <h3>Todas las semanas</h3>
