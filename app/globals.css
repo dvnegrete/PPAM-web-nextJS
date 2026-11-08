@@ -1204,7 +1204,7 @@ pre.bloque {
 .rol-nombre { font-weight: 600; font-size: 16px; white-space: nowrap; }
 .rol-capitan { margin-left: 4px; font-size: 0.65em; font-weight: 400; opacity: 0.6; vertical-align: 1px; }
 .leyenda-capitan { background: var(--fondo); font-size: 0.9rem; display: flex; align-items: flex-start; gap: 0.5rem; }
-.leyenda-capitan input { margin: 0.2rem 0 0; flex: none; accent-color: var(--acento); pointer-events: none; }
+.leyenda-capitan input { width: auto; padding: 0; margin: 0.2rem 0 0; flex: none; accent-color: var(--acento); pointer-events: none; }
 .rol-telefono {
   white-space: nowrap;
   color: #5b6775;
