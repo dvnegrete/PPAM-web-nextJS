@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { api, clearSession, getSession, Session } from '@/lib/api';
-import type { CuentaDelPanel, Location } from '@/lib/types';
+import { ADMIN_ROLE_LABELS, type CuentaDelPanel, type Location } from '@/lib/types';
 import { Ajustes } from './ajustes';
 import { Bitacora } from './bitacora';
 import { Calendario } from './calendario';
@@ -13,7 +13,7 @@ import { Usuarios } from './usuarios';
 import { CambiarContrasena } from './cambiar-contrasena';
 import { Importar } from './importar';
 import { LoginForm } from './login-form';
-import { Navegacion } from './navegacion';
+import { GRUPOS, Navegacion, type Pestana } from './navegacion';
 import { Padron } from './padron';
 import { Reportes } from './reportes';
 import { RolDelMes } from './rol-del-mes';
@@ -27,19 +27,34 @@ import { TurnosFijos } from './turnos-fijos';
  * abra una pantalla que va a rechazarle cada petición.
  */
 const PESTANAS = [
-  { id: 'tablero', etiqueta: 'Tablero' },
-  { id: 'encuesta', etiqueta: 'Encuesta', whatsapp: true },
-  { id: 'confirmaciones', etiqueta: 'Mensaje Confirmación', whatsapp: true },
-  { id: 'rol', etiqueta: 'Rol del mes', whatsapp: true },
-  { id: 'calendario', etiqueta: 'Calendario' },
-  { id: 'padron', etiqueta: 'Padrón' },
-  { id: 'turnos-fijos', etiqueta: 'Turnos fijos' },
-  { id: 'reportes', etiqueta: 'Reportes' },
-  { id: 'bitacora', etiqueta: 'Bitácora' },
-  { id: 'usuarios', etiqueta: 'Usuarios', soloAdmin: true },
-  { id: 'importar', etiqueta: 'Importar', soloAdmin: true },
-  { id: 'ajustes', etiqueta: 'Ajustes', soloAdmin: true },
-] as const;
+  { id: 'tablero', etiqueta: 'Tablero', grupo: 'operacion' },
+  { id: 'calendario', etiqueta: 'Calendario', grupo: 'operacion' },
+  {
+    id: 'encuesta',
+    etiqueta: 'Encuesta',
+    grupo: 'whatsapp',
+    descripcion: 'Turnos con lugar disponible para inscribirse',
+  },
+  {
+    id: 'confirmaciones',
+    etiqueta: 'Confirmaciones',
+    grupo: 'whatsapp',
+    descripcion: 'Mensaje para que cada quien confirme su turno',
+  },
+  {
+    id: 'rol',
+    etiqueta: 'Rol del mes',
+    grupo: 'whatsapp',
+    descripcion: 'Imágenes con turnos, nombres y teléfonos',
+  },
+  { id: 'padron', etiqueta: 'Participantes', grupo: 'personas' },
+  { id: 'turnos-fijos', etiqueta: 'Turnos fijos', grupo: 'personas' },
+  { id: 'reportes', etiqueta: 'Reportes', grupo: 'analisis' },
+  { id: 'bitacora', etiqueta: 'Bitácora', grupo: 'analisis' },
+  { id: 'usuarios', etiqueta: 'Usuarios', grupo: 'admin', soloAdmin: true },
+  { id: 'importar', etiqueta: 'Importar', grupo: 'admin', soloAdmin: true },
+  { id: 'ajustes', etiqueta: 'Ajustes', grupo: 'admin', soloAdmin: true },
+] as const satisfies readonly Pestana[];
 
 type PestanaId = (typeof PESTANAS)[number]['id'];
 
@@ -104,19 +119,16 @@ export default function Page() {
     setCuenta(null);
   }
 
-  // Cambiar la contraseña cierra todas las sesiones, incluida esta: hay que
-  // volver a entrar, y eso es justo lo que se busca.
-  if (cuenta?.mustChangePassword || cambiandoClave) {
+  // Una contraseña impuesta por un administrador bloquea todo lo demás: el
+  // servidor rechaza cualquier otra petición hasta cambiarla, así que no hay
+  // panel que mostrar detrás.
+  if (cuenta?.mustChangePassword) {
     return (
       <div className="panel">
         <header className="cabecera">
           <h1>Horarios del exhibidor</h1>
         </header>
-        <CambiarContrasena
-          obligatorio={cuenta?.mustChangePassword ?? false}
-          onListo={salir}
-          onCerrar={cambiandoClave ? () => setCambiandoClave(false) : undefined}
-        />
+        <CambiarContrasena obligatorio onListo={salir} />
       </div>
     );
   }
@@ -125,20 +137,11 @@ export default function Page() {
   const visibles = PESTANAS.filter(
     (item) => !('soloAdmin' in item && item.soloAdmin) || cuenta?.role === 'ADMIN',
   );
+  const actual = PESTANAS.find((item) => item.id === pestana);
+  const grupo = GRUPOS.find((item) => item.id === actual?.grupo);
 
   return (
-    <div className="panel">
-      <header className="cabecera">
-        <div>
-          <h1>{location ? `Horarios ${location.name}` : 'Horarios del exhibidor'}</h1>
-          <p className="tenue" style={{ margin: 0 }}>
-            {location
-              ? [location.address, location.timezone].filter(Boolean).join(' · ')
-              : 'Cargando punto…'}
-          </p>
-        </div>
-      </header>
-
+    <div className="armazon">
       <Navegacion
         pestanas={visibles}
         activa={pestana}
@@ -147,31 +150,55 @@ export default function Page() {
         locationId={locationId}
         onElegirLocation={setLocationId}
         nombre={cuenta?.perfil.fullName ?? session.name}
+        correo={cuenta?.email ?? null}
+        rol={cuenta ? ADMIN_ROLE_LABELS[cuenta.role] : null}
         onCambiarContrasena={() => setCambiandoClave(true)}
         onSalir={salir}
       />
 
-      {error && <div className="aviso error">{error}</div>}
+      <main className="contenido">
+        <header className="contenido-cabecera">
+          <p className="tenue">
+            {[grupo?.etiqueta, location?.name ?? 'Cargando punto…'].filter(Boolean).join(' · ')}
+          </p>
+          <h1>{actual?.etiqueta}</h1>
+        </header>
 
-      {location && (
-        <>
-          {pestana === 'tablero' && <Tablero locationId={location.id} />}
-          {pestana === 'encuesta' && <Encuesta locationId={location.id} />}
-          {pestana === 'confirmaciones' && <Confirmaciones locationId={location.id} />}
-          {pestana === 'rol' && <RolDelMes locationId={location.id} />}
-          {pestana === 'calendario' && (
-            <Calendario locationId={location.id} minCapacity={location.minCapacity} />
+        <div className="contenido-cuerpo">
+          {error && <div className="aviso error">{error}</div>}
+
+          {location && (
+            <>
+              {pestana === 'tablero' && <Tablero locationId={location.id} />}
+              {pestana === 'encuesta' && <Encuesta locationId={location.id} />}
+              {pestana === 'confirmaciones' && <Confirmaciones locationId={location.id} />}
+              {pestana === 'rol' && <RolDelMes locationId={location.id} />}
+              {pestana === 'calendario' && (
+                <Calendario locationId={location.id} minCapacity={location.minCapacity} />
+              )}
+              {pestana === 'padron' && <Padron locationId={location.id} />}
+              {pestana === 'turnos-fijos' && <TurnosFijos locationId={location.id} />}
+              {pestana === 'usuarios' && <Usuarios locationId={location.id} />}
+              {pestana === 'importar' && <Importar locationId={location.id} />}
+              {pestana === 'reportes' && <Reportes locationId={location.id} />}
+              {pestana === 'bitacora' && <Bitacora esAdmin={cuenta?.role === 'ADMIN'} />}
+              {pestana === 'ajustes' && (
+                <Ajustes location={location} onPuntoActualizado={cargarLocations} />
+              )}
+            </>
           )}
-          {pestana === 'padron' && <Padron locationId={location.id} />}
-          {pestana === 'turnos-fijos' && <TurnosFijos locationId={location.id} />}
-          {pestana === 'usuarios' && <Usuarios locationId={location.id} />}
-          {pestana === 'importar' && <Importar locationId={location.id} />}
-          {pestana === 'reportes' && <Reportes locationId={location.id} />}
-          {pestana === 'bitacora' && <Bitacora esAdmin={cuenta?.role === 'ADMIN'} />}
-          {pestana === 'ajustes' && (
-            <Ajustes location={location} onPuntoActualizado={cargarLocations} />
-          )}
-        </>
+        </div>
+      </main>
+
+      {/* Cambiar la contraseña cierra todas las sesiones, incluida esta: hay que
+          volver a entrar, y eso es justo lo que se busca. Como diálogo, quien se
+          arrepiente vuelve a donde estaba sin perder la pantalla. */}
+      {cambiandoClave && (
+        <CambiarContrasena
+          obligatorio={false}
+          onListo={salir}
+          onCerrar={() => setCambiandoClave(false)}
+        />
       )}
     </div>
   );
