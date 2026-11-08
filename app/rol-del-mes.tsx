@@ -230,7 +230,7 @@ function Persona({ persona }: { persona: PersonaDelRol }) {
     <div className="rol-persona">
       <div className="rol-nombre">
         {persona.name}
-        {persona.isCaptain && <span className="rol-capitan">Capitán</span>}
+        {persona.isCaptain && <span className="rol-capitan">(C)</span>}
       </div>
       <div className="rol-telefono">{persona.phone}</div>
     </div>
