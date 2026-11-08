@@ -985,21 +985,32 @@ pre.bloque {
 .rol-titulo { font-size: 34px; font-weight: 700; text-transform: capitalize; }
 .rol-subtitulo { color: var(--acento); font-weight: 600; font-size: 18px; text-align: right; }
 
-.rol-persona { padding: 4px 0; }
-.rol-nombre { font-weight: 600; }
-.rol-capitan { margin-left: 6px; font-size: 0.75em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; opacity: 0.75; }
+.rol-persona {
+  /* Nombre y teléfono en una línea: la imagen sale más corta y se lee de un
+     vistazo. Si un nombre no cabe, el teléfono baja en lugar de encimarse. */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 12px;
+  padding: 2px 0;
+}
+.rol-nombre { font-weight: 600; font-size: 16px; white-space: nowrap; }
+.rol-capitan { margin-left: 4px; font-size: 0.65em; font-weight: 400; opacity: 0.6; vertical-align: 1px; }
+.leyenda-capitan { background: var(--fondo); font-size: 0.9rem; display: flex; align-items: flex-start; gap: 0.5rem; }
+.leyenda-capitan input { margin: 0.2rem 0 0; flex: none; accent-color: var(--acento); pointer-events: none; }
 .rol-telefono {
+  white-space: nowrap;
   color: #5b6775;
   font-size: 15px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }
-.rol-falta { color: #7a6200; font-size: 15px; font-style: italic; padding: 4px 0; }
+.rol-falta { color: #7a6200; font-size: 15px; font-style: italic; padding: 2px 0; }
 
 .rol-hora {
   color: var(--acento);
   font-weight: 700;
-  font-size: 15px;
+  font-size: 14px;
   white-space: nowrap;
 }
 
@@ -1007,25 +1018,25 @@ pre.bloque {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
   border: 1px solid #dfe3e8;
 }
 .rol-tabla th {
   background: var(--acento);
   color: #ffffff;
-  font-size: 20px;
-  padding: 10px 14px;
+  font-size: 18px;
+  padding: 7px 12px;
   text-align: left;
 }
 .rol-fecha { font-weight: 400; }
 .rol-tabla td {
   border-top: 1px solid #dfe3e8;
-  padding: 8px 14px;
+  padding: 6px 10px;
   vertical-align: top;
   word-break: break-word;
 }
-.rol-col-hora { width: 160px; }
-.rol-tabla td.rol-hora { padding-top: 12px; }
+.rol-col-hora { width: 116px; }
+.rol-tabla td.rol-hora { padding: 8px 8px 6px 12px; }
 .rol-tabla tbody tr:nth-child(even) td { background: #f6f7f9; }
 
 .rol-pie { margin-top: 20px; color: #5b6775; font-size: 14px; text-align: right; }
