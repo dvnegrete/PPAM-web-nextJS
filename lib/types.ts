@@ -470,3 +470,34 @@ export interface CuentaDelPanel {
   participantId: string | null;
   perfil: PerfilDeCuenta;
 }
+
+/** Una persona en el rol del mes: «Ana María López», «55 1234 5678». */
+export interface PersonaDelRol {
+  name: string;
+  phone: string;
+}
+
+/** Un turno del rol: el horario, quién va y cuántos lugares faltan. */
+export interface TurnoDelRol {
+  startMinute: number;
+  range: string;
+  people: PersonaDelRol[];
+  missing: number;
+}
+
+/** «Lunes» (vale todo el mes) o «Primer sábado» con su fecha. */
+export interface DiaDelRol {
+  title: string;
+  subtitle: string | null;
+  slots: TurnoDelRol[];
+}
+
+/** Rol del mes para compartir en el grupo; lo arma `GET /locations/:id/roster`. */
+export interface RolMensual {
+  locationName: string;
+  year: number;
+  month: number;
+  monthLabel: string;
+  weekdays: DiaDelRol[];
+  weekends: DiaDelRol[];
+}
