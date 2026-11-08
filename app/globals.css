@@ -521,7 +521,21 @@ pre.bloque {
   font-size: 0.84rem;
   line-height: 1.3;
 }
-.celda-fija .titulares .nombre { overflow-wrap: anywhere; }
+.celda-fija .titulares .nombre { overflow-wrap: anywhere; flex: 1; }
+.celda-fija .capitan { flex: none; display: flex; align-items: center; cursor: pointer; }
+.celda-fija .capitan input { margin: 0; accent-color: var(--acento); }
+
+/* Marca discreta junto al nombre del capitán (turnos fijos y detalle del turno). */
+.insignia-capitan {
+  margin-left: 0.35rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  vertical-align: middle;
+  background: var(--acento-suave);
+  color: var(--acento);
+}
 
 .celda-fija .quitar {
   flex: none;
@@ -973,6 +987,7 @@ pre.bloque {
 
 .rol-persona { padding: 4px 0; }
 .rol-nombre { font-weight: 600; }
+.rol-capitan { margin-left: 6px; font-size: 0.75em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; opacity: 0.75; }
 .rol-telefono {
   color: #5b6775;
   font-size: 15px;

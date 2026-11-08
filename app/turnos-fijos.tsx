@@ -29,6 +29,7 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
   const [semana, setSemana] = useState(0);
   const [eligiendo, setEligiendo] = useState<RecurringSlot | null>(null);
   const [quitando, setQuitando] = useState<string | null>(null);
+  const [marcando, setMarcando] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
 
@@ -92,6 +93,20 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
     }
   }
 
+  /** Marcar a uno como capitán le quita la marca al anterior: lo resuelve el servidor. */
+  async function marcarCapitan(recurringId: string, isCaptain: boolean) {
+    setMarcando(recurringId);
+    setError(null);
+    try {
+      await api(`/recurring/${recurringId}/captain`, { method: 'PATCH', body: { isCaptain } });
+      await cargar();
+    } catch (problema) {
+      setError(problema instanceof Error ? problema.message : 'No se pudo marcar al capitán');
+    } finally {
+      setMarcando(null);
+    }
+  }
+
   const cargarCandidatos = useCallback(
     (templateId: string) => () =>
       api<RecurringCandidate[]>(`/locations/${locationId}/recurring/${templateId}/candidates`),
@@ -150,6 +165,8 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
             onAgregar={setEligiendo}
             onQuitar={(id) => void quitar(id)}
             quitando={quitando}
+            onCapitan={(id, valor) => void marcarCapitan(id, valor)}
+            marcando={marcando}
           />
         </div>
       )}
@@ -177,6 +194,8 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
             onAgregar={setEligiendo}
             onQuitar={(id) => void quitar(id)}
             quitando={quitando}
+            onCapitan={(id, valor) => void marcarCapitan(id, valor)}
+            marcando={marcando}
           />
         </div>
       )}
@@ -237,11 +256,15 @@ function Rejilla({
   onAgregar,
   onQuitar,
   quitando,
+  onCapitan,
+  marcando,
 }: {
   slots: RecurringSlot[];
   onAgregar: (slot: RecurringSlot) => void;
   onQuitar: (recurringId: string) => void;
   quitando: string | null;
+  onCapitan: (recurringId: string, isCaptain: boolean) => void;
+  marcando: string | null;
 }) {
   // Los días se ordenan empezando en lunes: es cómo se lee un horario, aunque en
   // la base el domingo sea el día 0.
@@ -304,7 +327,24 @@ function Rejilla({
                     <ul className="titulares">
                       {slot.holders.map((titular) => (
                         <li key={titular.recurringId}>
-                          <span className="nombre">{titular.name}</span>
+                          <label
+                            className={`capitan ${titular.isCaptain ? 'activo' : ''}`}
+                            title={titular.isCaptain ? 'Capitán del turno' : 'Marcar como capitán'}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={titular.isCaptain}
+                              disabled={marcando !== null}
+                              onChange={(evento) =>
+                                onCapitan(titular.recurringId, evento.target.checked)
+                              }
+                              aria-label={`${titular.name} es capitán de ${DIAS[dia]} ${range}`}
+                            />
+                          </label>
+                          <span className="nombre">
+                            {titular.name}
+                            {titular.isCaptain && <span className="insignia-capitan">Capitán</span>}
+                          </span>
                           <button
                             className="quitar"
                             onClick={() => onQuitar(titular.recurringId)}
