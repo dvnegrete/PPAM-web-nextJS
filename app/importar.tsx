@@ -34,7 +34,7 @@ const AYUDA: Record<Tipo, string> = {
   assignments:
     'Asigna turnos fijos: en qué franja atiende habitualmente cada persona. Una fila por franja, ' +
     'así que el mismo teléfono se repite tantas veces como turnos tenga. Las horas van en reloj de ' +
-    '24 horas (las tres de la tarde son 15:00). Las personas deben existir ya en el padrón y la ' +
+    '24 horas (las tres de la tarde son 15:00). Las personas deben estar ya entre los participantes y la ' +
     'franja debe estar configurada en el punto; puedes ver las que hay en la pestaña «Turnos fijos».',
 };
 
@@ -55,7 +55,7 @@ const GRUPOS: Record<Tipo, GrupoCampos[]> = {
           nombre: 'apellido_paterno',
           alias: ['apellido paterno', 'paternal_surname'],
           requerido: true,
-          que: 'Primer apellido. Con él se ordena el padrón.',
+          que: 'Primer apellido. Con él se ordena la lista de participantes.',
         },
         {
           nombre: 'apellido_materno',
@@ -175,8 +175,8 @@ const GRUPOS: Record<Tipo, GrupoCampos[]> = {
           nombre: 'telefono',
           alias: ['teléfono', 'phone'],
           requerido: true,
-          que: 'Identifica a la persona. Debe estar ya en el padrón.',
-          valores: 'Si el teléfono no existe, la fila falla: importa primero el padrón.',
+          que: 'Identifica a la persona. Debe estar ya entre los participantes.',
+          valores: 'Si el teléfono no existe, la fila falla: importa primero a los participantes.',
         },
         {
           nombre: 'dia',
@@ -299,7 +299,7 @@ export function Importar({ locationId }: { locationId: string }) {
               setResultado(null);
             }}
           >
-            <option value="participants">Padrón de participantes</option>
+            <option value="participants">Participantes</option>
             <option value="assignments">Asignaciones fijas (turnos habituales)</option>
           </select>
         </label>

@@ -180,8 +180,8 @@ export function GuardiaDeEncargados({ locationId }: { locationId: string }) {
 
       {supervisores.length === 0 && (
         <div className="aviso atencion">
-          Todavía no hay encargados. Da de alta una cuenta de encargado vinculada a alguien del
-          padrón y aparecerá aquí.
+          Todavía no hay encargados. Da de alta una cuenta de encargado vinculada a alguno de los
+          participantes y aparecerá aquí.
         </div>
       )}
     </details>

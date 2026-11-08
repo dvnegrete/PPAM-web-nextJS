@@ -186,7 +186,7 @@ export function EditarCuenta({
               <span className="tenue" style={{ marginTop: '0.2rem' }}>
                 {role === 'ADMIN'
                   ? 'Todo, incluidos ajustes, importación y cuentas.'
-                  : 'Tablero, calendario, encuesta y padrón.'}
+                  : 'Tablero, calendario, encuesta y participantes.'}
               </span>
             </label>
 
@@ -206,9 +206,9 @@ export function EditarCuenta({
         <fieldset className="grupo">
           <legend>Quién es</legend>
           <label>
-            <span>Del padrón (opcional)</span>
+            <span>Participante vinculado (opcional)</span>
             <select value={participantId} onChange={(e) => setParticipantId(e.target.value)}>
-              <option value="">No está en el padrón</option>
+              <option value="">No está entre los participantes</option>
               {padron.map((p) => (
                 <option key={p.id} value={p.id}>
                   {nombreFormal(p)}
@@ -219,12 +219,12 @@ export function EditarCuenta({
 
           {vinculada ? (
             <div className="aviso" style={{ background: 'var(--fondo)', marginBottom: 0 }}>
-              Sus datos son los de <strong>{persona ? nombreFormal(persona) : 'el padrón'}</strong>
+              Sus datos son los de <strong>{persona ? nombreFormal(persona) : 'su ficha de participante'}</strong>
               {persona?.phoneE164 && ` · ${persona.phoneE164}`}
               {persona?.congregation && ` · ${persona.congregation}`}.
               <br />
               <span className="tenue">
-                Se editan en la pestaña Padrón, no aquí: así el mismo dato no acaba con dos valores
+                Se editan en la pestaña Participantes, no aquí: así el mismo dato no acaba con dos valores
                 distintos.
               </span>
               {role === 'SUPERVISOR' && (
