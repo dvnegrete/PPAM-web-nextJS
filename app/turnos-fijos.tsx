@@ -145,7 +145,7 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
           </div>
           <div className="metrica">
             <span className="cifra">{datos?.padron.length ?? 0}</span>
-            <span className="rotulo">en el padrón del punto</span>
+            <span className="rotulo">participantes del punto</span>
           </div>
         </div>
       </details>
@@ -217,7 +217,7 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
 
       <details className="tarjeta">
         <summary style={{ cursor: 'pointer' }}>
-          Padrón del punto ({datos?.padron.length ?? 0}) · {sinTurno.length} sin turno fijo
+          Participantes del punto ({datos?.padron.length ?? 0}) · {sinTurno.length} sin turno fijo
         </summary>
         <table style={{ marginTop: '0.8rem' }}>
           <thead>
@@ -242,7 +242,7 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
           </tbody>
         </table>
         {(datos?.padron.length ?? 0) === 0 && (
-          <p className="tenue">Aún no hay nadie en el padrón de este punto. Usa la pestaña «Importar».</p>
+          <p className="tenue">Aún no hay participantes en este punto. Usa la pestaña «Importar».</p>
         )}
       </details>
 
@@ -412,7 +412,7 @@ function ElegirTitular({
       })
       .catch((problema: unknown) => {
         if (vigente) {
-          setError(problema instanceof Error ? problema.message : 'No se pudo cargar el padrón');
+          setError(problema instanceof Error ? problema.message : 'No se pudieron cargar los participantes');
         }
       })
       .finally(() => {
@@ -468,11 +468,11 @@ function ElegirTitular({
         </label>
 
         <div className="lista-candidatos">
-          {cargando && <p className="tenue">Cargando padrón…</p>}
+          {cargando && <p className="tenue">Cargando participantes…</p>}
           {!cargando && visibles.length === 0 && (
             <p className="tenue">
               {candidatos.length === 0
-                ? 'Todos los del padrón ya son titulares de esta franja.'
+                ? 'Todos los participantes ya son titulares de esta franja.'
                 : 'Nadie coincide con esa búsqueda.'}
             </p>
           )}

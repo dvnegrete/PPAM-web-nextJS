@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 
 interface Props {
@@ -19,6 +19,9 @@ const MINIMO = 8;
  * quedarse con la cuenta. Y al guardar, el servidor cierra **todas** las
  * sesiones —incluida esta—, así que hay que volver a entrar. Eso es lo que se
  * busca al cambiar una contraseña, pero conviene avisarlo antes.
+ *
+ * Cuando la pide la propia persona se abre como diálogo sobre la pantalla en que
+ * estaba; cuando es obligatoria ocupa la página, porque no hay nada detrás.
  */
 export function CambiarContrasena({ obligatorio, onListo, onCerrar }: Props) {
   const [actual, setActual] = useState('');
@@ -26,6 +29,15 @@ export function CambiarContrasena({ obligatorio, onListo, onCerrar }: Props) {
   const [repetida, setRepetida] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
+
+  useEffect(() => {
+    if (obligatorio || !onCerrar) return;
+    function alTeclear(evento: KeyboardEvent) {
+      if (evento.key === 'Escape') onCerrar?.();
+    }
+    document.addEventListener('keydown', alTeclear);
+    return () => document.removeEventListener('keydown', alTeclear);
+  }, [obligatorio, onCerrar]);
 
   const corta = nueva.length > 0 && nueva.length < MINIMO;
   const noCoinciden = repetida.length > 0 && nueva !== repetida;
@@ -43,9 +55,9 @@ export function CambiarContrasena({ obligatorio, onListo, onCerrar }: Props) {
     }
   }
 
-  return (
-    <div className="tarjeta" style={{ maxWidth: 440, margin: '0 auto' }}>
-      <h3>{obligatorio ? 'Cambia tu contraseña para continuar' : 'Cambiar mi contraseña'}</h3>
+  const formulario = (
+    <>
+      <h3>{obligatorio ? 'Cambia tu contraseña para continuar' : 'Mi contraseña'}</h3>
       <p className="tenue">
         {obligatorio
           ? 'La que tienes la puso un administrador, así que alguien más la conoce. Elige una propia antes de entrar.'
@@ -96,12 +108,34 @@ export function CambiarContrasena({ obligatorio, onListo, onCerrar }: Props) {
       <div className="dialogo-acciones">
         {!obligatorio && onCerrar && (
           <button onClick={onCerrar} disabled={ocupado}>
-            Volver
+            Cancelar
           </button>
         )}
         <button className="primario" onClick={() => void guardar()} disabled={ocupado || !listo}>
-          {ocupado ? 'Guardando…' : 'Cambiar contraseña'}
+          {ocupado ? 'Guardando…' : obligatorio ? 'Cambiar contraseña' : 'Guardar y volver a entrar'}
         </button>
+      </div>
+    </>
+  );
+
+  if (obligatorio) {
+    return (
+      <div className="tarjeta" style={{ maxWidth: 440, margin: '0 auto' }}>
+        {formulario}
+      </div>
+    );
+  }
+
+  return (
+    <div className="telon" onClick={ocupado ? undefined : onCerrar}>
+      <div
+        className="dialogo"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Mi contraseña"
+        onClick={(evento) => evento.stopPropagation()}
+      >
+        {formulario}
       </div>
     </div>
   );

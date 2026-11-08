@@ -186,7 +186,7 @@ export const CATEGORIAS_BITACORA = [
   { id: 'turnos', etiqueta: 'Turnos y asignaciones' },
   { id: 'cobertura', etiqueta: 'Coberturas' },
   { id: 'encargados', etiqueta: 'Encargados y solicitudes' },
-  { id: 'padron', etiqueta: 'Padrón' },
+  { id: 'padron', etiqueta: 'Participantes' },
   { id: 'turnos_fijos', etiqueta: 'Turnos fijos' },
   { id: 'mensajes', etiqueta: 'Preguntas por WhatsApp' },
   { id: 'importaciones', etiqueta: 'Importaciones' },

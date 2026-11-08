@@ -50,7 +50,7 @@ export function AgregarParticipante({
       })
       .catch((problema: unknown) => {
         if (vigente) {
-          setError(problema instanceof Error ? problema.message : 'No se pudo cargar el padrón');
+          setError(problema instanceof Error ? problema.message : 'No se pudieron cargar los participantes');
         }
       })
       .finally(() => {
@@ -137,7 +137,7 @@ export function AgregarParticipante({
             }}
           />
           <span>
-            No está en el padrón de este punto. Viene de otro, y así el turno no se queda
+            No es participante de este punto. Viene de otro, y así el turno no se queda
             descubierto.
           </span>
         </label>
@@ -198,7 +198,7 @@ export function AgregarParticipante({
             </label>
 
             <div className="lista-candidatos">
-              {cargando && <p className="tenue">Cargando padrón…</p>}
+              {cargando && <p className="tenue">Cargando participantes…</p>}
               {!cargando && visibles.length === 0 && (
                 <p className="tenue">
                   {candidatos.length === 0
@@ -218,7 +218,7 @@ export function AgregarParticipante({
 
               {yaCubrieron.length > 0 && (
                 <>
-                  <p className="grupo-candidatos">Ya han cubierto antes, sin estar en el padrón</p>
+                  <p className="grupo-candidatos">Ya han cubierto antes, sin ser participantes del punto</p>
                   {yaCubrieron.map((persona) => (
                     <Candidato
                       key={persona.id}
