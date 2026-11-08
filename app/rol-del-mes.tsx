@@ -282,9 +282,17 @@ function columnasPara(dias: DiaDelRol[]): number {
 }
 
 /** Un día con una fila por turno y una columna por persona. */
-function BloqueDia({ dia, columnas }: { dia: DiaDelRol; columnas: number }) {
+function BloqueDia({
+  dia,
+  columnas,
+  verde = false,
+}: {
+  dia: DiaDelRol;
+  columnas: number;
+  verde?: boolean;
+}) {
   return (
-    <table className="rol-tabla">
+    <table className={`rol-tabla ${verde ? 'semana-verde' : ''}`}>
       {/* Con `table-layout: fixed` los anchos salen de aquí, no del encabezado. */}
       <colgroup>
         <col className="rol-col-hora" />
@@ -337,13 +345,28 @@ function ImagenEntreSemana({ rol }: { rol: RolMensual }) {
   );
 }
 
+/**
+ * Alterna azul y verde por semana del mes, empezando en azul: «Primer sábado» y
+ * «Primer domingo» van en azul, los segundos en verde, y así. La semana sale del
+ * ordinal del título, que es como el servidor ya los agrupa y ordena.
+ */
+function semanasEnVerde(dias: DiaDelRol[]): boolean[] {
+  const ordinales: string[] = [];
+  return dias.map((dia) => {
+    const ordinal = dia.title.split(' ')[0];
+    if (!ordinales.includes(ordinal)) ordinales.push(ordinal);
+    return ordinales.indexOf(ordinal) % 2 === 1;
+  });
+}
+
 function ImagenFinDeSemana({ rol }: { rol: RolMensual }) {
   const columnas = columnasPara(rol.weekends);
+  const verdes = semanasEnVerde(rol.weekends);
   return (
     <>
       <Encabezado rol={rol} subtitulo="Sábados y domingos" />
-      {rol.weekends.map((dia) => (
-        <BloqueDia key={dia.title} dia={dia} columnas={columnas} />
+      {rol.weekends.map((dia, indice) => (
+        <BloqueDia key={dia.title} dia={dia} columnas={columnas} verde={verdes[indice]} />
       ))}
       <PieDeImagen />
     </>

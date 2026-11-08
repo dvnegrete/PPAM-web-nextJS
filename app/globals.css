@@ -1245,5 +1245,10 @@ pre.bloque {
 .rol-col-hora { width: 116px; }
 .rol-tabla td.rol-hora { padding: 8px 8px 6px 12px; }
 .rol-tabla tbody tr:nth-child(even) td { background: var(--rol-franja); }
+/* Fines de semana: las semanas pares van en verde para separar una de otra. */
+.rol-tabla.semana-verde {
+  --rol-color: var(--acento);
+  --rol-franja: #f2f8f4;
+}
 
 .rol-pie { margin-top: 20px; color: #5b6775; font-size: 14px; text-align: right; }
