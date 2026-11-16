@@ -286,10 +286,13 @@ function BloqueDia({
   dia,
   columnas,
   verde = false,
+  markAvailable = false,
 }: {
   dia: DiaDelRol;
   columnas: number;
   verde?: boolean;
+  /** Añade el asterisco que remite a la nota bajo el encabezado. */
+  markAvailable?: boolean;
 }) {
   return (
     <table className={`rol-tabla ${verde ? 'semana-verde' : ''}`}>
@@ -320,7 +323,9 @@ function BloqueDia({
                   {persona ? (
                     <Persona persona={persona} />
                   ) : (
-                    libre && <div className="rol-falta">Lugar disponible</div>
+                    libre && (
+                      <div className="rol-falta">Lugar disponible{markAvailable && '*'}</div>
+                    )
                   )}
                 </td>
               );
@@ -359,14 +364,28 @@ function semanasEnVerde(dias: DiaDelRol[]): boolean[] {
   });
 }
 
+/**
+ * En fin de semana un lugar puede salir libre solo en una fecha, porque su
+ * titular avisó que no va. La nota evita que se lea como un turno sin titular.
+ */
+const AVAILABLE_SPOT_NOTE =
+  '* Lugar disponible generalmente por una cancelación que un participante ha registrado anteriormente. ' +
+  'No disponible de forma permanente.';
+
 function ImagenFinDeSemana({ rol }: { rol: RolMensual }) {
   const columnas = columnasPara(rol.weekends);
   const verdes = semanasEnVerde(rol.weekends);
+  // La nota solo acompaña a la imagen si de verdad hay algún lugar marcado.
+  const hasAvailableSpots = rol.weekends.some((dia) => dia.slots.some((turno) => turno.missing > 0));
   return (
     <>
       <Encabezado rol={rol} subtitulo="Sábados y domingos" />
+      {hasAvailableSpots && <p className="rol-note">{AVAILABLE_SPOT_NOTE}</p>}
       {rol.weekends.map((dia, indice) => (
-        <BloqueDia key={dia.title} dia={dia} columnas={columnas} verde={verdes[indice]} />
+        <BloqueDia key={dia.title} dia={dia} columnas={columnas}
+          verde={verdes[indice]}
+          markAvailable
+        />
       ))}
       <PieDeImagen />
     </>
