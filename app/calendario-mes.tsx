@@ -73,7 +73,7 @@ export function CalendarioMes({
   }
 
   return (
-    <div className="calendario">
+    <div className="calendario seccion-color azul">
       <div className="calendario-cabecera">
         <button onClick={() => mover(-1)} aria-label="Mes anterior">
           ‹

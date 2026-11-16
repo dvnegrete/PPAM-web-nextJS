@@ -13,6 +13,21 @@ const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', '
 const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const ORDINALES = ['', '1.ª', '2.ª', '3.ª', '4.ª', '5.ª'];
 
+/** A quién se está por quitar y de qué franja, para decirlo en la confirmación. */
+interface PendingRemoval {
+  recurringId: string;
+  name: string;
+  when: string;
+}
+
+/** «Lunes · 7:00 a 9:00 am · todas las semanas». */
+function describeSlot(slot: RecurringSlot): string {
+  const range = rango12h(slot.startMinute, slot.endMinute);
+  return slot.weekOfMonth === 0
+    ? `${DIAS[slot.weekday]} · ${range} · todas las semanas`
+    : `${DIAS[slot.weekday]} · ${range} · ${ORDINALES[slot.weekOfMonth]} semana del mes`;
+}
+
 /**
  * Turnos fijos: quién atiende habitualmente cada franja.
  *
@@ -29,6 +44,9 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
   const [semana, setSemana] = useState(0);
   const [eligiendo, setEligiendo] = useState<RecurringSlot | null>(null);
   const [quitando, setQuitando] = useState<string | null>(null);
+  // Quitar pide confirmación: la «×» queda junto a la casilla del capitán y un
+  // toque en falso dejaría a alguien sin su turno en los meses siguientes.
+  const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval | null>(null);
   const [marcando, setMarcando] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -80,11 +98,23 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
     await cargar();
   }
 
+  /** Abre la confirmación con el nombre y la franja, para que se lea a quién se quita. */
+  function requestRemoval(recurringId: string) {
+    for (const slot of datos?.slots ?? []) {
+      const holder = slot.holders.find((item) => item.recurringId === recurringId);
+      if (holder) {
+        setPendingRemoval({ recurringId, name: holder.name, when: describeSlot(slot) });
+        return;
+      }
+    }
+  }
+
   async function quitar(recurringId: string) {
     setQuitando(recurringId);
     setError(null);
     try {
       await api(`/recurring/${recurringId}`, { method: 'DELETE' });
+      setPendingRemoval(null);
       await cargar();
     } catch (problema) {
       setError(problema instanceof Error ? problema.message : 'No se pudo quitar');
@@ -123,7 +153,7 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
     <section>
       {error && <div className="aviso error">{error}</div>}
 
-      <details className="tarjeta resumen-plegable">
+      <details className="tarjeta resumen-plegable seccion-color naranja">
         <summary>
           <span className="titulo">Resumen de titulares</span>
           <span className="cifras-resumen">
@@ -150,28 +180,29 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
         </div>
       </details>
 
-      <p className="tenue" style={{ marginBottom: '1rem' }}>
-        Al generar el calendario de un mes, cada titular queda sentado en todas las ocurrencias de su
-        franja. Quitar a alguien de aquí no toca los turnos ya generados: solo cambia lo que se
-        materialice de ahora en adelante.
-      </p>
-
-      <p className="aviso leyenda-capitan" style={{ marginBottom: '1rem' }}>
-        <input type="checkbox" checked readOnly tabIndex={-1} aria-hidden="true" />
-        <span>
-          La casilla antes de cada nombre marca al <strong>capitán del turno</strong>. Marca solo a
-          un participante por turno: si marcas a otro, el anterior deja de ser capitán.
-        </span>
-      </p>
+      <details className="tarjeta plegable">
+        <summary>Cómo funciona</summary>
+        <p className="tenue">
+          Al generar el calendario de un mes, cada titular queda en todas las fechas de su franja.
+          Quitar a alguien aquí no toca los turnos ya generados.
+        </p>
+        <p className="aviso leyenda-capitan" style={{ marginBottom: 0 }}>
+          <input type="checkbox" checked readOnly tabIndex={-1} aria-hidden="true" />
+          <span>
+            La casilla antes de cada nombre marca al <strong>capitán del turno</strong>: solo uno
+            por turno. Si marcas a otro, el anterior deja de serlo.
+          </span>
+        </p>
+      </details>
 
       {bloques.semanales.length > 0 && (
-        <div className="tarjeta" style={{ marginBottom: '1rem' }}>
+        <div className="tarjeta seccion-color verde" style={{ marginBottom: '1rem' }}>
           <h3>Todas las semanas</h3>
-          <p className="tenue">Estas franjas se repiten cada semana del mes.</p>
+          <p className="tenue">Se repiten cada semana del mes.</p>
           <Rejilla
             slots={bloques.semanales}
             onAgregar={setEligiendo}
-            onQuitar={(id) => void quitar(id)}
+            onQuitar={requestRemoval}
             quitando={quitando}
             onCapitan={(id, valor) => void marcarCapitan(id, valor)}
             marcando={marcando}
@@ -180,12 +211,9 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
       )}
 
       {bloques.semanasDisponibles.length > 0 && (
-        <div className="tarjeta" style={{ marginBottom: '1rem' }}>
+        <div className="tarjeta seccion-color azul" style={{ marginBottom: '1rem' }}>
           <h3>Por semana del mes</h3>
-          <p className="tenue">
-            Estas franjas cambian según el ordinal de la semana: el primer sábado puede tener otros
-            titulares que el segundo.
-          </p>
+          <p className="tenue">El primer sábado puede tener otros titulares que el segundo.</p>
           <div className="segmentado" style={{ margin: '0.6rem 0 0.9rem' }}>
             {bloques.semanasDisponibles.map((numero) => (
               <button
@@ -200,7 +228,7 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
           <Rejilla
             slots={bloques.ordinales.filter((slot) => slot.weekOfMonth === semana)}
             onAgregar={setEligiendo}
-            onQuitar={(id) => void quitar(id)}
+            onQuitar={requestRemoval}
             quitando={quitando}
             onCapitan={(id, valor) => void marcarCapitan(id, valor)}
             marcando={marcando}
@@ -215,9 +243,13 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
         </div>
       )}
 
-      <details className="tarjeta">
-        <summary style={{ cursor: 'pointer' }}>
-          Participantes del punto ({datos?.padron.length ?? 0}) · {sinTurno.length} sin turno fijo
+      <details className="tarjeta plegable seccion-color morado">
+        <summary>
+          Participantes del punto
+          <span className="etiqueta">{datos?.padron.length ?? 0}</span>
+          {sinTurno.length > 0 && (
+            <span className="etiqueta faltante">{sinTurno.length} sin turno fijo</span>
+          )}
         </summary>
         <table style={{ marginTop: '0.8rem' }}>
           <thead>
@@ -245,6 +277,40 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
           <p className="tenue">Aún no hay participantes en este punto. Usa la pestaña «Importar».</p>
         )}
       </details>
+
+      {pendingRemoval && (
+        <div
+          className="telon"
+          role="alertdialog"
+          aria-modal="true"
+          aria-label="Quitar turno fijo"
+        >
+          <div className="dialogo">
+            <h3>¿Por favor confirma que deseas eliminar este turno fijo?</h3>
+            <p>
+              <strong>{pendingRemoval.name}</strong> dejará de ser titular de:
+            </p>
+            <p className="aviso atencion">{pendingRemoval.when}</p>
+            <p className="tenue">
+              Los turnos ya generados no cambian; solo deja de aparecer en los meses que se generen
+              después.
+            </p>
+            {error && <div className="aviso error">{error}</div>}
+            <div className="dialogo-acciones">
+              <button onClick={() => setPendingRemoval(null)} disabled={quitando !== null} autoFocus>
+                No, conservar
+              </button>
+              <button
+                className="danger"
+                onClick={() => void quitar(pendingRemoval.recurringId)}
+                disabled={quitando !== null}
+              >
+                {quitando ? 'Quitando…' : 'Sí, quitar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {eligiendo && (
         <ElegirTitular
@@ -290,7 +356,17 @@ function Rejilla({
   }
 
   return (
-    <div className="rejilla-fijos-envoltura">
+    <>
+      <DayList
+        slots={slots}
+        days={dias}
+        onAgregar={onAgregar}
+        onQuitar={onQuitar}
+        quitando={quitando}
+        onCapitan={onCapitan}
+        marcando={marcando}
+      />
+      <div className="rejilla-fijos-envoltura fixed-grid-wide">
       <table className="rejilla-fijos">
         <thead>
           <tr>
@@ -319,61 +395,15 @@ function Rejilla({
                 }
                 return (
                   <td key={dia} className="celda-fija">
-                    <div className="cupo">
-                      <span
-                        className={`etiqueta ${
-                          slot.freeSlots === 0
-                            ? 'completo'
-                            : slot.holders.length === 0
-                              ? 'critico'
-                              : 'faltante'
-                        }`}
-                      >
-                        {slot.holders.length}/{slot.capacity}
-                      </span>
-                    </div>
-                    <ul className="titulares">
-                      {slot.holders.map((titular) => (
-                        <li key={titular.recurringId}>
-                          <label
-                            className={`capitan ${titular.isCaptain ? 'activo' : ''}`}
-                            title={titular.isCaptain ? 'Capitán del turno' : 'Marcar como capitán'}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={titular.isCaptain}
-                              disabled={marcando !== null}
-                              onChange={(evento) =>
-                                onCapitan(titular.recurringId, evento.target.checked)
-                              }
-                              aria-label={`${titular.name} es capitán de ${DIAS[dia]} ${range}`}
-                            />
-                          </label>
-                          <span className="nombre">
-                            {titular.name}
-                            {titular.isCaptain && <span className="insignia-capitan">Capitán</span>}
-                          </span>
-                          <button
-                            className="quitar"
-                            onClick={() => onQuitar(titular.recurringId)}
-                            disabled={quitando === titular.recurringId}
-                            aria-label={`Quitar a ${titular.name} de ${DIAS[dia]} ${range}`}
-                            title={`Quitar a ${titular.name}`}
-                          >
-                            ×
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                    {slot.freeSlots > 0 && (
-                      <button
-                        className="agregar-titular"
-                        onClick={() => onAgregar(slot)}
-                        aria-label={`Agregar titular a ${DIAS[dia]} ${range}`}
-                      >
-                        + Agregar
-                      </button>
-                    )}
+                    <SlotHolders
+                      slot={slot}
+                      label={`${DIAS[dia]} ${range}`}
+                      onAgregar={onAgregar}
+                      onQuitar={onQuitar}
+                      quitando={quitando}
+                      onCapitan={onCapitan}
+                      marcando={marcando}
+                    />
                   </td>
                 );
               })}
@@ -381,6 +411,159 @@ function Rejilla({
           ))}
         </tbody>
       </table>
+      </div>
+    </>
+  );
+}
+
+interface SlotActions {
+  onAgregar: (slot: RecurringSlot) => void;
+  onQuitar: (recurringId: string) => void;
+  quitando: string | null;
+  onCapitan: (recurringId: string, isCaptain: boolean) => void;
+  marcando: string | null;
+}
+
+/** Clase de la etiqueta de cupo: completo, a medias o sin nadie. */
+function capacityClass(slot: RecurringSlot): string {
+  if (slot.freeSlots === 0) return 'completo';
+  return slot.holders.length === 0 ? 'critico' : 'faltante';
+}
+
+/**
+ * Los titulares de una franja, con sus controles. Es el mismo contenido en la
+ * rejilla ancha y en la lista por día, para que editar sea igual en ambas.
+ */
+function SlotHolders({
+  slot,
+  label,
+  showCapacity = true,
+  onAgregar,
+  onQuitar,
+  quitando,
+  onCapitan,
+  marcando,
+}: SlotActions & { slot: RecurringSlot; label: string; showCapacity?: boolean }) {
+  return (
+    <>
+      {showCapacity && (
+        <div className="cupo">
+          <span className={`etiqueta ${capacityClass(slot)}`}>
+            {slot.holders.length}/{slot.capacity}
+          </span>
+        </div>
+      )}
+      <ul className="titulares">
+        {slot.holders.map((titular) => (
+          <li key={titular.recurringId}>
+            <label
+              className={`capitan ${titular.isCaptain ? 'activo' : ''}`}
+              title={titular.isCaptain ? 'Capitán del turno' : 'Marcar como capitán'}
+            >
+              <input
+                type="checkbox"
+                checked={titular.isCaptain}
+                disabled={marcando !== null}
+                onChange={(evento) => onCapitan(titular.recurringId, evento.target.checked)}
+                aria-label={`${titular.name} es capitán de ${label}`}
+              />
+            </label>
+            <span className="nombre">
+              {titular.name}
+              {titular.isCaptain && <span className="insignia-capitan">Capitán</span>}
+            </span>
+            <button
+              className="quitar"
+              onClick={() => onQuitar(titular.recurringId)}
+              disabled={quitando === titular.recurringId}
+              aria-label={`Quitar a ${titular.name} de ${label}`}
+              title={`Quitar a ${titular.name}`}
+            >
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
+      {slot.freeSlots > 0 && (
+        <button
+          className="agregar-titular"
+          onClick={() => onAgregar(slot)}
+          aria-label={`Agregar titular a ${label}`}
+        >
+          + Agregar
+        </button>
+      )}
+    </>
+  );
+}
+
+/**
+ * La misma rejilla para pantallas angostas: se elige un día y sus franjas van
+ * una debajo de otra. Cinco columnas con tres nombres cada una no caben sin
+ * desplazarse de lado; un día a la vez, sí.
+ */
+function DayList({
+  slots,
+  days,
+  ...actions
+}: SlotActions & { slots: RecurringSlot[]; days: number[] }) {
+  const [selectedDay, setSelectedDay] = useState(days[0]);
+  // Al cambiar de semana pueden cambiar los días disponibles.
+  const activeDay = days.includes(selectedDay) ? selectedDay : days[0];
+  const daySlots = slots
+    .filter((slot) => slot.weekday === activeDay)
+    .sort((a, b) => a.startMinute - b.startMinute);
+
+  return (
+    <div className="fixed-day-list">
+      <div className="fixed-day-tabs" role="tablist" aria-label="Día">
+        {days.map((day) => {
+          const ofDay = slots.filter((slot) => slot.weekday === day);
+          const free = ofDay.reduce((sum, slot) => sum + slot.freeSlots, 0);
+          return (
+            <button
+              key={day}
+              role="tab"
+              aria-selected={day === activeDay}
+              className={day === activeDay ? 'primario' : ''}
+              onClick={() => setSelectedDay(day)}
+            >
+              {DIAS_CORTOS[day]}
+              {free > 0 && <span className="fixed-day-free">{free}</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="tenue fixed-day-title">
+        {DIAS[activeDay]}
+        {' · '}
+        {daySlots.reduce((sum, slot) => sum + slot.freeSlots, 0) === 0
+          ? 'todos los lugares con titular'
+          : 'el número indica lugares sin titular'}
+      </p>
+
+      <ul className="fixed-slots">
+        {daySlots.map((slot) => {
+          const range = rango12h(slot.startMinute, slot.endMinute);
+          return (
+            <li key={slot.templateId} className={`fixed-slot celda-fija ${capacityClass(slot)}`}>
+              <div className="fixed-slot-header">
+                <strong>{range}</strong>
+                <span className={`etiqueta ${capacityClass(slot)}`}>
+                  {slot.holders.length}/{slot.capacity}
+                </span>
+              </div>
+              <SlotHolders
+                slot={slot}
+                label={`${DIAS[activeDay]} ${range}`}
+                showCapacity={false}
+                {...actions}
+              />
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
@@ -441,11 +624,7 @@ function ElegirTitular({
     }
   }
 
-  const horario = rango12h(slot.startMinute, slot.endMinute);
-  const cuando =
-    slot.weekOfMonth === 0
-      ? `${DIAS[slot.weekday]} · ${horario} · todas las semanas`
-      : `${DIAS[slot.weekday]} · ${horario} · ${ORDINALES[slot.weekOfMonth]} semana del mes`;
+  const cuando = describeSlot(slot);
 
   return (
     <div className="telon" role="dialog" aria-modal="true" aria-label="Asignar turno fijo">

@@ -14,6 +14,14 @@ function enDias(dias: number): string {
   return fecha.toISOString().slice(0, 10);
 }
 
+/** «16 nov», a partir de AAAA-MM-DD, sin pasar por zonas horarias. */
+function diaCorto(fecha: string): string {
+  const [, mes, dia] = fecha.split('-');
+  return `${Number(dia)} ${MESES[Number(mes) - 1] ?? ''}`;
+}
+
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
 export function Encuesta({ locationId }: { locationId: string }) {
   const [desde, setDesde] = useState(enDias(0));
   const [hasta, setHasta] = useState(enDias(7));
@@ -46,12 +54,20 @@ export function Encuesta({ locationId }: { locationId: string }) {
 
   return (
     <section>
-      <div className="tarjeta" style={{ marginBottom: '1rem' }}>
-        <h3>Convocatoria para el grupo</h3>
-        <p className="tenue">
-          El sistema arma el texto con los turnos que necesitan gente. La encuesta se publica y se
-          responde en WhatsApp como siempre; aquí solo se prepara para no transcribirla a mano.
-        </p>
+      <p className="tenue encuesta-intro">Copia cada parte y pégala en WhatsApp.</p>
+
+      {/* Plegado: casi siempre sirve el periodo por omisión, y abierto empujaba
+          la pregunta y las opciones fuera de la primera pantalla del teléfono. */}
+      <details className="tarjeta plegable">
+        <summary>
+          Periodo
+          <span className="etiqueta">
+            {diaCorto(desde)} – {diaCorto(hasta)}
+          </span>
+          <span className="etiqueta">
+            {nivel === 'cupo' ? 'Turnos incompletos' : 'Solo los críticos'}
+          </span>
+        </summary>
 
         <div className="filtros-encuesta">
           <label>
@@ -89,7 +105,7 @@ export function Encuesta({ locationId }: { locationId: string }) {
             Próximos 14 días
           </button>
         </div>
-      </div>
+      </details>
 
       {error && <div className="aviso error">{error}</div>}
       {cargando && <p className="tenue">Generando…</p>}
@@ -110,7 +126,7 @@ export function Encuesta({ locationId }: { locationId: string }) {
             </div>
           ) : (
             <>
-              <div className="tarjeta" style={{ marginBottom: '1rem' }}>
+              <div className="tarjeta seccion-color verde" style={{ marginBottom: '1rem' }}>
                 <h3>1. Pregunta de la encuesta</h3>
                 <div className="copiable">
                   <code>{borrador.question}</code>
@@ -118,7 +134,7 @@ export function Encuesta({ locationId }: { locationId: string }) {
                 </div>
               </div>
 
-              <div className="tarjeta" style={{ marginBottom: '1rem' }}>
+              <div className="tarjeta seccion-color azul" style={{ marginBottom: '1rem' }}>
                 <h3>2. Opciones</h3>
                 <p className="tenue">
                   WhatsApp pide capturarlas una por una, así que cada línea tiene su propio botón.
@@ -133,7 +149,7 @@ export function Encuesta({ locationId }: { locationId: string }) {
                 ))}
               </div>
 
-              <div className="tarjeta" style={{ marginBottom: '1rem' }}>
+              <div className="tarjeta seccion-color morado" style={{ marginBottom: '1rem' }}>
                 <h3>¿Prefieres un mensaje normal?</h3>
                 <p className="tenue">
                   Todo junto en un bloque, para pegarlo como mensaje de texto en vez de encuesta.
@@ -142,7 +158,7 @@ export function Encuesta({ locationId }: { locationId: string }) {
                 <BotonCopiar texto={borrador.plainText} etiqueta="Copiar todo el mensaje" />
               </div>
 
-              <div className="tarjeta">
+              <div className="tarjeta seccion-color naranja">
                 <h3>Mensaje para el grupo Suplencias</h3>
                 <p className="tenue">
                   Los mismos turnos, pedidos como apoyo y diciendo dónde está el exhibidor: en ese

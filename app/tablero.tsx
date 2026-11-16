@@ -228,12 +228,79 @@ export function Tablero({ locationId }: { locationId: string }) {
         </button>
       </div>
 
+      {!cargando && vista === 'calendario' && datos && (
+        <div className="calendario-con-detalle">
+          <CalendarioMes
+            year={mes.year}
+            month={mes.month}
+            days={datos.days}
+            seleccionado={diaAbierto}
+            onSeleccionar={(fecha) => {
+              setDiaAbierto(fecha === diaAbierto ? null : fecha);
+              setHistorialDe(null);
+            }}
+            onCambiarMes={(year, month) => {
+              setMes({ year, month });
+              setDiaAbierto(null);
+            }}
+          />
+
+          <div className="detalle-dia">
+            {diaDetalle ? (
+              <div className="tarjeta dia seccion-color verde">
+                <h3>{diaDetalle.label}</h3>
+                {diaDetalle.shifts.map((turno) => (
+                  <TurnoDetalle
+                    key={turno.id}
+                    turno={turno}
+                    etiquetaDia={diaDetalle.label}
+                    historialAbierto={historialDe === turno.id}
+                    onAlternarHistorial={() =>
+                      setHistorialDe(historialDe === turno.id ? null : turno.id)
+                    }
+                    onCancelar={abrirCancelacion(
+                      turno,
+                      `${diaDetalle.label}, ${rangoTurno(turno)}`,
+                    )}
+                    onAgregar={() => setAgregando(turno)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="tarjeta vacio seccion-color verde">
+                <p className="tenue">
+                  Toca un día del calendario para ver sus turnos y a quién le toca.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {movimientos.length > 0 && (
+        <details className="tarjeta actividad seccion-color morado">
+          <summary>
+            Actividad reciente · lo último fue {movimientos[0].description.toLowerCase()}
+          </summary>
+          <ul className="lista-movimientos">
+            {movimientos.map((movimiento) => (
+              <li key={movimiento.id}>
+                <span>{movimiento.description}</span>
+                <span className="tenue">
+                  {fechaCorta(movimiento.at)} · registró {movimiento.by}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+
       {resumen && (
         /* Colapsado por omisión, también en pantalla de PC: al entrar, lo que
            tiene que verse es el calendario, no cuatro tarjetas de cifras. El
            propio resumen lleva los números, así que no hay que abrirlo para
            saber si algo va mal. */
-        <details className="tarjeta resumen-plegable">
+        <details className="tarjeta resumen-plegable seccion-color naranja">
           <summary>
             <span className="titulo">Resumen del periodo</span>
             <span className="cifras-resumen">
@@ -269,75 +336,8 @@ export function Tablero({ locationId }: { locationId: string }) {
         </details>
       )}
 
-      {movimientos.length > 0 && (
-        <details className="tarjeta actividad">
-          <summary>
-            Actividad reciente · lo último fue {movimientos[0].description.toLowerCase()}
-          </summary>
-          <ul className="lista-movimientos">
-            {movimientos.map((movimiento) => (
-              <li key={movimiento.id}>
-                <span>{movimiento.description}</span>
-                <span className="tenue">
-                  {fechaCorta(movimiento.at)} · registró {movimiento.by}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
-
       {cargando && <p className="tenue">Cargando…</p>}
-
-      {!cargando && vista === 'calendario' && datos && (
-        <div className="calendario-con-detalle">
-          <CalendarioMes
-            year={mes.year}
-            month={mes.month}
-            days={datos.days}
-            seleccionado={diaAbierto}
-            onSeleccionar={(fecha) => {
-              setDiaAbierto(fecha === diaAbierto ? null : fecha);
-              setHistorialDe(null);
-            }}
-            onCambiarMes={(year, month) => {
-              setMes({ year, month });
-              setDiaAbierto(null);
-            }}
-          />
-
-          <div className="detalle-dia">
-            {diaDetalle ? (
-              <div className="tarjeta dia">
-                <h3>{diaDetalle.label}</h3>
-                {diaDetalle.shifts.map((turno) => (
-                  <TurnoDetalle
-                    key={turno.id}
-                    turno={turno}
-                    etiquetaDia={diaDetalle.label}
-                    historialAbierto={historialDe === turno.id}
-                    onAlternarHistorial={() =>
-                      setHistorialDe(historialDe === turno.id ? null : turno.id)
-                    }
-                    onCancelar={abrirCancelacion(
-                      turno,
-                      `${diaDetalle.label}, ${rangoTurno(turno)}`,
-                    )}
-                    onAgregar={() => setAgregando(turno)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="tarjeta vacio">
-                <p className="tenue">
-                  Toca un día del calendario para ver sus turnos y a quién le toca.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
+      
       {!cargando && vista === 'lista' && (
         <>
           {datos?.days.length === 0 && (
@@ -348,7 +348,7 @@ export function Tablero({ locationId }: { locationId: string }) {
           )}
 
           {datos?.days.map((dia) => (
-            <div key={dia.date} className="tarjeta dia">
+            <div key={dia.date} className="tarjeta dia seccion-color verde">
               <h3>{dia.label}</h3>
               {dia.shifts.map((turno) => (
                 <TurnoDetalle
