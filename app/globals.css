@@ -1084,6 +1084,21 @@ pre.bloque {
 .plegable[open] > summary { margin-bottom: 0.9rem; }
 .plegable .forma-alta,
 .plegable .filtros-padron { margin-bottom: 0; }
+.encuesta-intro { margin: 0 0 0.6rem; font-size: 0.9rem; }
+
+/* Secciones con un tono propio: solo el borde y el título, para distinguirlas
+   sin que el color compita con el texto que se va a copiar. */
+.seccion-color {
+  --tono: var(--acento);
+  border-color: color-mix(in srgb, var(--tono) 35%, var(--borde));
+  border-left: 4px solid color-mix(in srgb, var(--tono) 70%, white);
+}
+.seccion-color > h3,
+.seccion-color > summary { color: var(--tono); }
+.confirmaciones-nota { margin: 0.7rem 0 0; font-size: 0.85rem; }
+.seccion-color.azul { --tono: #1d4f91; }
+.seccion-color.morado { --tono: #5b3a9b; }
+.seccion-color.naranja { --tono: #a14a00; }
 
 /* ------------------------------------------------------------------ */
 /* El padrón en el teléfono: menos columnas, sin romper la tabla       */

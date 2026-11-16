@@ -228,67 +228,6 @@ export function Tablero({ locationId }: { locationId: string }) {
         </button>
       </div>
 
-      {resumen && (
-        /* Colapsado por omisión, también en pantalla de PC: al entrar, lo que
-           tiene que verse es el calendario, no cuatro tarjetas de cifras. El
-           propio resumen lleva los números, así que no hay que abrirlo para
-           saber si algo va mal. */
-        <details className="tarjeta resumen-plegable">
-          <summary>
-            <span className="titulo">Resumen del periodo</span>
-            <span className="cifras-resumen">
-              {resumen.totalShifts} turnos
-              {resumen.understaffed > 0 && (
-                <span className="etiqueta faltante">{resumen.understaffed} incompletos</span>
-              )}
-              {resumen.critical > 0 && (
-                <span className="etiqueta critico">{resumen.critical} críticos</span>
-              )}
-              {resumen.cancellations > 0 && <span>{resumen.cancellations} cancelaciones</span>}
-            </span>
-          </summary>
-
-          <div className="resumen">
-          <div className="metrica">
-            <span className="cifra">{resumen.totalShifts}</span>
-            <span className="rotulo">turnos en el periodo</span>
-          </div>
-          <div className={`metrica ${resumen.understaffed > 0 ? 'atencion' : ''}`}>
-            <span className="cifra">{resumen.understaffed}</span>
-            <span className="rotulo">les falta una persona</span>
-          </div>
-          <div className={`metrica ${resumen.critical > 0 ? 'alerta' : ''}`}>
-            <span className="cifra">{resumen.critical}</span>
-            <span className="rotulo">con una o menos</span>
-          </div>
-          <div className="metrica">
-            <span className="cifra">{resumen.cancellations}</span>
-            <span className="rotulo">cancelaciones</span>
-          </div>
-          </div>
-        </details>
-      )}
-
-      {movimientos.length > 0 && (
-        <details className="tarjeta actividad">
-          <summary>
-            Actividad reciente · lo último fue {movimientos[0].description.toLowerCase()}
-          </summary>
-          <ul className="lista-movimientos">
-            {movimientos.map((movimiento) => (
-              <li key={movimiento.id}>
-                <span>{movimiento.description}</span>
-                <span className="tenue">
-                  {fechaCorta(movimiento.at)} · registró {movimiento.by}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
-
-      {cargando && <p className="tenue">Cargando…</p>}
-
       {!cargando && vista === 'calendario' && datos && (
         <div className="calendario-con-detalle">
           <CalendarioMes
@@ -338,6 +277,67 @@ export function Tablero({ locationId }: { locationId: string }) {
         </div>
       )}
 
+      {movimientos.length > 0 && (
+        <details className="tarjeta actividad">
+          <summary>
+            Actividad reciente · lo último fue {movimientos[0].description.toLowerCase()}
+          </summary>
+          <ul className="lista-movimientos">
+            {movimientos.map((movimiento) => (
+              <li key={movimiento.id}>
+                <span>{movimiento.description}</span>
+                <span className="tenue">
+                  {fechaCorta(movimiento.at)} · registró {movimiento.by}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+
+      {resumen && (
+        /* Colapsado por omisión, también en pantalla de PC: al entrar, lo que
+           tiene que verse es el calendario, no cuatro tarjetas de cifras. El
+           propio resumen lleva los números, así que no hay que abrirlo para
+           saber si algo va mal. */
+        <details className="tarjeta resumen-plegable">
+          <summary>
+            <span className="titulo">Resumen del periodo</span>
+            <span className="cifras-resumen">
+              {resumen.totalShifts} turnos
+              {resumen.understaffed > 0 && (
+                <span className="etiqueta faltante">{resumen.understaffed} incompletos</span>
+              )}
+              {resumen.critical > 0 && (
+                <span className="etiqueta critico">{resumen.critical} críticos</span>
+              )}
+              {resumen.cancellations > 0 && <span>{resumen.cancellations} cancelaciones</span>}
+            </span>
+          </summary>
+
+          <div className="resumen">
+          <div className="metrica">
+            <span className="cifra">{resumen.totalShifts}</span>
+            <span className="rotulo">turnos en el periodo</span>
+          </div>
+          <div className={`metrica ${resumen.understaffed > 0 ? 'atencion' : ''}`}>
+            <span className="cifra">{resumen.understaffed}</span>
+            <span className="rotulo">les falta una persona</span>
+          </div>
+          <div className={`metrica ${resumen.critical > 0 ? 'alerta' : ''}`}>
+            <span className="cifra">{resumen.critical}</span>
+            <span className="rotulo">con una o menos</span>
+          </div>
+          <div className="metrica">
+            <span className="cifra">{resumen.cancellations}</span>
+            <span className="rotulo">cancelaciones</span>
+          </div>
+          </div>
+        </details>
+      )}
+
+      {cargando && <p className="tenue">Cargando…</p>}
+      
       {!cargando && vista === 'lista' && (
         <>
           {datos?.days.length === 0 && (

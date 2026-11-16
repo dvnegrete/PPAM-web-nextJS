@@ -221,71 +221,19 @@ export function Confirmaciones({ locationId }: { locationId: string }) {
         </div>
       )}
 
-      <div className="tarjeta" style={{ marginBottom: '1rem' }}>
-        <h3>Confirmaciones por publicar</h3>
-        <p className="tenue">
-          Quienes se ofrecieron a cubrir un turno y todavía no han salido en ningún mensaje del
-          grupo. Copiar no marca nada: después de pegarlo, el sistema pregunta si ya se publicó.
-        </p>
+      {borrador && borrador.rows.length === 0 && (
+        <div className="aviso exito">
+          No hay nadie pendiente de confirmación. Al registrar una cobertura en el tablero,
+          aparecerá aquí.
+        </div>
+      )}
 
-        {borrador && borrador.rows.length === 0 ? (
-          <div className="aviso exito" style={{ marginBottom: 0 }}>
-            No hay nadie pendiente de confirmación. Al registrar una cobertura en el tablero,
-            aparecerá aquí.
-          </div>
-        ) : (
-          <>
-            <ul className="personas">
-              {(borrador?.rows ?? []).map((fila) => {
-                const quitada = quitadas.has(fila.key);
-                return (
-                  <li key={fila.key} className={quitada ? 'baja' : undefined}>
-                    <span className="nombre">{fila.name}</span>
-                    <span className="tenue detalle">
-                      {fila.dayLabel} de {fila.range}
-                      {fila.assignedAt && ` · registrado el ${fechaCorta(fila.assignedAt)}`}
-                      {fila.assignedByName && ` por ${fila.assignedByName}`}
-                    </span>
-                    <button
-                      className="accion"
-                      onClick={() =>
-                        setQuitadas((previas) => {
-                          const siguiente = new Set(previas);
-                          if (quitada) siguiente.delete(fila.key);
-                          else siguiente.add(fila.key);
-                          return siguiente;
-                        })
-                      }
-                    >
-                      {quitada ? 'Devolver' : 'Quitar'}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-
-            {quitadas.size > 0 && (
-              <p className="tenue" style={{ marginTop: '0.7rem' }}>
-                Lo quitado solo sale de este mensaje; no cambia nada del turno y volverá a
-                ofrecerse la próxima vez.
-              </p>
-            )}
-          </>
-        )}
-      </div>
-
+      {/* El mensaje va primero: es lo que se viene a copiar. La lista de quién
+          entra queda plegada debajo, para quien necesite quitar una línea. */}
       {filas.length > 0 && (
-        <div className="tarjeta">
+        <div className="tarjeta seccion-color verde" style={{ marginBottom: '1rem' }}>
           <h3>Mensaje para el grupo</h3>
           <pre className="bloque">{texto}</pre>
-
-          <p className="tenue">
-            Cada <strong>[nombre completo]</strong> es el lugar donde hay que etiquetar a la
-            persona: bórralo, teclea <code>@</code> y elígela del menú de WhatsApp. El sistema no
-            puede hacerlo por ti —la etiqueta depende de cómo tengas guardado a cada quien en tu
-            teléfono—, y por eso va el nombre completo: para que no quede duda de a cuál de dos
-            participantes parecidos etiquetar.
-          </p>
 
           <div className="atajos">
             <BotonCopiar
@@ -296,7 +244,68 @@ export function Confirmaciones({ locationId }: { locationId: string }) {
             />
             <button onClick={() => setEnDialogo(filas)}>Ya lo publiqué</button>
           </div>
+
+          <p className="tenue confirmaciones-nota">
+            Al pegarlo, cambia cada <strong>[nombre]</strong> por su etiqueta: bórralo, teclea{' '}
+            <code>@</code> y elige a la persona.
+          </p>
         </div>
+      )}
+
+      {borrador && borrador.rows.length > 0 && (
+        <details className="tarjeta plegable seccion-color azul">
+          <summary>
+            Quién va en el mensaje
+            <span className="etiqueta">
+              {filas.length === 1 ? '1 persona' : `${filas.length} personas`}
+            </span>
+            {quitadas.size > 0 && (
+              <span className="etiqueta faltante">
+                {quitadas.size === 1 ? '1 quitada' : `${quitadas.size} quitadas`}
+              </span>
+            )}
+          </summary>
+
+          <p className="tenue">
+            Se ofrecieron a cubrir un turno y aún no salen en ningún mensaje. Quita a quien no
+            quieras publicar ahora.
+          </p>
+
+          <ul className="personas">
+            {borrador.rows.map((fila) => {
+              const quitada = quitadas.has(fila.key);
+              return (
+                <li key={fila.key} className={quitada ? 'baja' : undefined}>
+                  <span className="nombre">{fila.name}</span>
+                  <span className="tenue detalle">
+                    {fila.dayLabel} de {fila.range}
+                    {fila.assignedAt && ` · registrado el ${fechaCorta(fila.assignedAt)}`}
+                    {fila.assignedByName && ` por ${fila.assignedByName}`}
+                  </span>
+                  <button
+                    className="accion"
+                    onClick={() =>
+                      setQuitadas((previas) => {
+                        const siguiente = new Set(previas);
+                        if (quitada) siguiente.delete(fila.key);
+                        else siguiente.add(fila.key);
+                        return siguiente;
+                      })
+                    }
+                  >
+                    {quitada ? 'Devolver' : 'Quitar'}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          {quitadas.size > 0 && (
+            <p className="tenue" style={{ marginTop: '0.7rem', marginBottom: 0 }}>
+              Lo quitado solo sale de este mensaje; volverá a ofrecerse la próxima vez.
+            </p>
+          )}
+        </details>
       )}
 
       {enDialogo && (
