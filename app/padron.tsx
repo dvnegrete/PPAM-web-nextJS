@@ -12,10 +12,12 @@ import type {
 import { nombreCompleto, nombreFormal, nombreVisible } from '@/lib/nombres';
 import { clave, coincide, digitos, terminos, type Buscable } from '@/lib/texto';
 import { EditarParticipante } from './editar-participante';
+import { TurnosDeParticipante } from './turnos-de-participante';
 
 export function Padron({ locationId }: { locationId: string }) {
   const [participantes, setParticipantes] = useState<Participant[]>([]);
   const [editando, setEditando] = useState<Participant | null>(null);
+  const [viendoTurnos, setViendoTurnos] = useState<Participant | null>(null);
   const [valores, setValores] = useState<OrganizationValues>({
     congregation: [],
     circuit: [],
@@ -351,6 +353,9 @@ export function Padron({ locationId }: { locationId: string }) {
                   )}
                 </td>
                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  <button className="accion" onClick={() => setViendoTurnos(p)}>
+                    Turnos
+                  </button>{' '}
                   <button className="accion" onClick={() => setEditando(p)}>
                     Editar
                   </button>
@@ -372,6 +377,15 @@ export function Padron({ locationId }: { locationId: string }) {
           </p>
         )}
       </div>
+
+      {viendoTurnos && (
+        <TurnosDeParticipante
+          locationId={locationId}
+          participanteId={viendoTurnos.id}
+          nombre={nombreVisible(viendoTurnos)}
+          onCerrar={() => setViendoTurnos(null)}
+        />
+      )}
 
       {editando && (
         <EditarParticipante

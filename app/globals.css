@@ -1252,3 +1252,26 @@ pre.bloque {
 }
 
 .rol-pie { margin-top: 20px; color: #5b6775; font-size: 14px; text-align: right; }
+
+/* Turnos de un participante (diálogo desde Participantes) */
+.turnos-persona-titulo { margin: 1.1rem 0 0.4rem; }
+.turnos-persona { list-style: none; margin: 0; padding: 0; }
+.turnos-persona li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.15rem 0.75rem;
+  align-items: center;
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--borde);
+}
+.turnos-persona li:first-child { border-top: 0; }
+.turnos-persona-cuando { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.5rem; }
+.turnos-persona-cuando strong { display: inline-block; }
+.turnos-persona-cuando strong::first-letter { text-transform: uppercase; }
+.turnos-persona-detalle { grid-column: 1; font-size: 0.85rem; }
+.turnos-persona li > button { grid-column: 2; grid-row: 1 / span 2; }
+.turnos-persona li.cancelado strong,
+.turnos-persona li.cancelado .turnos-persona-cuando > span:not(.etiqueta) {
+  color: var(--texto-tenue);
+  text-decoration: line-through;
+}

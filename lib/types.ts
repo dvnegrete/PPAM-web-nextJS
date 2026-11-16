@@ -384,6 +384,36 @@ export interface AnnounceResult {
   draft: ConfirmationsDraft;
 }
 
+/** Un turno fijo de la persona: «Lunes · cada semana», «7 a 9 am». */
+export interface TurnoFijoDeParticipante {
+  label: string;
+  range: string;
+  isCaptain: boolean;
+}
+
+/** Una fecha que la persona tiene registrada, vigente o ya cancelada. */
+export interface TurnoProximoDeParticipante {
+  assignmentId: string;
+  shiftId: string;
+  date: string;
+  label: string;
+  range: string;
+  origin: 'FIXED' | 'SIGNUP' | 'COVERAGE' | 'MANUAL';
+  cancelled: boolean;
+  cancelReason: string | null;
+  isCaptain: boolean;
+  companions: string[];
+  /** Su cónyuge, si atiende este mismo turno. */
+  spouseName: string | null;
+}
+
+/** Lo que arma `GET /locations/:id/participants/:participantId/shifts`. */
+export interface TurnosDeParticipante {
+  participant: { id: string; name: string; phone: string };
+  fixed: TurnoFijoDeParticipante[];
+  upcoming: TurnoProximoDeParticipante[];
+}
+
 /** Motivos frecuentes de cancelación, alineados con el backend. */
 export const CANCEL_REASONS: Array<{ code: string; label: string }> = [
   { code: 'enfermedad', label: 'Enfermedad' },
