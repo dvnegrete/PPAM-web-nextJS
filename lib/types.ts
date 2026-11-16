@@ -471,6 +471,8 @@ export interface RecurringCandidate {
 export interface UpdateParticipantResult extends Participant {
   /** Turnos futuros que se liberaron al pausar o dar de baja. */
   cancelledShifts: number;
+  /** Turnos fijos que se quitaron; solo en la baja definitiva. */
+  removedFixedShifts: number;
   /** Avisos que no impidieron guardar pero el administrador debe leer. */
   warnings: string[];
 }

@@ -1386,11 +1386,23 @@ pre.bloque {
 }
 
 .turnos-seccion { margin: 1rem; border-radius: 12px; overflow: hidden; border: 1px solid; }
-.turnos-seccion h4 {
-  display: flex; align-items: center; justify-content: space-between;
-  margin: 0; padding: 0.55rem 0.85rem;
-  color: #fff; font-size: 0.95rem;
+.turnos-seccion > summary {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin: 0; padding: 0.6rem 0.85rem;
+  color: #fff; font-size: 0.95rem; font-weight: 600;
+  cursor: pointer; list-style: none;
 }
+.turnos-seccion > summary::-webkit-details-marker { display: none; }
+.turnos-seccion > summary .turnos-cuenta { margin-left: auto; }
+/* La flecha dice si está abierta: apunta abajo plegada y arriba desplegada. */
+.turnos-seccion > summary::after {
+  content: '';
+  width: 0.5rem; height: 0.5rem;
+  border-right: 2px solid #fff; border-bottom: 2px solid #fff;
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform 0.15s;
+}
+.turnos-seccion[open] > summary::after { transform: rotate(-135deg) translate(-2px, -2px); }
 .turnos-cuenta {
   min-width: 1.6rem; padding: 0 0.45rem;
   border-radius: 999px;
@@ -1402,11 +1414,11 @@ pre.bloque {
 .turnos-lista { list-style: none; margin: 0; padding: 0.6rem; display: grid; gap: 0.5rem; }
 
 .turnos-seccion.fijos { border-color: var(--fijo); background: var(--fijo-suave); }
-.turnos-seccion.fijos h4 { background: var(--fijo); }
+.turnos-seccion.fijos > summary { background: var(--fijo); }
 .turnos-seccion.fijos .turnos-nota,
 .turnos-seccion.fijos .turnos-vacio { color: var(--fijo); }
 .turnos-seccion.proximos { border-color: var(--proximo); background: var(--proximo-suave); }
-.turnos-seccion.proximos h4 { background: var(--proximo); }
+.turnos-seccion.proximos > summary { background: var(--proximo); }
 .turnos-seccion.proximos .turnos-nota,
 .turnos-seccion.proximos .turnos-vacio { color: var(--proximo); }
 
@@ -1536,3 +1548,24 @@ pre.bloque {
 /* Botón de una acción que quita algo: rojo, para que no se confunda con el primario. */
 button.danger { background: var(--alerta); border-color: var(--alerta); color: #fff; }
 button.danger:hover:not(:disabled) { border-color: var(--alerta); filter: brightness(0.93); }
+
+/* Baja definitiva, al pie del diálogo de turnos: apartada y en rojo suave para
+   que no se confunda con cancelar una sola fecha. */
+.permanent-removal {
+  margin: 1rem;
+  padding: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--alerta) 35%, var(--borde));
+  border-left: 4px solid color-mix(in srgb, var(--alerta) 70%, white);
+  border-radius: 12px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1rem;
+}
+.permanent-removal > div { flex: 1 1 16rem; min-width: 0; }
+.permanent-removal h4 { margin: 0 0 0.15rem; color: var(--alerta); }
+.permanent-removal p { margin: 0; font-size: 0.88rem; }
+.permanent-removal button { min-height: 44px; }
+.removal-summary { margin: 0.4rem 0 0.8rem; padding-left: 1.2rem; display: grid; gap: 0.35rem; }
+
+@media (max-width: 560px) {
+  .permanent-removal { margin: 0.75rem; }
+  .permanent-removal button { width: 100%; }
+}

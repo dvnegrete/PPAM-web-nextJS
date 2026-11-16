@@ -119,6 +119,9 @@ export function EditarParticipante({
           `«${STATUS_LABELS[estado].toLowerCase()}».\n\n` +
           'Sus turnos futuros ya asignados se van a liberar, y NO se convocará a nadie: los huecos ' +
           'quedarán visibles en el Tablero para que decidas cuándo pedir cobertura.\n\n' +
+          (estado === 'INACTIVE'
+            ? 'También se quitan sus turnos fijos, para que otra persona pueda tomarlos.\n\n'
+            : 'Sus turnos fijos se conservan para cuando vuelva.\n\n') +
           'Los turnos que ya atendió no se tocan.',
       );
       if (!sigue) return;
@@ -248,6 +251,9 @@ export function EditarParticipante({
           {seDaDeBaja && (
             <div className="aviso atencion" style={{ marginBottom: 0 }}>
               Al guardar se liberarán sus turnos futuros sin convocar a nadie.
+              {estado === 'INACTIVE'
+                ? ' También se quitarán sus turnos fijos.'
+                : ' Sus turnos fijos se conservan.'}
             </div>
           )}
         </fieldset>

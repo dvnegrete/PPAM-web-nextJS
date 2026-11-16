@@ -482,6 +482,8 @@ export function Padron({ locationId }: { locationId: string }) {
           locationId={locationId}
           participanteId={viendoTurnos.id}
           nombre={nombreVisible(viendoTurnos)}
+          status={viendoTurnos.status}
+          onChanged={() => void cargar()}
           onCerrar={() => setViendoTurnos(null)}
         />
       )}
@@ -522,6 +524,13 @@ function resumenDeGuardado(resultado: UpdateParticipantResult): string {
       resultado.cancelledShifts === 1
         ? 'Se liberó 1 turno futuro, sin convocar a nadie.'
         : `Se liberaron ${resultado.cancelledShifts} turnos futuros, sin convocar a nadie.`,
+    );
+  }
+  if (resultado.removedFixedShifts > 0) {
+    partes.push(
+      resultado.removedFixedShifts === 1
+        ? 'Se quitó 1 turno fijo.'
+        : `Se quitaron ${resultado.removedFixedShifts} turnos fijos.`,
     );
   }
   partes.push(...resultado.warnings);

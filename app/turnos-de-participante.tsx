@@ -4,8 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import {
   CANCEL_REASONS,
+  type ParticipantStatus,
   type TurnoProximoDeParticipante,
   type TurnosDeParticipante as Turnos,
+  type UpdateParticipantResult,
 } from '@/lib/types';
 import { CancelarDialogo } from './cancelar-dialogo';
 
@@ -14,6 +16,9 @@ interface Props {
   participanteId: string;
   /** Se muestra mientras llega la respuesta, para que el diálogo no abra vacío. */
   nombre: string;
+  status: ParticipantStatus;
+  /** Algo cambió en la persona (una baja): la lista de afuera debe recargarse. */
+  onChanged: () => void;
   onCerrar: () => void;
 }
 
@@ -25,7 +30,15 @@ const TIPO: Record<TurnoProximoDeParticipante['origin'], string> = {
   MANUAL: 'manual',
 };
 
+/** Hasta cuántas fechas se muestran abiertas; con más, la lista entra plegada. */
+const MAX_UPCOMING_OPEN = 4;
+
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+/** «1 turno fijo», «3 turnos fijos». */
+function countLabel(count: number, singular: string, plural: string): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
 
 /** «AL» para «Ana López». */
 function iniciales(nombre: string): string {
@@ -48,11 +61,21 @@ const ORIGEN: Record<TurnoProximoDeParticipante['origin'], string> = {
  * incluidas. Desde aquí mismo se cancela, porque la pregunta casi siempre llega
  * con un «está enfermo, no va a poder».
  */
-export function TurnosDeParticipante({ locationId, participanteId, nombre, onCerrar }: Props) {
+export function TurnosDeParticipante({
+  locationId,
+  participanteId,
+  nombre,
+  status,
+  onChanged,
+  onCerrar,
+}: Props) {
   const [turnos, setTurnos] = useState<Turnos | null>(null);
   const [cancelando, setCancelando] = useState<TurnoProximoDeParticipante | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [currentStatus, setCurrentStatus] = useState(status);
+  const [confirmingRemoval, setConfirmingRemoval] = useState(false);
+  const [removing, setRemoving] = useState(false);
 
   const cargar = useCallback(async () => {
     setError(null);
@@ -72,13 +95,13 @@ export function TurnosDeParticipante({ locationId, participanteId, nombre, onCer
   // Con el diálogo de baja encima, Escape es suyo: cerrar los dos de un golpe
   // dejaría la duda de si la cancelación se registró.
   useEffect(() => {
-    if (cancelando) return;
+    if (cancelando || confirmingRemoval) return;
     function alTeclear(evento: KeyboardEvent) {
       if (evento.key === 'Escape') onCerrar();
     }
     document.addEventListener('keydown', alTeclear);
     return () => document.removeEventListener('keydown', alTeclear);
-  }, [cancelando, onCerrar]);
+  }, [cancelando, confirmingRemoval, onCerrar]);
 
   async function cancelar(reasonCode: string, reason: string, tambienConyuge: boolean) {
     if (!cancelando) return;
@@ -98,7 +121,38 @@ export function TurnosDeParticipante({ locationId, participanteId, nombre, onCer
     await cargar();
   }
 
+  /**
+   * Baja definitiva: un solo paso que da de baja a la persona, quita sus turnos
+   * fijos y libera sus fechas próximas. Lo hace el servidor al cambiar el estado.
+   */
+  async function removePermanently() {
+    setRemoving(true);
+    setError(null);
+    try {
+      const result = await api<UpdateParticipantResult>(
+        `/locations/${locationId}/participants/${participanteId}`,
+        { method: 'PATCH', body: { status: 'INACTIVE' } },
+      );
+      setCurrentStatus('INACTIVE');
+      setConfirmingRemoval(false);
+      setAviso(
+        `${nombre} quedó de baja. ` +
+          `${countLabel(result.removedFixedShifts, 'turno fijo quitado', 'turnos fijos quitados')} y ` +
+          `${countLabel(result.cancelledShifts, 'turno próximo liberado', 'turnos próximos liberados')}, ` +
+          'sin convocar a nadie.',
+      );
+      onChanged();
+      await cargar();
+    } catch (problema) {
+      setError(problema instanceof Error ? problema.message : 'No se pudo dar de baja');
+      setConfirmingRemoval(false);
+    } finally {
+      setRemoving(false);
+    }
+  }
+
   const vigentes = turnos?.upcoming.filter((turno) => !turno.cancelled).length ?? 0;
+  const fixedCount = turnos?.fixed.length ?? 0;
 
   return (
     <>
@@ -131,11 +185,13 @@ export function TurnosDeParticipante({ locationId, participanteId, nombre, onCer
 
           {turnos && (
             <>
-              <section className="turnos-seccion fijos">
-                <h4>
+              {/* Plegables: con muchas fechas, la baja definitiva quedaba al fondo
+                  de un desplazamiento largo y no se sabía que existía. */}
+              <details className="turnos-seccion fijos" open>
+                <summary>
                   Turnos fijos
                   <span className="turnos-cuenta">{turnos.fixed.length}</span>
-                </h4>
+                </summary>
                 <p className="turnos-nota">Lo que le toca siempre, mes con mes.</p>
                 {turnos.fixed.length === 0 ? (
                   <p className="turnos-vacio">No tiene turnos fijos.</p>
@@ -150,13 +206,16 @@ export function TurnosDeParticipante({ locationId, participanteId, nombre, onCer
                     ))}
                   </ul>
                 )}
-              </section>
+              </details>
 
-              <section className="turnos-seccion proximos">
-                <h4>
+              <details
+                className="turnos-seccion proximos"
+                open={turnos.upcoming.length <= MAX_UPCOMING_OPEN}
+              >
+                <summary>
                   Próximos turnos
                   <span className="turnos-cuenta">{vigentes}</span>
-                </h4>
+                </summary>
                 <p className="turnos-nota">Fechas ya registradas, de hoy en adelante.</p>
                 {turnos.upcoming.length === 0 ? (
                   <p className="turnos-vacio">
@@ -203,11 +262,75 @@ export function TurnosDeParticipante({ locationId, participanteId, nombre, onCer
                     })}
                   </ul>
                 )}
+              </details>
+
+              <section className="permanent-removal">
+                {currentStatus === 'INACTIVE' ? (
+                  <p className="tenue">
+                    Esta persona está <strong>dada de baja</strong>. Para que vuelva, cambia su
+                    estado en «Editar» y asígnale de nuevo sus turnos fijos.
+                  </p>
+                ) : (
+                  <>
+                    <div>
+                      <h4>Baja definitiva</h4>
+                      <p className="tenue">
+                        Si ya no va a participar: la da de baja, quita sus turnos fijos y libera
+                        sus turnos próximos, todo de una vez.
+                      </p>
+                    </div>
+                    <button className="danger" onClick={() => setConfirmingRemoval(true)}>
+                      Dar de baja y liberar todos sus turnos
+                    </button>
+                  </>
+                )}
               </section>
             </>
           )}
         </div>
       </div>
+
+      {confirmingRemoval && (
+        <div
+          className="telon"
+          role="alertdialog"
+          aria-modal="true"
+          aria-label="Baja definitiva"
+        >
+          <div className="dialogo">
+            <h3>¿Dar de baja a {turnos?.participant.name ?? nombre}?</h3>
+            <p>Se hará todo esto de una vez:</p>
+            <ul className="removal-summary">
+              <li>
+                Queda como <strong>«Dado de baja»</strong> en Participantes.
+              </li>
+              <li>
+                Se quitan <strong>{countLabel(fixedCount, 'turno fijo', 'turnos fijos')}</strong>:
+                su lugar queda libre para otro titular.
+              </li>
+              <li>
+                Se liberan{' '}
+                <strong>{countLabel(vigentes, 'turno próximo', 'turnos próximos')}</strong>, sin
+                convocar a nadie: los huecos quedan visibles en el Tablero.
+              </li>
+              <li>Deja de salir en el Rol del mes.</li>
+            </ul>
+            <p className="tenue">Los turnos que ya atendió no se tocan.</p>
+            <div className="dialogo-acciones">
+              <button onClick={() => setConfirmingRemoval(false)} disabled={removing} autoFocus>
+                No, conservar
+              </button>
+              <button
+                className="danger"
+                onClick={() => void removePermanently()}
+                disabled={removing}
+              >
+                {removing ? 'Dando de baja…' : 'Sí, dar de baja'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {cancelando && (
         <CancelarDialogo
