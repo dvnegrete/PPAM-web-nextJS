@@ -1532,3 +1532,7 @@ pre.bloque {
   .fixed-day-list { display: block; }
   .fixed-grid-wide { display: none; }
 }
+
+/* Botón de una acción que quita algo: rojo, para que no se confunda con el primario. */
+button.danger { background: var(--alerta); border-color: var(--alerta); color: #fff; }
+button.danger:hover:not(:disabled) { border-color: var(--alerta); filter: brightness(0.93); }

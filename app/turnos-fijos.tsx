@@ -13,6 +13,21 @@ const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', '
 const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const ORDINALES = ['', '1.ª', '2.ª', '3.ª', '4.ª', '5.ª'];
 
+/** A quién se está por quitar y de qué franja, para decirlo en la confirmación. */
+interface PendingRemoval {
+  recurringId: string;
+  name: string;
+  when: string;
+}
+
+/** «Lunes · 7:00 a 9:00 am · todas las semanas». */
+function describeSlot(slot: RecurringSlot): string {
+  const range = rango12h(slot.startMinute, slot.endMinute);
+  return slot.weekOfMonth === 0
+    ? `${DIAS[slot.weekday]} · ${range} · todas las semanas`
+    : `${DIAS[slot.weekday]} · ${range} · ${ORDINALES[slot.weekOfMonth]} semana del mes`;
+}
+
 /**
  * Turnos fijos: quién atiende habitualmente cada franja.
  *
@@ -29,6 +44,9 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
   const [semana, setSemana] = useState(0);
   const [eligiendo, setEligiendo] = useState<RecurringSlot | null>(null);
   const [quitando, setQuitando] = useState<string | null>(null);
+  // Quitar pide confirmación: la «×» queda junto a la casilla del capitán y un
+  // toque en falso dejaría a alguien sin su turno en los meses siguientes.
+  const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval | null>(null);
   const [marcando, setMarcando] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -80,11 +98,23 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
     await cargar();
   }
 
+  /** Abre la confirmación con el nombre y la franja, para que se lea a quién se quita. */
+  function requestRemoval(recurringId: string) {
+    for (const slot of datos?.slots ?? []) {
+      const holder = slot.holders.find((item) => item.recurringId === recurringId);
+      if (holder) {
+        setPendingRemoval({ recurringId, name: holder.name, when: describeSlot(slot) });
+        return;
+      }
+    }
+  }
+
   async function quitar(recurringId: string) {
     setQuitando(recurringId);
     setError(null);
     try {
       await api(`/recurring/${recurringId}`, { method: 'DELETE' });
+      setPendingRemoval(null);
       await cargar();
     } catch (problema) {
       setError(problema instanceof Error ? problema.message : 'No se pudo quitar');
@@ -172,7 +202,7 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
           <Rejilla
             slots={bloques.semanales}
             onAgregar={setEligiendo}
-            onQuitar={(id) => void quitar(id)}
+            onQuitar={requestRemoval}
             quitando={quitando}
             onCapitan={(id, valor) => void marcarCapitan(id, valor)}
             marcando={marcando}
@@ -198,7 +228,7 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
           <Rejilla
             slots={bloques.ordinales.filter((slot) => slot.weekOfMonth === semana)}
             onAgregar={setEligiendo}
-            onQuitar={(id) => void quitar(id)}
+            onQuitar={requestRemoval}
             quitando={quitando}
             onCapitan={(id, valor) => void marcarCapitan(id, valor)}
             marcando={marcando}
@@ -247,6 +277,40 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
           <p className="tenue">Aún no hay participantes en este punto. Usa la pestaña «Importar».</p>
         )}
       </details>
+
+      {pendingRemoval && (
+        <div
+          className="telon"
+          role="alertdialog"
+          aria-modal="true"
+          aria-label="Quitar turno fijo"
+        >
+          <div className="dialogo">
+            <h3>¿Por favor confirma que deseas eliminar este turno fijo?</h3>
+            <p>
+              <strong>{pendingRemoval.name}</strong> dejará de ser titular de:
+            </p>
+            <p className="aviso atencion">{pendingRemoval.when}</p>
+            <p className="tenue">
+              Los turnos ya generados no cambian; solo deja de aparecer en los meses que se generen
+              después.
+            </p>
+            {error && <div className="aviso error">{error}</div>}
+            <div className="dialogo-acciones">
+              <button onClick={() => setPendingRemoval(null)} disabled={quitando !== null} autoFocus>
+                No, conservar
+              </button>
+              <button
+                className="danger"
+                onClick={() => void quitar(pendingRemoval.recurringId)}
+                disabled={quitando !== null}
+              >
+                {quitando ? 'Quitando…' : 'Sí, quitar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {eligiendo && (
         <ElegirTitular
@@ -560,11 +624,7 @@ function ElegirTitular({
     }
   }
 
-  const horario = rango12h(slot.startMinute, slot.endMinute);
-  const cuando =
-    slot.weekOfMonth === 0
-      ? `${DIAS[slot.weekday]} · ${horario} · todas las semanas`
-      : `${DIAS[slot.weekday]} · ${horario} · ${ORDINALES[slot.weekOfMonth]} semana del mes`;
+  const cuando = describeSlot(slot);
 
   return (
     <div className="telon" role="dialog" aria-modal="true" aria-label="Asignar turno fijo">
