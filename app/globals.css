@@ -1253,25 +1253,206 @@ pre.bloque {
 
 .rol-pie { margin-top: 20px; color: #5b6775; font-size: 14px; text-align: right; }
 
-/* Turnos de un participante (diálogo desde Participantes) */
-.turnos-persona-titulo { margin: 1.1rem 0 0.4rem; }
-.turnos-persona { list-style: none; margin: 0; padding: 0; }
-.turnos-persona li {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.15rem 0.75rem;
-  align-items: center;
-  padding: 0.55rem 0;
-  border-top: 1px solid var(--borde);
+/* ------------------------------------------------------------------ */
+/* Participantes: buscador destacado y fichas en el teléfono           */
+/* ------------------------------------------------------------------ */
+
+.buscador-destacado label { position: relative; }
+.buscador-destacado input {
+  padding: 0.8rem 0.9rem 0.8rem 2.7rem;
+  font-size: 1.05rem;
+  border: 2px solid var(--acento);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px -4px rgba(31, 111, 74, 0.45);
 }
-.turnos-persona li:first-child { border-top: 0; }
-.turnos-persona-cuando { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.5rem; }
-.turnos-persona-cuando strong { display: inline-block; }
-.turnos-persona-cuando strong::first-letter { text-transform: uppercase; }
-.turnos-persona-detalle { grid-column: 1; font-size: 0.85rem; }
-.turnos-persona li > button { grid-column: 2; grid-row: 1 / span 2; }
-.turnos-persona li.cancelado strong,
-.turnos-persona li.cancelado .turnos-persona-cuando > span:not(.etiqueta) {
+.buscador-destacado input:focus { outline: 3px solid var(--acento-suave); }
+.buscador-lupa {
+  position: absolute; left: 0.85rem; top: 50%;
+  transform: translateY(-50%);
+  color: var(--acento);
+  pointer-events: none;
+}
+
+.padron-telefono { display: none; }
+
+.ficha-iniciales {
+  flex: none;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--acento);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; font-weight: 700;
+}
+.ficha-quien { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ficha-quien strong,
+.ficha-quien h3 { margin: 0; font-size: 1rem; line-height: 1.25; overflow-wrap: anywhere; }
+.ficha-quien a,
+.ficha-quien span {
   color: var(--texto-tenue);
-  text-decoration: line-through;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+}
+.ficha-quien a { color: var(--acento); }
+
+.padron-fichas { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.ficha {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 0.8rem;
+  min-width: 0;
+}
+.ficha-cabecera { display: flex; align-items: center; gap: 0.7rem; }
+.ficha-datos { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.55rem; }
+.ficha-datos:empty { display: none; }
+.ficha-datos .etiqueta { max-width: 100%; overflow-wrap: anywhere; }
+.ficha-acciones { display: grid; grid-template-columns: 2fr 1fr; gap: 0.5rem; margin-top: 0.7rem; }
+.ficha-acciones button { min-height: 44px; }
+
+.padron-invitacion {
+  text-align: center;
+  padding: 1.4rem 1rem;
+  border: 1px dashed var(--borde);
+  border-radius: 12px;
+  background: var(--superficie);
+  color: var(--texto-tenue);
+}
+.padron-invitacion p { margin: 0 0 0.9rem; }
+.padron-invitacion strong { color: var(--texto); }
+.padron-ocultar { width: 100%; margin-top: 0.8rem; }
+
+@media (max-width: 900px) {
+  .padron-escritorio { display: none; }
+  .padron-telefono { display: block; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Turnos de un participante (diálogo desde Participantes)             */
+/* ------------------------------------------------------------------ */
+
+.dialogo-turnos {
+  /* Un color por tipo de turno; el fondo suave y el tono fuerte van en par. */
+  --fijo: #1f6f4a;        --fijo-suave: #e7f2ec;
+  --proximo: #1d4f91;     --proximo-suave: #eef3fb;
+  --sustitucion: #a14a00; --sustitucion-suave: #fff0df;
+  --inscripcion: #5b3a9b; --inscripcion-suave: #f1ebfb;
+  --manual: #35506b;      --manual-suave: #e9eff5;
+  --capitan: #7a5a00;     --capitan-suave: #fff3c4;
+  padding: 0;
+  overflow-x: hidden;
+}
+.dialogo-turnos > .aviso,
+.dialogo-turnos > p { margin: 0.8rem 1rem 0; }
+
+.turnos-quien {
+  position: sticky; top: 0; z-index: 1;
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.9rem 1rem;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+}
+.turnos-cerrar {
+  flex: none;
+  width: 40px; height: 40px; padding: 0;
+  border-radius: 50%;
+  font-size: 1.4rem; line-height: 1;
+  color: var(--texto-tenue);
+}
+
+.turnos-seccion { margin: 1rem; border-radius: 12px; overflow: hidden; border: 1px solid; }
+.turnos-seccion h4 {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 0; padding: 0.55rem 0.85rem;
+  color: #fff; font-size: 0.95rem;
+}
+.turnos-cuenta {
+  min-width: 1.6rem; padding: 0 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 0.8rem; text-align: center;
+}
+.turnos-nota { margin: 0; padding: 0.4rem 0.85rem 0; font-size: 0.82rem; }
+.turnos-vacio { margin: 0; padding: 0.6rem 0.85rem 0.85rem; font-size: 0.9rem; }
+.turnos-lista { list-style: none; margin: 0; padding: 0.6rem; display: grid; gap: 0.5rem; }
+
+.turnos-seccion.fijos { border-color: var(--fijo); background: var(--fijo-suave); }
+.turnos-seccion.fijos h4 { background: var(--fijo); }
+.turnos-seccion.fijos .turnos-nota,
+.turnos-seccion.fijos .turnos-vacio { color: var(--fijo); }
+.turnos-seccion.proximos { border-color: var(--proximo); background: var(--proximo-suave); }
+.turnos-seccion.proximos h4 { background: var(--proximo); }
+.turnos-seccion.proximos .turnos-nota,
+.turnos-seccion.proximos .turnos-vacio { color: var(--proximo); }
+
+.turno-marca {
+  padding: 0.08rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.74rem; font-weight: 700;
+  white-space: nowrap;
+  background: var(--tono-suave); color: var(--tono);
+}
+.turno-marca.capitan { background: var(--capitan-suave); color: var(--capitan); }
+.turno-hora { font-variant-numeric: tabular-nums; }
+
+.turno-fijo {
+  --tono: var(--fijo); --tono-suave: var(--fijo-suave);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.6rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--superficie);
+  border-radius: 10px;
+  border-left: 5px solid var(--fijo);
+}
+.turno-fijo strong { flex: 1 1 auto; }
+.turno-fijo .turno-hora { font-weight: 600; color: var(--fijo); }
+
+.turno-fecha {
+  --tono: var(--fijo); --tono-suave: var(--fijo-suave);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center; gap: 0.7rem;
+  padding: 0.6rem 0.7rem;
+  background: var(--superficie);
+  border-radius: 10px;
+  border-left: 5px solid var(--tono);
+}
+.turno-fecha.sustitucion { --tono: var(--sustitucion); --tono-suave: var(--sustitucion-suave); }
+.turno-fecha.inscripcion { --tono: var(--inscripcion); --tono-suave: var(--inscripcion-suave); }
+.turno-fecha.manual { --tono: var(--manual); --tono-suave: var(--manual-suave); }
+.turno-fecha.cancelado { --tono: var(--alerta); --tono-suave: var(--alerta-suave); background: #fbf5f5; }
+
+.turno-dia {
+  width: 48px; padding: 0.3rem 0;
+  border-radius: 10px;
+  background: var(--tono-suave); color: var(--tono);
+  display: flex; flex-direction: column; align-items: center;
+  line-height: 1.1;
+}
+.turno-dia .numero { font-size: 1.25rem; font-weight: 700; }
+.turno-dia .mes { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+
+.turno-cuerpo { min-width: 0; }
+.turno-titulo { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.45rem; }
+.turno-titulo strong { display: inline-block; }
+.turno-titulo strong::first-letter { text-transform: uppercase; }
+.turno-fecha .turno-hora { font-weight: 600; color: var(--tono); }
+.turno-con { font-size: 0.84rem; color: var(--texto-tenue); overflow-wrap: anywhere; }
+.turno-fecha.cancelado strong,
+.turno-fecha.cancelado .turno-hora { text-decoration: line-through; color: var(--texto-tenue); }
+
+@media (max-width: 560px) {
+  /* En el teléfono el diálogo es una hoja que sube desde abajo y ocupa todo
+     el ancho: no hay nada que desplazar de lado. */
+  .telon:has(> .dialogo-turnos) { padding: 0; align-items: flex-end; }
+  .dialogo-turnos { width: 100%; max-height: 92vh; border-radius: 18px 18px 0 0; }
+  .turnos-seccion { margin: 0.75rem; }
+  .turno-fecha { grid-template-columns: auto minmax(0, 1fr); }
+  .turno-fecha > button { grid-column: 1 / -1; min-height: 40px; }
+}
+
+/* Entre el teléfono y una pantalla amplia, el menú lateral le quita ancho a la
+   tabla: las columnas de consulta se esconden antes de que haya que desplazarla. */
+@media (max-width: 1100px) {
+  .padron-tabla .secundaria { display: none; }
 }

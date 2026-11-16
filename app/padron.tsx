@@ -10,7 +10,14 @@ import type {
   UpdateParticipantResult,
 } from '@/lib/types';
 import { nombreCompleto, nombreFormal, nombreVisible } from '@/lib/nombres';
-import { clave, coincide, digitos, terminos, type Buscable } from '@/lib/texto';
+import {
+  clave,
+  coincide,
+  digitos,
+  telefonoLegible,
+  terminos,
+  type Buscable,
+} from '@/lib/texto';
 import { EditarParticipante } from './editar-participante';
 import { TurnosDeParticipante } from './turnos-de-participante';
 
@@ -29,6 +36,9 @@ export function Padron({ locationId }: { locationId: string }) {
     city: '',
   });
   const [busqueda, setBusqueda] = useState('');
+  // En el teléfono la lista no se pinta hasta que se busca o se pide: ciento
+  // treinta fichas de entrada son un desplazamiento que nadie quiere recorrer.
+  const [verTodos, setVerTodos] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [nombre, setNombre] = useState('');
@@ -142,19 +152,53 @@ export function Padron({ locationId }: { locationId: string }) {
   const sinCongregacion = participantes.filter((p) => !p.congregation).length;
   const noActivos = participantes.filter((p) => p.status !== 'ACTIVE').length;
 
+  const listaAbierta = hayBusqueda || hayFiltro || verTodos;
+
+  const sinResultados = (
+    <>
+      {participantes.length === 0 && (
+        <p className="tenue">Aún no hay nadie registrado. Usa la pestaña «Importar».</p>
+      )}
+      {participantes.length > 0 && visibles.length === 0 && (
+        <p className="tenue">
+          {hayBusqueda && hayFiltro
+            ? 'Nadie coincide con la búsqueda dentro del filtro aplicado.'
+            : hayBusqueda
+              ? `Nadie coincide con «${busqueda.trim()}».`
+              : 'Nadie coincide con el filtro aplicado.'}
+        </p>
+      )}
+    </>
+  );
+
   return (
     <section>
       {error && <div className="aviso error">{error}</div>}
       {aviso && <div className="aviso exito">{aviso}</div>}
 
-      <div className="buscador">
+      <div className="buscador buscador-destacado">
         <label>
           <span className="oculto-visualmente">Buscar participantes</span>
+          <svg
+            className="buscador-lupa"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="M21 21l-4.3-4.3" />
+          </svg>
           <input
             type="search"
             value={busqueda}
             onChange={(evento) => setBusqueda(evento.target.value)}
-            placeholder="Buscar por nombre, apellido, teléfono o congregación"
+            placeholder="Buscar por nombre, teléfono o congregación"
             autoFocus
           />
         </label>
@@ -280,7 +324,7 @@ export function Padron({ locationId }: { locationId: string }) {
         </div>
       </details>
 
-      <div className="tarjeta">
+      <div className="tarjeta padron-escritorio">
         <table className="padron-tabla">
           <thead>
             <tr>
@@ -308,7 +352,9 @@ export function Padron({ locationId }: { locationId: string }) {
                     <span className="tenue">{nombreVisible(p)}</span>
                   )}
                 </td>
-                <td style={{ fontVariantNumeric: 'tabular-nums' }}>{p.phoneE164}</td>
+                <td style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                  {telefonoLegible(p.phoneE164)}
+                </td>
                 <td>
                   {p.role === 'PARTICIPANT' ? (
                     ROLE_LABELS[p.role]
@@ -364,17 +410,70 @@ export function Padron({ locationId }: { locationId: string }) {
             ))}
           </tbody>
         </table>
-        {participantes.length === 0 && (
-          <p className="tenue">Aún no hay nadie registrado. Usa la pestaña «Importar».</p>
-        )}
-        {participantes.length > 0 && visibles.length === 0 && (
-          <p className="tenue">
-            {hayBusqueda && hayFiltro
-              ? 'Nadie coincide con la búsqueda dentro del filtro aplicado.'
-              : hayBusqueda
-                ? `Nadie coincide con «${busqueda.trim()}».`
-                : 'Nadie coincide con el filtro aplicado.'}
-          </p>
+        {sinResultados}
+      </div>
+
+      {/* En el teléfono, fichas en vez de tabla: once columnas no caben sin
+          desplazarse de lado, y una ficha deja los dos botones al alcance. */}
+      <div className="padron-telefono">
+        {!listaAbierta && participantes.length > 0 ? (
+          <div className="padron-invitacion">
+            <p>
+              Escribe un nombre o un teléfono para encontrar a alguien y ver <strong>qué turnos
+              cubre</strong>.
+            </p>
+            <button onClick={() => setVerTodos(true)}>
+              Ver los {participantes.length} participantes
+            </button>
+          </div>
+        ) : (
+          <>
+            <ul className="padron-fichas">
+              {visibles.map((p) => (
+                <li key={p.id} className="ficha">
+                  <div className="ficha-cabecera">
+                    <span className="ficha-iniciales" aria-hidden="true">
+                      {iniciales(p)}
+                    </span>
+                    <div className="ficha-quien">
+                      <strong>{nombreFormal(p)}</strong>
+                      <a href={`tel:${p.phoneE164}`}>{telefonoLegible(p.phoneE164)}</a>
+                    </div>
+                  </div>
+                  <div className="ficha-datos">
+                    {p.role !== 'PARTICIPANT' && (
+                      <span className="etiqueta completo">{ROLE_LABELS[p.role]}</span>
+                    )}
+                    {p.status !== 'ACTIVE' && (
+                      <span
+                        className={`etiqueta ${p.status === 'PAUSED' ? 'faltante' : 'critico'}`}
+                      >
+                        {STATUS_LABELS[p.status]}
+                      </span>
+                    )}
+                    {p.congregation && <span className="etiqueta">{p.congregation}</span>}
+                    {(p.spouse || p.spouseName) && (
+                      <span className="etiqueta">
+                        Cónyuge: {p.spouse ? nombreVisible(p.spouse) : p.spouseName}
+                      </span>
+                    )}
+                  </div>
+                  <div className="ficha-acciones">
+                    <button className="primario" onClick={() => setViendoTurnos(p)}>
+                      Ver turnos
+                    </button>
+                    <button onClick={() => setEditando(p)}>Editar</button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {sinResultados}
+            {verTodos && !hayBusqueda && !hayFiltro && (
+              <button className="padron-ocultar" onClick={() => setVerTodos(false)}>
+                Ocultar la lista
+              </button>
+            )}
+          </>
         )}
       </div>
 
@@ -400,6 +499,13 @@ export function Padron({ locationId }: { locationId: string }) {
         />
       )}
     </section>
+  );
+}
+
+/** «AL» para Ana López: lo que distingue una ficha de otra de un vistazo. */
+function iniciales(persona: Participant): string {
+  return `${persona.firstName.charAt(0)}${persona.paternalSurname.charAt(0)}`.toLocaleUpperCase(
+    'es-MX',
   );
 }
 

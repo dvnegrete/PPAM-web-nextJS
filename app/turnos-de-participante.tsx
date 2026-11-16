@@ -17,6 +17,22 @@ interface Props {
   onCerrar: () => void;
 }
 
+/** Clase de color de cada origen: un vistazo basta para distinguirlos. */
+const TIPO: Record<TurnoProximoDeParticipante['origin'], string> = {
+  FIXED: 'fijo',
+  COVERAGE: 'sustitucion',
+  SIGNUP: 'inscripcion',
+  MANUAL: 'manual',
+};
+
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+/** «AL» para «Ana López». */
+function iniciales(nombre: string): string {
+  const partes = nombre.trim().split(/\s+/);
+  return `${partes[0]?.charAt(0) ?? ''}${partes[1]?.charAt(0) ?? ''}`.toLocaleUpperCase('es-MX');
+}
+
 const ORIGEN: Record<TurnoProximoDeParticipante['origin'], string> = {
   FIXED: 'Fijo',
   COVERAGE: 'Sustitución',
@@ -95,13 +111,19 @@ export function TurnosDeParticipante({ locationId, participanteId, nombre, onCer
           if (evento.target === evento.currentTarget) onCerrar();
         }}
       >
-        <div className="dialogo dialogo-ancho">
-          <h3>Turnos de {turnos?.participant.name ?? nombre}</h3>
-          {turnos && (
-            <p className="tenue" style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {turnos.participant.phone}
-            </p>
-          )}
+        <div className="dialogo dialogo-ancho dialogo-turnos">
+          <header className="turnos-quien">
+            <span className="ficha-iniciales" aria-hidden="true">
+              {iniciales(turnos?.participant.name ?? nombre)}
+            </span>
+            <div className="ficha-quien">
+              <h3>{turnos?.participant.name ?? nombre}</h3>
+              {turnos && <span>{turnos.participant.phone}</span>}
+            </div>
+            <button className="turnos-cerrar" onClick={onCerrar} aria-label="Cerrar">
+              ×
+            </button>
+          </header>
 
           {error && <div className="aviso error">{error}</div>}
           {aviso && <div className="aviso exito">{aviso}</div>}
@@ -109,74 +131,81 @@ export function TurnosDeParticipante({ locationId, participanteId, nombre, onCer
 
           {turnos && (
             <>
-              <h4 className="turnos-persona-titulo">Turnos fijos</h4>
-              {turnos.fixed.length === 0 ? (
-                <p className="tenue">No tiene turnos fijos.</p>
-              ) : (
-                <ul className="turnos-persona">
-                  {turnos.fixed.map((fijo) => (
-                    <li key={`${fijo.label}-${fijo.range}`}>
-                      <div className="turnos-persona-cuando">
+              <section className="turnos-seccion fijos">
+                <h4>
+                  Turnos fijos
+                  <span className="turnos-cuenta">{turnos.fixed.length}</span>
+                </h4>
+                <p className="turnos-nota">Lo que le toca siempre, mes con mes.</p>
+                {turnos.fixed.length === 0 ? (
+                  <p className="turnos-vacio">No tiene turnos fijos.</p>
+                ) : (
+                  <ul className="turnos-lista">
+                    {turnos.fixed.map((fijo) => (
+                      <li key={`${fijo.label}-${fijo.range}`} className="turno-fijo">
                         <strong>{fijo.label}</strong>
-                        <span>{fijo.range}</span>
-                        {fijo.isCaptain && <span className="etiqueta completo">Capitán</span>}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                        <span className="turno-hora">{fijo.range}</span>
+                        {fijo.isCaptain && <span className="turno-marca capitan">Capitán</span>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
 
-              <h4 className="turnos-persona-titulo">
-                Próximos turnos
-                {vigentes > 0 && <span className="tenue"> · {vigentes}</span>}
-              </h4>
-              {turnos.upcoming.length === 0 ? (
-                <p className="tenue">
-                  Sin turnos próximos registrados. Las fechas de un mes aparecen cuando se genera
-                  en Calendario.
-                </p>
-              ) : (
-                <ul className="turnos-persona">
-                  {turnos.upcoming.map((turno) => (
-                    <li key={turno.assignmentId} className={turno.cancelled ? 'cancelado' : ''}>
-                      <div className="turnos-persona-cuando">
-                        <strong>{turno.label}</strong>
-                        <span>{turno.range}</span>
-                        {turno.cancelled ? (
-                          <span className="etiqueta critico">Ya canceló</span>
-                        ) : (
-                          <>
-                            <span
-                              className={`etiqueta ${turno.origin === 'FIXED' ? '' : 'faltante'}`}
-                            >
-                              {ORIGEN[turno.origin]}
-                            </span>
-                            {turno.isCaptain && <span className="etiqueta completo">Capitán</span>}
-                          </>
-                        )}
-                      </div>
-                      <div className="turnos-persona-detalle tenue">
-                        {turno.cancelled
-                          ? (turno.cancelReason ?? 'Sin motivo anotado')
-                          : turno.companions.length > 0
-                            ? `Con ${turno.companions.join(', ')}`
-                            : 'Nadie más en este turno'}
-                      </div>
-                      {!turno.cancelled && (
-                        <button className="accion" onClick={() => setCancelando(turno)}>
-                          Cancelar
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <section className="turnos-seccion proximos">
+                <h4>
+                  Próximos turnos
+                  <span className="turnos-cuenta">{vigentes}</span>
+                </h4>
+                <p className="turnos-nota">Fechas ya registradas, de hoy en adelante.</p>
+                {turnos.upcoming.length === 0 ? (
+                  <p className="turnos-vacio">
+                    Sin turnos próximos registrados. Las fechas de un mes aparecen cuando se
+                    genera en Calendario.
+                  </p>
+                ) : (
+                  <ul className="turnos-lista">
+                    {turnos.upcoming.map((turno) => {
+                      const tipo = turno.cancelled ? 'cancelado' : TIPO[turno.origin];
+                      const [, mes, dia] = turno.date.split('-');
+                      return (
+                        <li key={turno.assignmentId} className={`turno-fecha ${tipo}`}>
+                          <span className="turno-dia" aria-hidden="true">
+                            <span className="numero">{Number(dia)}</span>
+                            <span className="mes">{MESES[Number(mes) - 1]}</span>
+                          </span>
+                          <div className="turno-cuerpo">
+                            <div className="turno-titulo">
+                              <strong>{turno.label}</strong>
+                              <span className="turno-marca">
+                                {turno.cancelled ? 'Ya canceló' : ORIGEN[turno.origin]}
+                              </span>
+                              {turno.isCaptain && (
+                                <span className="turno-marca capitan">Capitán</span>
+                              )}
+                            </div>
+                            <div className="turno-hora">{turno.range}</div>
+                            <div className="turno-con">
+                              {turno.cancelled
+                                ? `Motivo: ${turno.cancelReason ?? 'sin anotar'}`
+                                : turno.companions.length > 0
+                                  ? `Con ${turno.companions.join(', ')}`
+                                  : 'Nadie más en este turno'}
+                            </div>
+                          </div>
+                          {!turno.cancelled && (
+                            <button className="accion" onClick={() => setCancelando(turno)}>
+                              Cancelar
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </section>
             </>
           )}
-
-          <div className="dialogo-acciones">
-            <button onClick={onCerrar}>Cerrar</button>
-          </div>
         </div>
       </div>
 

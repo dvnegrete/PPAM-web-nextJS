@@ -53,3 +53,18 @@ export function coincide(terms: string[], buscable: Buscable): boolean {
     return soloDigitos.length > 0 && buscable.digitos.includes(soloDigitos);
   });
 }
+
+/**
+ * El teléfono como se dicta: «55 1234 5678».
+ *
+ * Solo para leerlo; lo que se guarda y se busca sigue siendo E.164. Las ladas
+ * de dos dígitos de México son tres (55 y 56, 33, 81); el resto son de tres.
+ * Un número que no es mexicano de diez dígitos se deja tal cual.
+ */
+export function telefonoLegible(e164: string): string {
+  const nacional = /^\+52(\d{10})$/.exec(e164)?.[1];
+  if (!nacional) return e164;
+  return /^(55|56|33|81)/.test(nacional)
+    ? `${nacional.slice(0, 2)} ${nacional.slice(2, 6)} ${nacional.slice(6)}`
+    : `${nacional.slice(0, 3)} ${nacional.slice(3, 6)} ${nacional.slice(6)}`;
+}
