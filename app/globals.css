@@ -1489,9 +1489,23 @@ pre.bloque {
 
 /* Entre el teléfono y una pantalla amplia, el menú lateral le quita ancho a la
    tabla: las columnas de consulta se esconden antes de que haya que desplazarla. */
-@media (max-width: 1100px) {
+@media (max-width: 1500px) {
   .padron-tabla .secundaria { display: none; }
 }
+
+/* Participantes en escritorio: once columnas no caben en los 1080 px del cuerpo,
+   y el contenido se salía de la tarjeta dejando la tabla más angosta que lo que
+   mostraba. La vista gana ancho, la tabla se reparte sola y, si aun así no cupiera,
+   la tarjeta se desplaza en lugar de desbordarse. */
+.contenido-cuerpo:has(.padron-escritorio) { max-width: 1480px; }
+.padron-escritorio { overflow-x: auto; }
+.padron-tabla { table-layout: auto; width: 100%; }
+.padron-tabla th,
+.padron-tabla td { padding: 0.55rem 0.6rem; font-size: 0.9rem; vertical-align: middle; }
+.padron-tabla td:first-child { min-width: 11rem; font-weight: 600; }
+.padron-tabla th:last-child,
+.padron-tabla td:last-child { width: 1%; white-space: nowrap; }
+.padron-tabla .etiqueta { white-space: nowrap; }
 
 /* ------------------------------------------------------------------ */
 /* Turnos fijos sin desplazamiento lateral: un día a la vez            */
