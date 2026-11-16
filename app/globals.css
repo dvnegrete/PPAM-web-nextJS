@@ -1094,11 +1094,20 @@ pre.bloque {
   border-left: 4px solid color-mix(in srgb, var(--tono) 70%, white);
 }
 .seccion-color > h3,
-.seccion-color > summary { color: var(--tono); }
+.seccion-color > summary,
+.seccion-color > .calendario-cabecera h3 { color: var(--tono); }
 .confirmaciones-nota { margin: 0.7rem 0 0; font-size: 0.85rem; }
 .seccion-color.azul { --tono: #1d4f91; }
 .seccion-color.morado { --tono: #5b3a9b; }
 .seccion-color.naranja { --tono: #a14a00; }
+
+/* En el Tablero, cada turno lleva además una franja con el color de su estado:
+   el mismo lenguaje de borde, aplicado a lo que ya decía el fondo. */
+.turno > .turno-cabecera { border-left: 4px solid var(--borde); }
+.turno.ok > .turno-cabecera { border-left-color: color-mix(in srgb, var(--acento) 70%, white); }
+.turno.bajoCupo > .turno-cabecera { border-left-color: color-mix(in srgb, var(--aviso) 70%, white); }
+.turno.bajoMinimo > .turno-cabecera,
+.turno.cancelado > .turno-cabecera { border-left-color: color-mix(in srgb, var(--alerta) 70%, white); }
 
 /* ------------------------------------------------------------------ */
 /* El padrón en el teléfono: menos columnas, sin romper la tabla       */

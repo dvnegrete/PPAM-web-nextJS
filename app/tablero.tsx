@@ -247,7 +247,7 @@ export function Tablero({ locationId }: { locationId: string }) {
 
           <div className="detalle-dia">
             {diaDetalle ? (
-              <div className="tarjeta dia">
+              <div className="tarjeta dia seccion-color verde">
                 <h3>{diaDetalle.label}</h3>
                 {diaDetalle.shifts.map((turno) => (
                   <TurnoDetalle
@@ -267,7 +267,7 @@ export function Tablero({ locationId }: { locationId: string }) {
                 ))}
               </div>
             ) : (
-              <div className="tarjeta vacio">
+              <div className="tarjeta vacio seccion-color verde">
                 <p className="tenue">
                   Toca un día del calendario para ver sus turnos y a quién le toca.
                 </p>
@@ -278,7 +278,7 @@ export function Tablero({ locationId }: { locationId: string }) {
       )}
 
       {movimientos.length > 0 && (
-        <details className="tarjeta actividad">
+        <details className="tarjeta actividad seccion-color morado">
           <summary>
             Actividad reciente · lo último fue {movimientos[0].description.toLowerCase()}
           </summary>
@@ -300,7 +300,7 @@ export function Tablero({ locationId }: { locationId: string }) {
            tiene que verse es el calendario, no cuatro tarjetas de cifras. El
            propio resumen lleva los números, así que no hay que abrirlo para
            saber si algo va mal. */
-        <details className="tarjeta resumen-plegable">
+        <details className="tarjeta resumen-plegable seccion-color naranja">
           <summary>
             <span className="titulo">Resumen del periodo</span>
             <span className="cifras-resumen">
@@ -348,7 +348,7 @@ export function Tablero({ locationId }: { locationId: string }) {
           )}
 
           {datos?.days.map((dia) => (
-            <div key={dia.date} className="tarjeta dia">
+            <div key={dia.date} className="tarjeta dia seccion-color verde">
               <h3>{dia.label}</h3>
               {dia.shifts.map((turno) => (
                 <TurnoDetalle
