@@ -64,6 +64,9 @@ function enumerar(partes: string[]): string {
   return `${partes.slice(0, -1).join(', ')} y ${partes[partes.length - 1]}`;
 }
 
+/** Despedida del mensaje; la misma que redacta el servidor. */
+const CLOSING_MESSAGE = 'Gracias hermanos agradecemos su disponibilidad, Jehová les bendiga';
+
 /**
  * El mensaje con las filas que quedan.
  *
@@ -89,10 +92,11 @@ function armarTexto(filas: ConfirmationRow[]): string {
 
   const lineas = [...porTurno.values()].map((grupo) => {
     const nombres = enumerar(grupo.map((fila) => `[${fila.name}]`));
-    return `- ${grupo[0].dayLabel} de ${grupo[0].range}: ${nombres}`;
+    // Entre asteriscos WhatsApp lo pone en negritas, igual que en la encuesta.
+    return `- ${grupo[0].dayLabel} de *${grupo[0].range}*: ${nombres}`;
   });
 
-  return `${encabezado}\n${lineas.join('\n')}`;
+  return `${encabezado}\n${lineas.join('\n')}\n\n${CLOSING_MESSAGE}`;
 }
 
 /**
