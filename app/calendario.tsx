@@ -20,6 +20,19 @@ function diaSemana(fecha: string): string {
   return DIAS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
 }
 
+/** Sábado o domingo: llevan otro tono para ubicarlos de un vistazo en el mes. */
+function isWeekend(fecha: string): boolean {
+  const dia = diaSemana(fecha);
+  return dia === 'sábado' || dia === 'domingo';
+}
+
+/** Qué tan cubierto está el turno; es la clase de su etiqueta y de su franja. */
+function shiftLevel(shift: CalendarShift, minCapacity: number): string {
+  if (shift.occupied >= shift.capacity) return 'completo';
+  if (shift.occupied >= minCapacity) return '';
+  return shift.occupied === 0 ? 'critico' : 'faltante';
+}
+
 export function Calendario({ locationId, minCapacity }: { locationId: string; minCapacity: number }) {
   const hoy = new Date();
   const [year, setYear] = useState(hoy.getFullYear());
@@ -113,7 +126,7 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
 
   return (
     <section>
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'end', flexWrap: 'wrap', marginBottom: '1rem' }}>
+      <div className="tarjeta seccion-color azul month-controls">
         <label style={{ marginBottom: 0, width: 130 }}>
           <span>Mes</span>
           <select value={month} onChange={(event) => setMonth(Number(event.target.value))}>
@@ -135,7 +148,7 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
         <button onClick={pedirGenerar}>
           {shifts.length > 0 ? 'Volver a generar' : 'Generar calendario'}
         </button>
-        <label style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', width: 'auto' }}>
+        <label className="month-controls-check">
           <input
             type="checkbox"
             checked={soloIncompletos}
@@ -156,55 +169,52 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
       </p>
 
       {Object.entries(porDia).map(([fecha, turnos]) => (
-        <div key={fecha} className="tarjeta" style={{ marginBottom: '0.75rem' }}>
+        <div
+          key={fecha}
+          className={`tarjeta seccion-color ${isWeekend(fecha) ? 'azul' : 'verde'}`}
+          style={{ marginBottom: '0.75rem' }}
+        >
           <h3 style={{ textTransform: 'capitalize' }}>
-            {diaSemana(fecha)} {fecha.slice(8)} de {MESES[Number(fecha.slice(5, 7)) - 1]}
+            {diaSemana(fecha)} {Number(fecha.slice(8))} de {MESES[Number(fecha.slice(5, 7)) - 1]}
           </h3>
-          <table>
-            <thead>
-              <tr>
-                <th style={{ width: 170 }}>Horario</th>
-                <th className="numero" style={{ width: 80 }}>Cupo</th>
-                <th>Participantes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {turnos.map((shift) => (
-                <tr key={shift.id}>
-                  <td>{rangoTurno(shift)}</td>
-                  <td className="numero">
-                    <span
-                      className={`etiqueta ${
-                        shift.occupied >= shift.capacity
-                          ? 'completo'
-                          : shift.occupied >= minCapacity
-                            ? ''
-                            : shift.occupied === 0
-                              ? 'critico'
-                              : 'faltante'
-                      }`}
-                    >
-                      {ocupacionTexto(shift.occupied, shift.capacity)}
-                    </span>
-                  </td>
-                  <td>
+          {/* Lista y no tabla: tres columnas no caben en un teléfono sin
+              desplazarse de lado, y aquí cada turno baja a dos renglones. */}
+          <ul className="month-shifts">
+            {turnos.map((shift) => {
+              const level = shiftLevel(shift, minCapacity);
+              return (
+                <li key={shift.id} className={`month-shift ${level}`}>
+                  <strong className="month-shift-range">{rangoTurno(shift)}</strong>
+                  <span className={`etiqueta ${level}`}>
+                    {ocupacionTexto(shift.occupied, shift.capacity)}
+                  </span>
+                  <div className="month-shift-people">
                     {shift.status === 'CANCELLED' ? (
                       <span className="etiqueta critico">Turno cancelado</span>
                     ) : shift.participants.length === 0 ? (
                       <span className="tenue">Sin asignar</span>
                     ) : (
-                      shift.participants
-                        .map(
-                          (p) =>
-                            `${p.name}${p.isCaptain ? ' (capitán)' : ''}${p.confirmed ? ' ✓' : ''}${p.origin === 'COVERAGE' ? ' (cubre)' : ''}`,
-                        )
-                        .join(' · ')
+                      shift.participants.map((person, index) => (
+                        <span key={`${person.name}-${index}`} className="month-shift-person">
+                          {person.name}
+                          {person.isCaptain && <span className="insignia-capitan">Capitán</span>}
+                          {person.origin === 'COVERAGE' && (
+                            <span className="tenue"> (cubre)</span>
+                          )}
+                          {person.confirmed && (
+                            <span className="marca" title="Confirmó su asistencia">
+                              {' '}
+                              ✓
+                            </span>
+                          )}
+                        </span>
+                      ))
                     )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       ))}
 

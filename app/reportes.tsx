@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
+import { clave } from '@/lib/texto';
 import type { AttendanceRow, MonthlySummary } from '@/lib/types';
 
 const MESES = [
@@ -16,6 +17,7 @@ export function Reportes({ locationId }: { locationId: string }) {
   const [resumen, setResumen] = useState<MonthlySummary | null>(null);
   const [asistencia, setAsistencia] = useState<AttendanceRow[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
 
   const cargar = useCallback(async () => {
     setError(null);
@@ -41,9 +43,15 @@ export function Reportes({ locationId }: { locationId: string }) {
     void cargar();
   }, [cargar]);
 
+  // Sin acentos ni mayúsculas, igual que el buscador de Participantes.
+  const visibleRows = useMemo(() => {
+    const term = clave(search);
+    return term ? asistencia.filter((row) => clave(row.fullName).includes(term)) : asistencia;
+  }, [asistencia, search]);
+
   return (
     <section>
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'end', marginBottom: '1rem' }}>
+      <div className="tarjeta seccion-color azul month-controls">
         <label style={{ marginBottom: 0, width: 130 }}>
           <span>Mes</span>
           <select value={month} onChange={(e) => setMonth(Number(e.target.value))}>
@@ -61,7 +69,7 @@ export function Reportes({ locationId }: { locationId: string }) {
       {error && <div className="aviso error">{error}</div>}
 
       {resumen && (
-        <details className="tarjeta plegable">
+        <details className="tarjeta plegable seccion-color naranja">
           <summary>
             Resumen de {MESES[resumen.month - 1]} de {resumen.year}
             <span className="etiqueta completo">{resumen.totalShifts} turnos</span>
@@ -92,9 +100,27 @@ export function Reportes({ locationId }: { locationId: string }) {
         </details>
       )}
 
-      <div className="tarjeta" style={{ marginBottom: '1rem' }}>
+      <div className="tarjeta seccion-color verde" style={{ marginBottom: '1rem' }}>
         <h3>Participación por persona</h3>
-        <table>
+
+        <div className="buscador">
+          <label>
+            <span className="oculto-visualmente">Buscar persona</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Buscar por nombre"
+            />
+          </label>
+          {search.trim() && (
+            <span className="coincidencias" aria-live="polite">
+              {visibleRows.length === 1 ? '1 coincidencia' : `${visibleRows.length} coincidencias`}
+            </span>
+          )}
+        </div>
+
+        <table className="attendance-table">
           <thead>
             <tr>
               <th>Nombre</th>
@@ -105,7 +131,7 @@ export function Reportes({ locationId }: { locationId: string }) {
             </tr>
           </thead>
           <tbody>
-            {asistencia.map((fila) => (
+            {visibleRows.map((fila) => (
               <tr key={fila.participantId}>
                 <td>{fila.fullName}</td>
                 <td className="numero">{fila.served}</td>
@@ -116,7 +142,35 @@ export function Reportes({ locationId }: { locationId: string }) {
             ))}
           </tbody>
         </table>
+
+        {/* En el teléfono, cinco columnas no caben: el nombre arriba y las
+            cuatro cifras debajo, cada una con su rótulo y su color. */}
+        <ul className="attendance-list">
+          {visibleRows.map((fila) => (
+            <li key={fila.participantId}>
+              <strong>{fila.fullName}</strong>
+              <div className="attendance-stats">
+                <span className="stat served">
+                  <b>{fila.served}</b> atendidos
+                </span>
+                <span className={`stat ${fila.cancelled > 0 ? 'cancelled' : ''}`}>
+                  <b>{fila.cancelled}</b> cancelados
+                </span>
+                <span className={`stat ${fila.covered > 0 ? 'covered' : ''}`}>
+                  <b>{fila.covered}</b> cubrió
+                </span>
+                <span className="stat upcoming">
+                  <b>{fila.upcoming}</b> próximos
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+
         {asistencia.length === 0 && <p className="tenue">Sin datos en el periodo.</p>}
+        {asistencia.length > 0 && visibleRows.length === 0 && (
+          <p className="tenue">Nadie coincide con «{search.trim()}».</p>
+        )}
       </div>
     </section>
   );

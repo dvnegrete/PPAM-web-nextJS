@@ -1569,3 +1569,62 @@ button.danger:hover:not(:disabled) { border-color: var(--alerta); filter: bright
   .permanent-removal { margin: 0.75rem; }
   .permanent-removal button { width: 100%; }
 }
+
+/* ------------------------------------------------------------------ */
+/* Calendario y Reportes: controles del mes y listas sin desborde      */
+/* ------------------------------------------------------------------ */
+
+.month-controls {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+.month-controls-check {
+  display: flex; align-items: center; gap: 0.4rem;
+  width: auto; margin-bottom: 0; min-height: 38px;
+}
+.month-controls-check input { width: auto; padding: 0; }
+.month-controls-check span { margin: 0; }
+
+.month-shifts { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.month-shift {
+  --tone: var(--borde);
+  display: grid;
+  grid-template-columns: 11rem 6.5rem minmax(0, 1fr);
+  align-items: baseline; gap: 0.2rem 0.7rem;
+  padding: 0.45rem 0.6rem;
+  border-left: 4px solid var(--tone);
+  border-radius: 8px;
+  background: var(--fondo);
+}
+.month-shift.completo { --tone: color-mix(in srgb, var(--acento) 70%, white); }
+.month-shift.faltante { --tone: color-mix(in srgb, var(--aviso) 70%, white); }
+.month-shift.critico { --tone: color-mix(in srgb, var(--alerta) 70%, white); }
+.month-shift-range { font-variant-numeric: tabular-nums; }
+.month-shift > .etiqueta { justify-self: start; font-variant-numeric: tabular-nums; }
+.month-shift-people { min-width: 0; display: flex; flex-wrap: wrap; gap: 0.1rem 0.9rem; }
+.month-shift-person { overflow-wrap: anywhere; }
+.month-shift-person .marca { color: var(--acento); }
+
+.attendance-list { display: none; list-style: none; margin: 0; padding: 0; }
+.attendance-list li { padding: 0.6rem 0; border-top: 1px solid var(--borde); }
+.attendance-list li:first-child { border-top: 0; }
+.attendance-stats { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; }
+.stat {
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--fondo); color: var(--texto-tenue);
+  font-size: 0.8rem; font-variant-numeric: tabular-nums;
+}
+.stat b { color: inherit; }
+.stat.served { background: var(--acento-suave); color: var(--acento); }
+.stat.cancelled { background: var(--alerta-suave); color: var(--alerta); }
+.stat.covered { background: #fff0df; color: #a14a00; }
+.stat.upcoming { background: #eef3fb; color: #1d4f91; }
+
+@media (max-width: 700px) {
+  .month-shift { grid-template-columns: minmax(0, 1fr) auto; }
+  .month-shift-people { grid-column: 1 / -1; font-size: 0.92rem; }
+  .month-shift > .etiqueta { justify-self: end; }
+  .attendance-table { display: none; }
+  .attendance-list { display: block; }
+}
