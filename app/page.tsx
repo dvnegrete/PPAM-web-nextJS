@@ -1,25 +1,71 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
 import { clearSession, getSession, Session } from '@/lib/api';
 import { fetchOwnAccount } from '@/lib/services/accounts';
 import { fetchLocations } from '@/lib/services/locations';
 import { ADMIN_ROLE_LABELS, type CuentaDelPanel, type Location } from '@/lib/types';
-import { Ajustes } from './ajustes';
-import { Bitacora } from './bitacora';
-import { Calendario } from './calendario';
-import { Confirmaciones } from './confirmaciones';
-import { Encuesta } from './encuesta';
 import { Tablero } from './tablero';
-import { Usuarios } from './usuarios';
 import { CambiarContrasena } from './cambiar-contrasena';
-import { Importar } from './importar';
 import { LoginForm } from './login-form';
 import { GRUPOS, Navegacion, type Pestana } from './navegacion';
-import { Padron } from './padron';
-import { Reportes } from './reportes';
-import { RolDelMes } from './rol-del-mes';
-import { TurnosFijos } from './turnos-fijos';
+
+/** Lo que se ve el instante en que se descarga el código de una pestaña. */
+function TabLoading() {
+  return <p className="tenue">Cargando…</p>;
+}
+
+/**
+ * Las pestañas se descargan al abrirlas, no todas al entrar: casi siempre se
+ * llega al Tablero y se usan una o dos más, y cargar las doce de golpe hacía
+ * esperar por pantallas que no se iban a ver. El Tablero va en el paquete
+ * inicial porque es la primera que se pinta.
+ */
+const Ajustes = dynamic(() => import('./ajustes').then((m) => m.Ajustes), {
+  loading: TabLoading,
+  ssr: false,
+});
+const Bitacora = dynamic(() => import('./bitacora').then((m) => m.Bitacora), {
+  loading: TabLoading,
+  ssr: false,
+});
+const Calendario = dynamic(() => import('./calendario').then((m) => m.Calendario), {
+  loading: TabLoading,
+  ssr: false,
+});
+const Confirmaciones = dynamic(() => import('./confirmaciones').then((m) => m.Confirmaciones), {
+  loading: TabLoading,
+  ssr: false,
+});
+const Encuesta = dynamic(() => import('./encuesta').then((m) => m.Encuesta), {
+  loading: TabLoading,
+  ssr: false,
+});
+const Importar = dynamic(() => import('./importar').then((m) => m.Importar), {
+  loading: TabLoading,
+  ssr: false,
+});
+const Padron = dynamic(() => import('./padron').then((m) => m.Padron), {
+  loading: TabLoading,
+  ssr: false,
+});
+const Reportes = dynamic(() => import('./reportes').then((m) => m.Reportes), {
+  loading: TabLoading,
+  ssr: false,
+});
+const RolDelMes = dynamic(() => import('./rol-del-mes').then((m) => m.RolDelMes), {
+  loading: TabLoading,
+  ssr: false,
+});
+const TurnosFijos = dynamic(() => import('./turnos-fijos').then((m) => m.TurnosFijos), {
+  loading: TabLoading,
+  ssr: false,
+});
+const Usuarios = dynamic(() => import('./usuarios').then((m) => m.Usuarios), {
+  loading: TabLoading,
+  ssr: false,
+});
 
 /**
  * Las pestañas, con quién las ve.
