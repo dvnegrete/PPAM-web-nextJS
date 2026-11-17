@@ -1,30 +1,30 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { errorMessage } from '@/lib/errors';
+import { nombreVisible } from '@/lib/nombres';
+import {
+  buildSearchIndex,
+  directoryCounts,
+  filterParticipants,
+  NO_FILTERS,
+  saveSummary,
+  type OrganizationFilters,
+} from '@/lib/participant-directory';
 import {
   createParticipant,
   fetchOrganizationValues,
   fetchParticipants,
+  type NewParticipant,
 } from '@/lib/services/participants';
-import type { Participant } from '@/lib/types';
-import { MARITAL_LABELS, ORGANIZATION_LABELS, ROLE_LABELS, STATUS_LABELS } from '@/lib/types';
-import type {
-  OrganizationField,
-  OrganizationValues,
-  UpdateParticipantResult,
-} from '@/lib/types';
-import { nombreCompleto, nombreFormal, nombreVisible } from '@/lib/nombres';
-import {
-  clave,
-  coincide,
-  digitos,
-  telefonoLegible,
-  terminos,
-  type Buscable,
-} from '@/lib/texto';
+import { terminos } from '@/lib/texto';
+import type { OrganizationValues, Participant } from '@/lib/types';
 import { EditarParticipante } from './editar-participante';
+import { ParticipantCards } from './participant-cards';
+import { ParticipantCreateForm } from './participant-create-form';
+import { ParticipantFilters } from './participant-filters';
+import { ParticipantsTable } from './participants-table';
 import { TurnosDeParticipante } from './turnos-de-participante';
-import { errorMessage } from '@/lib/errors';
 
 export function Padron({ locationId }: { locationId: string }) {
   const [participantes, setParticipantes] = useState<Participant[]>([]);
@@ -35,24 +35,12 @@ export function Padron({ locationId }: { locationId: string }) {
     circuit: [],
     city: [],
   });
-  const [filtros, setFiltros] = useState<Record<OrganizationField, string>>({
-    congregation: '',
-    circuit: '',
-    city: '',
-  });
+  const [filtros, setFiltros] = useState<OrganizationFilters>(NO_FILTERS);
   const [busqueda, setBusqueda] = useState('');
-  // En el teléfono la lista no se pinta hasta que se busca o se pide: ciento
-  // treinta fichas de entrada son un desplazamiento que nadie quiere recorrer.
+  // En el teléfono la lista no se pinta hasta que se busca o se pide.
   const [verTodos, setVerTodos] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
-  const [nombre, setNombre] = useState('');
-  const [paterno, setPaterno] = useState('');
-  const [materno, setMaterno] = useState('');
-  const [comoMostrar, setComoMostrar] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [rol, setRol] = useState('participante');
-  const [org, setOrg] = useState({ congregation: '', circuit: '', city: '' });
 
   const cargar = useCallback(async () => {
     setError(null);
@@ -72,87 +60,27 @@ export function Padron({ locationId }: { locationId: string }) {
     void cargar();
   }, [cargar]);
 
-  async function agregar(event: React.FormEvent) {
-    event.preventDefault();
+  async function agregar(participant: NewParticipant): Promise<boolean> {
     setError(null);
     setAviso(null);
     try {
-      await createParticipant(locationId, {
-        firstName: nombre,
-        paternalSurname: paterno,
-        maternalSurname: materno || undefined,
-        displayName: comoMostrar || undefined,
-        phone: telefono,
-        role: rol,
-        congregation: org.congregation || undefined,
-        circuit: org.circuit || undefined,
-        city: org.city || undefined,
-      });
-      setAviso(`${nombre} ${paterno} quedó registrado.`);
-      setNombre('');
-      setPaterno('');
-      setMaterno('');
-      setComoMostrar('');
-      setTelefono('');
-      setOrg({ congregation: '', circuit: '', city: '' });
-      await cargar();
+      await createParticipant(locationId, participant);
+      setAviso(`${participant.firstName} ${participant.paternalSurname} quedó registrado.`);
+      void cargar();
+      return true;
     } catch (problem) {
       setError(errorMessage(problem, 'No se pudo dar de alta'));
+      return false;
     }
   }
 
-  /**
-   * Lo buscable de cada persona, preparado una sola vez.
-   *
-   * Normalizar ciento treinta filas en cada tecla sería trabajo tirado: el
-   * padrón solo cambia al recargarlo, así que el índice se arma con él.
-   *
-   * El cónyuge entra por sus **dos** vías —el nombre anotado de quien no
-   * participa y el nombre compuesto de quien sí—, porque lo contrario sería que
-   * buscar a una pareja funcione solo cuando no está en el padrón.
-   */
-  const indice = useMemo(() => {
-    const mapa = new Map<string, Buscable>();
-    for (const p of participantes) {
-      mapa.set(p.id, {
-        texto: clave(
-          [
-            p.firstName,
-            p.paternalSurname,
-            p.maternalSurname,
-            p.displayName,
-            p.congregation,
-            p.spouseName,
-            p.spouse ? nombreCompleto(p.spouse) : null,
-          ]
-            .filter(Boolean)
-            .join(' '),
-        ),
-        digitos: digitos(p.phoneE164),
-      });
-    }
-    return mapa;
-  }, [participantes]);
-
+  const indice = useMemo(() => buildSearchIndex(participantes), [participantes]);
   const terms = useMemo(() => terminos(busqueda), [busqueda]);
   const hayBusqueda = terms.length > 0;
   const hayFiltro = Object.values(filtros).some(Boolean);
 
-  // La búsqueda acota dentro del filtro, no lo sustituye: son dos preguntas
-  // distintas y combinarlas es lo que permite «de esta congregación, ¿quién...?».
-  const visibles = participantes
-    .filter((p) =>
-      (Object.keys(filtros) as OrganizationField[]).every(
-        (campo) => !filtros[campo] || p[campo] === filtros[campo],
-      ),
-    )
-    .filter((p) => !hayBusqueda || coincide(terms, indice.get(p.id)!));
-
-  const encargados = participantes.filter((p) => p.role !== 'PARTICIPANT').length;
-  const sinConsentimiento = participantes.filter((p) => !p.optInAt).length;
-  const sinEstadoCivil = participantes.filter((p) => p.maritalStatus === 'SIN_REGISTRAR').length;
-  const sinCongregacion = participantes.filter((p) => !p.congregation).length;
-  const noActivos = participantes.filter((p) => p.status !== 'ACTIVE').length;
+  const visibles = filterParticipants(participantes, filtros, terms, indice);
+  const counts = directoryCounts(participantes);
 
   const listaAbierta = hayBusqueda || hayFiltro || verTodos;
 
@@ -211,273 +139,37 @@ export function Padron({ locationId }: { locationId: string }) {
         )}
       </div>
 
-      {/* Plegado: el padrón entra por CSV y dar de alta a mano es la excepción.
-          Diez campos abiertos empujaban el buscador y la tabla fuera de la vista. */}
-      <details className="tarjeta plegable">
-        <summary>Dar de alta a alguien nuevo</summary>
-        <form onSubmit={agregar} className="forma-alta">
-          <label style={{ marginBottom: 0 }}>
-            <span>Nombre</span>
-            <input
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="Ana María"
-              required
-            />
-          </label>
-          <label style={{ marginBottom: 0 }}>
-            <span>Apellido paterno</span>
-            <input value={paterno} onChange={(e) => setPaterno(e.target.value)} required />
-          </label>
-          <label style={{ marginBottom: 0 }}>
-            <span>Apellido materno</span>
-            <input
-              value={materno}
-              onChange={(e) => setMaterno(e.target.value)}
-              placeholder="Opcional"
-            />
-          </label>
-          <label style={{ marginBottom: 0 }}>
-            <span>Cómo mostrarlo</span>
-            <input
-              value={comoMostrar}
-              onChange={(e) => setComoMostrar(e.target.value)}
-              placeholder="Opcional"
-            />
-          </label>
-          <label style={{ marginBottom: 0 }}>
-            <span>Teléfono</span>
-            <input
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
-              placeholder="55 1234 5678"
-              required
-            />
-          </label>
-          <label style={{ marginBottom: 0 }}>
-            <span>Rol</span>
-            <select value={rol} onChange={(e) => setRol(e.target.value)}>
-              <option value="participante">Participante</option>
-              <option value="encargado">Encargado</option>
-            </select>
-          </label>
-          {(Object.keys(ORGANIZATION_LABELS) as OrganizationField[]).map((campo) => (
-            <label key={campo} style={{ marginBottom: 0 }}>
-              <span>{ORGANIZATION_LABELS[campo]}</span>
-              <input
-                value={org[campo]}
-                onChange={(e) => setOrg({ ...org, [campo]: e.target.value })}
-                list={`alta-${campo}`}
-                placeholder="Opcional"
-              />
-              <datalist id={`alta-${campo}`}>
-                {valores[campo]?.map((valor) => (
-                  <option key={valor} value={valor} />
-                ))}
-              </datalist>
-            </label>
-          ))}
-          <button className="primario" type="submit">Agregar</button>
-        </form>
-      </details>
+      <ParticipantCreateForm knownValues={valores} onCreate={agregar} />
 
       {/* Los contadores son del padrón entero: dicen qué falta por capturar, y
           eso no cambia porque se esté buscando a alguien. */}
       <p className="tenue">
-        {participantes.length} registrado(s) · {encargados} encargado(s)
-        {noActivos > 0 && ` · ${noActivos} pausado(s) o de baja`}
-        {sinConsentimiento > 0 && ` · ${sinConsentimiento} sin primer contacto`}
-        {sinEstadoCivil > 0 && ` · ${sinEstadoCivil} sin estado civil`}
-        {sinCongregacion > 0 && ` · ${sinCongregacion} sin congregación`}
+        {counts.total} registrado(s) · {counts.supervisors} encargado(s)
+        {counts.notActive > 0 && ` · ${counts.notActive} pausado(s) o de baja`}
+        {counts.withoutOptIn > 0 && ` · ${counts.withoutOptIn} sin primer contacto`}
+        {counts.withoutMaritalStatus > 0 && ` · ${counts.withoutMaritalStatus} sin estado civil`}
+        {counts.withoutCongregation > 0 && ` · ${counts.withoutCongregation} sin congregación`}
       </p>
 
-      <details className="tarjeta plegable">
-        <summary>
-          Filtros
-          {hayFiltro && (
-            <span className="etiqueta completo">
-              {Object.values(filtros).filter(Boolean).join(' · ')}
-            </span>
-          )}
-        </summary>
-        <div className="filtros-padron">
-        {(Object.keys(ORGANIZATION_LABELS) as OrganizationField[]).map((campo) => (
-          <label key={campo} style={{ marginBottom: 0 }}>
-            <span>{ORGANIZATION_LABELS[campo]}</span>
-            <select
-              value={filtros[campo]}
-              onChange={(evento) => setFiltros({ ...filtros, [campo]: evento.target.value })}
-            >
-              <option value="">Todas</option>
-              {valores[campo]?.map((valor) => (
-                <option key={valor} value={valor}>
-                  {valor}
-                </option>
-              ))}
-            </select>
-          </label>
-        ))}
-          <button
-            onClick={() => setFiltros({ congregation: '', circuit: '', city: '' })}
-            disabled={!hayFiltro}
-          >
-            Quitar filtros
-          </button>
-        </div>
-      </details>
+      <ParticipantFilters filters={filtros} knownValues={valores} onChange={setFiltros} />
 
-      <div className="tarjeta padron-escritorio">
-        <table className="padron-tabla">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th className="secundaria">Se muestra como</th>
-              <th>Teléfono</th>
-              <th>Rol</th>
-              <th>Estado</th>
-              <th>Congregación</th>
-              <th className="secundaria">Circuito</th>
-              <th className="secundaria">Ciudad</th>
-              <th className="secundaria">Estado civil</th>
-              <th className="secundaria">Cónyuge</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {visibles.map((p) => (
-              <tr key={p.id}>
-                <td>{nombreFormal(p)}</td>
-                <td className="secundaria">
-                  {p.displayName ? (
-                    p.displayName
-                  ) : (
-                    <span className="tenue">{nombreVisible(p)}</span>
-                  )}
-                </td>
-                <td style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
-                  {telefonoLegible(p.phoneE164)}
-                </td>
-                <td>
-                  {p.role === 'PARTICIPANT' ? (
-                    ROLE_LABELS[p.role]
-                  ) : (
-                    <span className="etiqueta completo">{ROLE_LABELS[p.role]}</span>
-                  )}
-                </td>
-                <td>
-                  {p.status === 'ACTIVE' ? (
-                    <span className="tenue">{STATUS_LABELS[p.status]}</span>
-                  ) : (
-                    <span
-                      className={`etiqueta ${p.status === 'PAUSED' ? 'faltante' : 'critico'}`}
-                    >
-                      {STATUS_LABELS[p.status]}
-                    </span>
-                  )}
-                </td>
-                <td>{p.congregation ?? <span className="tenue">—</span>}</td>
-                <td className="secundaria">{p.circuit ?? <span className="tenue">—</span>}</td>
-                <td className="secundaria">{p.city ?? <span className="tenue">—</span>}</td>
-                <td className="secundaria">
-                  {p.maritalStatus === 'SIN_REGISTRAR' ? (
-                    <span className="tenue">Sin registrar</span>
-                  ) : (
-                    MARITAL_LABELS[p.maritalStatus]
-                  )}
-                </td>
-                <td className="secundaria">
-                  {p.spouse ? (
-                    <>
-                      {nombreVisible(p.spouse)}
-                      <span className="tenue"> · participa</span>
-                    </>
-                  ) : p.spouseName ? (
-                    <>
-                      {p.spouseName}
-                      <span className="tenue"> · no participa</span>
-                    </>
-                  ) : (
-                    <span className="tenue">—</span>
-                  )}
-                </td>
-                <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                  <button className="accion" onClick={() => setViendoTurnos(p)}>
-                    Turnos
-                  </button>{' '}
-                  <button className="accion" onClick={() => setEditando(p)}>
-                    Editar
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {sinResultados}
-      </div>
+      <ParticipantsTable
+        participants={visibles}
+        emptyState={sinResultados}
+        onShowShifts={setViendoTurnos}
+        onEdit={setEditando}
+      />
 
-      {/* En el teléfono, fichas en vez de tabla: once columnas no caben sin
-          desplazarse de lado, y una ficha deja los dos botones al alcance. */}
-      <div className="padron-telefono">
-        {!listaAbierta && participantes.length > 0 ? (
-          <div className="padron-invitacion">
-            <p>
-              Escribe un nombre o un teléfono para encontrar a alguien y ver <strong>qué turnos
-              cubre</strong>.
-            </p>
-            <button onClick={() => setVerTodos(true)}>
-              Ver los {participantes.length} participantes
-            </button>
-          </div>
-        ) : (
-          <>
-            <ul className="padron-fichas">
-              {visibles.map((p) => (
-                <li key={p.id} className="ficha">
-                  <div className="ficha-cabecera">
-                    <span className="ficha-iniciales" aria-hidden="true">
-                      {iniciales(p)}
-                    </span>
-                    <div className="ficha-quien">
-                      <strong>{nombreFormal(p)}</strong>
-                      <a href={`tel:${p.phoneE164}`}>{telefonoLegible(p.phoneE164)}</a>
-                    </div>
-                  </div>
-                  <div className="ficha-datos">
-                    {p.role !== 'PARTICIPANT' && (
-                      <span className="etiqueta completo">{ROLE_LABELS[p.role]}</span>
-                    )}
-                    {p.status !== 'ACTIVE' && (
-                      <span
-                        className={`etiqueta ${p.status === 'PAUSED' ? 'faltante' : 'critico'}`}
-                      >
-                        {STATUS_LABELS[p.status]}
-                      </span>
-                    )}
-                    {p.congregation && <span className="etiqueta">{p.congregation}</span>}
-                    {(p.spouse || p.spouseName) && (
-                      <span className="etiqueta">
-                        Cónyuge: {p.spouse ? nombreVisible(p.spouse) : p.spouseName}
-                      </span>
-                    )}
-                  </div>
-                  <div className="ficha-acciones">
-                    <button className="primario" onClick={() => setViendoTurnos(p)}>
-                      Ver turnos
-                    </button>
-                    <button onClick={() => setEditando(p)}>Editar</button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            {sinResultados}
-            {verTodos && !hayBusqueda && !hayFiltro && (
-              <button className="padron-ocultar" onClick={() => setVerTodos(false)}>
-                Ocultar la lista
-              </button>
-            )}
-          </>
-        )}
-      </div>
+      <ParticipantCards
+        participants={visibles}
+        emptyState={sinResultados}
+        onShowShifts={setViendoTurnos}
+        onEdit={setEditando}
+        total={participantes.length}
+        open={listaAbierta}
+        canHide={verTodos && !hayBusqueda && !hayFiltro}
+        onShowAll={setVerTodos}
+      />
 
       {viendoTurnos && (
         <TurnosDeParticipante
@@ -497,44 +189,11 @@ export function Padron({ locationId }: { locationId: string }) {
           valores={valores}
           onGuardado={async (resultado) => {
             await cargar();
-            setAviso(resumenDeGuardado(resultado));
+            setAviso(saveSummary(resultado));
           }}
           onCerrar={() => setEditando(null)}
         />
       )}
     </section>
   );
-}
-
-/** «AL» para Ana López: lo que distingue una ficha de otra de un vistazo. */
-function iniciales(persona: Participant): string {
-  return `${persona.firstName.charAt(0)}${persona.paternalSurname.charAt(0)}`.toLocaleUpperCase(
-    'es-MX',
-  );
-}
-
-/**
- * Qué contar después de guardar.
- *
- * Los turnos liberados y los mensajes descartados no se ven en la tabla, así que
- * si no se dicen aquí el administrador no se enteraría de que ocurrieron.
- */
-function resumenDeGuardado(resultado: UpdateParticipantResult): string {
-  const partes = [`${nombreVisible(resultado)}: cambios guardados.`];
-  if (resultado.cancelledShifts > 0) {
-    partes.push(
-      resultado.cancelledShifts === 1
-        ? 'Se liberó 1 turno futuro, sin convocar a nadie.'
-        : `Se liberaron ${resultado.cancelledShifts} turnos futuros, sin convocar a nadie.`,
-    );
-  }
-  if (resultado.removedFixedShifts > 0) {
-    partes.push(
-      resultado.removedFixedShifts === 1
-        ? 'Se quitó 1 turno fijo.'
-        : `Se quitaron ${resultado.removedFixedShifts} turnos fijos.`,
-    );
-  }
-  partes.push(...resultado.warnings);
-  return partes.join(' ');
 }
