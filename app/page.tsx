@@ -11,6 +11,7 @@ import { CambiarContrasena } from './cambiar-contrasena';
 import { LoginForm } from './login-form';
 import { GRUPOS, Navegacion, type Pestana } from './navegacion';
 import { errorMessage } from '@/lib/errors';
+import { rememberTab, reloadOnStaleBuild, tabAfterReload } from '@/lib/stale-build';
 
 /** Lo que se ve el instante en que se descarga el código de una pestaña. */
 function TabLoading() {
@@ -22,48 +23,51 @@ function TabLoading() {
  * llega al Tablero y se usan una o dos más, y cargar las doce de golpe hacía
  * esperar por pantallas que no se iban a ver. El Tablero va en el paquete
  * inicial porque es la primera que se pinta.
+ *
+ * Si la descarga falla es casi siempre porque hubo un despliegue con el panel
+ * abierto y esa versión ya no existe: `reloadOnStaleBuild` lo recarga solo.
  */
-const Ajustes = dynamic(() => import('./ajustes').then((m) => m.Ajustes), {
+const Ajustes = dynamic(() => import('./ajustes').then((m) => m.Ajustes).catch(reloadOnStaleBuild), {
   loading: TabLoading,
   ssr: false,
 });
-const Bitacora = dynamic(() => import('./bitacora').then((m) => m.Bitacora), {
+const Bitacora = dynamic(() => import('./bitacora').then((m) => m.Bitacora).catch(reloadOnStaleBuild), {
   loading: TabLoading,
   ssr: false,
 });
-const Calendario = dynamic(() => import('./calendario').then((m) => m.Calendario), {
+const Calendario = dynamic(() => import('./calendario').then((m) => m.Calendario).catch(reloadOnStaleBuild), {
   loading: TabLoading,
   ssr: false,
 });
-const Confirmaciones = dynamic(() => import('./confirmaciones').then((m) => m.Confirmaciones), {
+const Confirmaciones = dynamic(() => import('./confirmaciones').then((m) => m.Confirmaciones).catch(reloadOnStaleBuild), {
   loading: TabLoading,
   ssr: false,
 });
-const Encuesta = dynamic(() => import('./encuesta').then((m) => m.Encuesta), {
+const Encuesta = dynamic(() => import('./encuesta').then((m) => m.Encuesta).catch(reloadOnStaleBuild), {
   loading: TabLoading,
   ssr: false,
 });
-const Importar = dynamic(() => import('./importar').then((m) => m.Importar), {
+const Importar = dynamic(() => import('./importar').then((m) => m.Importar).catch(reloadOnStaleBuild), {
   loading: TabLoading,
   ssr: false,
 });
-const Padron = dynamic(() => import('./padron').then((m) => m.Padron), {
+const Padron = dynamic(() => import('./padron').then((m) => m.Padron).catch(reloadOnStaleBuild), {
   loading: TabLoading,
   ssr: false,
 });
-const Reportes = dynamic(() => import('./reportes').then((m) => m.Reportes), {
+const Reportes = dynamic(() => import('./reportes').then((m) => m.Reportes).catch(reloadOnStaleBuild), {
   loading: TabLoading,
   ssr: false,
 });
-const RolDelMes = dynamic(() => import('./rol-del-mes').then((m) => m.RolDelMes), {
+const RolDelMes = dynamic(() => import('./rol-del-mes').then((m) => m.RolDelMes).catch(reloadOnStaleBuild), {
   loading: TabLoading,
   ssr: false,
 });
-const TurnosFijos = dynamic(() => import('./turnos-fijos').then((m) => m.TurnosFijos), {
+const TurnosFijos = dynamic(() => import('./turnos-fijos').then((m) => m.TurnosFijos).catch(reloadOnStaleBuild), {
   loading: TabLoading,
   ssr: false,
 });
-const Usuarios = dynamic(() => import('./usuarios').then((m) => m.Usuarios), {
+const Usuarios = dynamic(() => import('./usuarios').then((m) => m.Usuarios).catch(reloadOnStaleBuild), {
   loading: TabLoading,
   ssr: false,
 });
@@ -119,8 +123,16 @@ export default function Page() {
 
   useEffect(() => {
     setSession(getSession());
+    // Si el panel se acaba de recargar solo por un despliegue, se vuelve a la
+    // sección que se estaba abriendo, para que la recarga no se note.
+    const pending = tabAfterReload();
+    if (PESTANAS.some((item) => item.id === pending)) setPestana(pending as PestanaId);
     setListo(true);
   }, []);
+
+  useEffect(() => {
+    rememberTab(pestana);
+  }, [pestana]);
 
   const cargarCuenta = useCallback(async () => {
     try {
