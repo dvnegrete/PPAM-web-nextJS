@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { api } from '@/lib/api';
+import { importCsv } from '@/lib/services/participants';
 import type { ImportResult } from '@/lib/types';
 import { GuiaCampos, type GrupoCampos } from './guia-campos';
 
@@ -234,12 +234,7 @@ export function Importar({ locationId }: { locationId: string }) {
     setError(null);
     setResultado(null);
     try {
-      setResultado(
-        await api<ImportResult>(`/locations/${locationId}/import/${tipo}`, {
-          method: 'POST',
-          body: { csv, dryRun },
-        }),
-      );
+      setResultado(await importCsv(locationId, tipo, csv, dryRun));
     } catch (problem) {
       setError(problem instanceof Error ? problem.message : 'No se pudo importar');
     } finally {

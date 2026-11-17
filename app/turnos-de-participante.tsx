@@ -1,13 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { cancelAssignment } from '@/lib/services/assignments';
+import { fetchParticipantShifts, updateParticipant } from '@/lib/services/participants';
 import {
   CANCEL_REASONS,
   type ParticipantStatus,
   type TurnoProximoDeParticipante,
   type TurnosDeParticipante as Turnos,
-  type UpdateParticipantResult,
 } from '@/lib/types';
 import { CancelarDialogo } from './cancelar-dialogo';
 
@@ -81,7 +81,7 @@ export function TurnosDeParticipante({
     setError(null);
     try {
       setTurnos(
-        await api<Turnos>(`/locations/${locationId}/participants/${participanteId}/shifts`),
+        await fetchParticipantShifts(locationId, participanteId),
       );
     } catch (problema) {
       setError(problema instanceof Error ? problema.message : 'No se pudieron cargar los turnos');
@@ -105,13 +105,11 @@ export function TurnosDeParticipante({
 
   async function cancelar(reasonCode: string, reason: string, tambienConyuge: boolean) {
     if (!cancelando) return;
-    const { spouseCancelled } = await api<{ ok: true; spouseCancelled: string | null }>(
-      `/assignments/${cancelando.assignmentId}/cancel`,
-      {
-        method: 'POST',
-        body: { reasonCode, reason: reason || undefined, cancelSpouse: tambienConyuge },
-      },
-    );
+    const { spouseCancelled } = await cancelAssignment(cancelando.assignmentId, {
+      reasonCode,
+      reason: reason || undefined,
+      cancelSpouse: tambienConyuge,
+    });
     setAviso(
       spouseCancelled
         ? `Se cancelaron los turnos de ${nombre} y ${spouseCancelled} del ${cancelando.label}.`
@@ -129,10 +127,7 @@ export function TurnosDeParticipante({
     setRemoving(true);
     setError(null);
     try {
-      const result = await api<UpdateParticipantResult>(
-        `/locations/${locationId}/participants/${participanteId}`,
-        { method: 'PATCH', body: { status: 'INACTIVE' } },
-      );
+      const result = await updateParticipant(locationId, participanteId, { status: 'INACTIVE' });
       setCurrentStatus('INACTIVE');
       setConfirmingRemoval(false);
       setAviso(

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { fetchParticipants } from '@/lib/services/participants';
 import { ADMIN_ROLE_LABELS } from '@/lib/types';
 import type { AdminRole, CuentaDelPanel, Participant } from '@/lib/types';
 import { EditarCuenta } from './editar-cuenta';
@@ -29,7 +30,7 @@ export function Usuarios({ locationId }: { locationId: string }) {
     try {
       const [lista, gente] = await Promise.all([
         api<CuentaDelPanel[]>('/admin-users'),
-        api<Participant[]>(`/locations/${locationId}/participants`),
+        fetchParticipants(locationId),
       ]);
       setCuentas(lista);
       setPadron(gente);

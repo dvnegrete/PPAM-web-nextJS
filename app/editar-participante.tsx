@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { fetchSpouseCandidates, updateParticipant } from '@/lib/services/participants';
 import { nombreCompleto, nombreFormal } from '@/lib/nombres';
 import {
   MARITAL_LABELS,
@@ -87,9 +87,7 @@ export function EditarParticipante({
   useEffect(() => {
     if (!casado) return;
     let vigente = true;
-    api<SpouseCandidate[]>(
-      `/locations/${locationId}/participants/${participante.id}/spouse-candidates`,
-    )
+    fetchSpouseCandidates(locationId, participante.id)
       .then((lista) => {
         if (vigente) setCandidatos(lista);
       })
@@ -130,30 +128,24 @@ export function EditarParticipante({
     setOcupado(true);
     setError(null);
     try {
-      const resultado = await api<UpdateParticipantResult>(
-        `/locations/${locationId}/participants/${participante.id}`,
-        {
-          method: 'PATCH',
-          body: {
-            firstName: nombre.trim(),
-            paternalSurname: paterno.trim(),
-            maternalSurname: materno.trim() || null,
-            displayName: comoMostrar.trim() || null,
-            // Solo se manda si cambió: así el servidor no marca una fecha de
-            // cambio de número por haber guardado otra cosa.
-            ...(cambiaTelefono ? { phone: telefono.trim() } : {}),
-            role: ROLE_VALUES[rol],
-            coverageAlerts: alertas,
-            status: estado,
-            congregation: org.congregation.trim() || null,
-            circuit: org.circuit.trim() || null,
-            city: org.city.trim() || null,
-            maritalStatus: civil,
-            spouseParticipantId: casado && modo === 'participante' ? conyugeId || null : null,
-            spouseName: casado && modo === 'externo' ? conyugeNombre.trim() || null : null,
-          },
-        },
-      );
+      const resultado = await updateParticipant(locationId, participante.id, {
+        firstName: nombre.trim(),
+        paternalSurname: paterno.trim(),
+        maternalSurname: materno.trim() || null,
+        displayName: comoMostrar.trim() || null,
+        // Solo se manda si cambió: así el servidor no marca una fecha de
+        // cambio de número por haber guardado otra cosa.
+        ...(cambiaTelefono ? { phone: telefono.trim() } : {}),
+        role: ROLE_VALUES[rol],
+        coverageAlerts: alertas,
+        status: estado,
+        congregation: org.congregation.trim() || null,
+        circuit: org.circuit.trim() || null,
+        city: org.city.trim() || null,
+        maritalStatus: civil,
+        spouseParticipantId: casado && modo === 'participante' ? conyugeId || null : null,
+        spouseName: casado && modo === 'externo' ? conyugeNombre.trim() || null : null,
+      });
       await onGuardado(resultado);
       onCerrar();
     } catch (problema) {

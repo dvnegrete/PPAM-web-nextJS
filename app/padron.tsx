@@ -1,7 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api } from '@/lib/api';
+import {
+  createParticipant,
+  fetchOrganizationValues,
+  fetchParticipants,
+} from '@/lib/services/participants';
 import type { Participant } from '@/lib/types';
 import { MARITAL_LABELS, ORGANIZATION_LABELS, ROLE_LABELS, STATUS_LABELS } from '@/lib/types';
 import type {
@@ -53,8 +57,8 @@ export function Padron({ locationId }: { locationId: string }) {
     setError(null);
     try {
       const [padron, conocidos] = await Promise.all([
-        api<Participant[]>(`/locations/${locationId}/participants`),
-        api<OrganizationValues>(`/locations/${locationId}/organization-values`),
+        fetchParticipants(locationId),
+        fetchOrganizationValues(locationId),
       ]);
       setParticipantes(padron);
       setValores(conocidos);
@@ -72,19 +76,16 @@ export function Padron({ locationId }: { locationId: string }) {
     setError(null);
     setAviso(null);
     try {
-      await api(`/locations/${locationId}/participants`, {
-        method: 'POST',
-        body: {
-          firstName: nombre,
-          paternalSurname: paterno,
-          maternalSurname: materno || undefined,
-          displayName: comoMostrar || undefined,
-          phone: telefono,
-          role: rol,
-          congregation: org.congregation || undefined,
-          circuit: org.circuit || undefined,
-          city: org.city || undefined,
-        },
+      await createParticipant(locationId, {
+        firstName: nombre,
+        paternalSurname: paterno,
+        maternalSurname: materno || undefined,
+        displayName: comoMostrar || undefined,
+        phone: telefono,
+        role: rol,
+        congregation: org.congregation || undefined,
+        circuit: org.circuit || undefined,
+        city: org.city || undefined,
       });
       setAviso(`${nombre} ${paterno} quedó registrado.`);
       setNombre('');
