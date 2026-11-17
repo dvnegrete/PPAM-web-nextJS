@@ -1237,6 +1237,8 @@ pre.bloque {
   letter-spacing: 0.02em;
 }
 .rol-falta { color: #7a6200; font-size: 15px; font-style: italic; padding: 2px 0; }
+/* Nota al pie del encabezado que explica el asterisco de «Lugar disponible*». */
+.rol-note { margin: -8px 0 18px; color: #7a6200; font-size: 15px; font-style: italic; }
 
 .rol-hora {
   color: var(--rol-color);
