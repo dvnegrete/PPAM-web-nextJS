@@ -5,6 +5,7 @@ import { toBlob } from 'html-to-image';
 import { fetchMonthRoster } from '@/lib/services/calendar';
 import type { DiaDelRol, PersonaDelRol, RolMensual } from '@/lib/types';
 import { MONTH_NAMES } from '@/lib/calendar-labels';
+import { errorMessage } from '@/lib/errors';
 
 /**
  * Ancho real de cada imagen. WhatsApp reduce lo que pasa de ~1600 px, y por
@@ -33,7 +34,7 @@ export function RolDelMes({ locationId }: { locationId: string }) {
     try {
       setRol(await fetchMonthRoster(locationId, year, month));
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudo cargar el rol del mes');
+      setError(errorMessage(problem, 'No se pudo cargar el rol del mes'));
     } finally {
       setCargando(false);
     }
@@ -162,7 +163,7 @@ function Lienzo({
       enlace.click();
       URL.revokeObjectURL(url);
     } catch (problem) {
-      setFallo(problem instanceof Error ? problem.message : 'No se pudo generar la imagen');
+      setFallo(errorMessage(problem, 'No se pudo generar la imagen'));
     } finally {
       setTrabajando(false);
     }
@@ -183,7 +184,7 @@ function Lienzo({
     } catch (problem) {
       // Cerrar la hoja de compartir no es un error.
       if (problem instanceof DOMException && problem.name === 'AbortError') return;
-      setFallo(problem instanceof Error ? problem.message : 'No se pudo compartir la imagen');
+      setFallo(errorMessage(problem, 'No se pudo compartir la imagen'));
     } finally {
       setTrabajando(false);
     }

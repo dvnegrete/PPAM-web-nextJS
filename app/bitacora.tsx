@@ -8,6 +8,7 @@ import {
   type AuditHistoryEntry,
   type CategoriaBitacora,
 } from '@/lib/types';
+import { errorMessage } from '@/lib/errors';
 
 const POR_PAGINA = 50;
 
@@ -87,7 +88,7 @@ export function Bitacora({ esAdmin }: { esAdmin: boolean }) {
       })
       .catch((problema: unknown) => {
         if (!vigente) return;
-        setError(problema instanceof Error ? problema.message : 'No se pudo cargar la bitácora');
+        setError(errorMessage(problema, 'No se pudo cargar la bitácora'));
         setEntradas([]);
         setCursor(null);
       })
@@ -108,7 +109,7 @@ export function Bitacora({ esAdmin }: { esAdmin: boolean }) {
       setEntradas((previas) => [...previas, ...pagina.entries]);
       setCursor(pagina.nextCursor);
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo cargar más');
+      setError(errorMessage(problema, 'No se pudo cargar más'));
     } finally {
       setCargando(false);
     }

@@ -5,6 +5,7 @@ import { fetchPollDraft } from '@/lib/services/group-messages';
 import type { PollDraft } from '@/lib/types';
 import { BotonCopiar } from './boton-copiar';
 import { MONTH_ABBREVIATIONS } from '@/lib/calendar-labels';
+import { errorMessage } from '@/lib/errors';
 
 type Nivel = 'cupo' | 'minimo';
 
@@ -37,7 +38,7 @@ export function Encuesta({ locationId }: { locationId: string }) {
       const to = new Date(`${hasta}T23:59:59`).toISOString();
       setBorrador(await fetchPollDraft(locationId, from, to, nivel));
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo generar el texto');
+      setError(errorMessage(problema, 'No se pudo generar el texto'));
     } finally {
       setCargando(false);
     }

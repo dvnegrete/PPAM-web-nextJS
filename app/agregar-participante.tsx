@@ -5,6 +5,7 @@ import { rangoTurno } from '@/lib/horas';
 import { nombreCompleto, nombreFormal } from '@/lib/nombres';
 import { clave, coincide, digitos, terminos, type Buscable } from '@/lib/texto';
 import type { AvailableParticipant, DashboardShift, ExternalCover } from '@/lib/types';
+import { errorMessage } from '@/lib/errors';
 
 interface Props {
   locationId: string;
@@ -50,7 +51,7 @@ export function AgregarParticipante({
       })
       .catch((problema: unknown) => {
         if (vigente) {
-          setError(problema instanceof Error ? problema.message : 'No se pudieron cargar los participantes');
+          setError(errorMessage(problema, 'No se pudieron cargar los participantes'));
         }
       })
       .finally(() => {
@@ -106,7 +107,7 @@ export function AgregarParticipante({
       if (deFuera) await onAgregarExterno(externo);
       else if (elegido) await onAgregar(elegido);
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo agregar');
+      setError(errorMessage(problema, 'No se pudo agregar'));
       setOcupado(false);
     }
   }

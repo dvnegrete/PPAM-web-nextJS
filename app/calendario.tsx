@@ -7,6 +7,7 @@ import { rangoTurno } from '@/lib/horas';
 import { ocupacionTexto } from '@/lib/turnos';
 import { RegenerarDialogo } from './regenerar-dialogo';
 import { MONTH_NAMES, WEEKDAY_NAMES } from '@/lib/calendar-labels';
+import { errorMessage } from '@/lib/errors';
 
 function diaSemana(fecha: string): string {
   // La fecha viene como AAAA-MM-DD y representa el día local del punto.
@@ -44,7 +45,7 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
     try {
       setShifts(await fetchMonthCalendar(locationId, year, month));
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudo cargar el calendario');
+      setError(errorMessage(problem, 'No se pudo cargar el calendario'));
     } finally {
       setCargando(false);
     }
@@ -92,7 +93,7 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
       );
       await cargar();
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudo generar el calendario');
+      setError(errorMessage(problem, 'No se pudo generar el calendario'));
     }
   }
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { fetchShiftHistory } from '@/lib/services/dashboard';
 import type { Movement } from '@/lib/types';
 import { fechaCorta } from '@/lib/horas';
+import { errorMessage } from '@/lib/errors';
 
 /**
  * Recorrido completo de un turno.
@@ -24,7 +25,7 @@ export function MovimientosTurno({ shiftId }: { shiftId: string }) {
       })
       .catch((problema: unknown) => {
         if (vigente) {
-          setError(problema instanceof Error ? problema.message : 'No se pudo cargar el historial');
+          setError(errorMessage(problema, 'No se pudo cargar el historial'));
         }
       });
     return () => {

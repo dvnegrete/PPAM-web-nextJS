@@ -11,6 +11,7 @@ import {
 import type { RecurringCandidate, RecurringOverview, RecurringSlot } from '@/lib/types';
 import { rango12h } from '@/lib/horas';
 import { WEEKDAY_ABBREVIATIONS, WEEKDAY_TITLES } from '@/lib/calendar-labels';
+import { errorMessage } from '@/lib/errors';
 
 const ORDINALES = ['', '1.ª', '2.ª', '3.ª', '4.ª', '5.ª'];
 
@@ -57,7 +58,7 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
       setDatos(await fetchRecurringOverview(locationId));
       setError(null);
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudieron cargar los turnos fijos');
+      setError(errorMessage(problema, 'No se pudieron cargar los turnos fijos'));
     } finally {
       setCargando(false);
     }
@@ -115,7 +116,7 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
       setPendingRemoval(null);
       await cargar();
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo quitar');
+      setError(errorMessage(problema, 'No se pudo quitar'));
     } finally {
       setQuitando(null);
     }
@@ -129,7 +130,7 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
       await setRecurringCaptain(recurringId, isCaptain);
       await cargar();
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo marcar al capitán');
+      setError(errorMessage(problema, 'No se pudo marcar al capitán'));
     } finally {
       setMarcando(null);
     }
@@ -592,7 +593,7 @@ function ElegirTitular({
       })
       .catch((problema: unknown) => {
         if (vigente) {
-          setError(problema instanceof Error ? problema.message : 'No se pudieron cargar los participantes');
+          setError(errorMessage(problema, 'No se pudieron cargar los participantes'));
         }
       })
       .finally(() => {
@@ -616,7 +617,7 @@ function ElegirTitular({
     try {
       await onAgregar(elegido);
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo asignar');
+      setError(errorMessage(problema, 'No se pudo asignar'));
       setOcupado(false);
     }
   }

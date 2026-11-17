@@ -5,6 +5,7 @@ import { createAccount, resetAccountPassword, updateAccount } from '@/lib/servic
 import { nombreFormal } from '@/lib/nombres';
 import { ADMIN_ROLE_LABELS } from '@/lib/types';
 import type { AdminRole, CuentaDelPanel, Participant } from '@/lib/types';
+import { errorMessage } from '@/lib/errors';
 
 interface Props {
   /** `null` para dar de alta. */
@@ -102,7 +103,7 @@ export function EditarCuenta({
       }
       onCerrar();
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo guardar');
+      setError(errorMessage(problema, 'No se pudo guardar'));
       setOcupado(false);
     }
   }
@@ -122,7 +123,7 @@ export function EditarCuenta({
       await onGuardado(`Contraseña de ${cuenta.email} restablecida.`);
       onCerrar();
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo restablecer');
+      setError(errorMessage(problema, 'No se pudo restablecer'));
       setOcupado(false);
     }
   }

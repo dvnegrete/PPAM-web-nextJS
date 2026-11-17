@@ -20,6 +20,7 @@ import type {
   SpouseCandidate,
   UpdateParticipantResult,
 } from '@/lib/types';
+import { errorMessage } from '@/lib/errors';
 
 /** Cómo se registra al cónyuge: con referencia al padrón o solo su nombre. */
 type Modo = 'participante' | 'externo';
@@ -93,7 +94,7 @@ export function EditarParticipante({
       })
       .catch((problema: unknown) => {
         if (vigente) {
-          setError(problema instanceof Error ? problema.message : 'No se pudieron cargar los participantes');
+          setError(errorMessage(problema, 'No se pudieron cargar los participantes'));
         }
       });
     return () => {
@@ -149,7 +150,7 @@ export function EditarParticipante({
       await onGuardado(resultado);
       onCerrar();
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo guardar');
+      setError(errorMessage(problema, 'No se pudo guardar'));
       setOcupado(false);
     }
   }

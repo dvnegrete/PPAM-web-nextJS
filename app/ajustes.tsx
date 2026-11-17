@@ -7,6 +7,7 @@ import {
   updateLocationSettings,
 } from '@/lib/services/locations';
 import type { Location, LocationSettings } from '@/lib/types';
+import { errorMessage } from '@/lib/errors';
 
 const CAMPOS: Array<{ clave: keyof LocationSettings; etiqueta: string; ayuda: string }> = [
   {
@@ -73,7 +74,7 @@ export function Ajustes({
     try {
       setSettings(await fetchLocationSettings(location.id));
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudieron cargar los ajustes');
+      setError(errorMessage(problem, 'No se pudieron cargar los ajustes'));
     }
   }, [location.id]);
 
@@ -91,7 +92,7 @@ export function Ajustes({
       setSettings(await updateLocationSettings(location.id, settings));
       setAviso('Ajustes guardados.');
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudieron guardar');
+      setError(errorMessage(problem, 'No se pudieron guardar'));
     } finally {
       setBusy(false);
     }
@@ -251,7 +252,7 @@ function IdentidadDelPunto({
       setAviso('Datos del punto guardados.');
       onGuardado();
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudo guardar el punto');
+      setError(errorMessage(problem, 'No se pudo guardar el punto'));
     } finally {
       setBusy(false);
     }

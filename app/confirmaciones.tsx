@@ -6,6 +6,7 @@ import { fechaCorta } from '@/lib/horas';
 import type { ConfirmationRow, ConfirmationsDraft } from '@/lib/types';
 import { BotonCopiar } from './boton-copiar';
 import { ConfirmarPublicado } from './confirmar-publicado';
+import { errorMessage } from '@/lib/errors';
 
 /** Lo que se recuerda de una copia que nadie confirmó todavía. */
 interface CopiaPendiente {
@@ -139,7 +140,7 @@ export function Confirmaciones({ locationId }: { locationId: string }) {
         if (guardado) guardarPendiente(locationId, null);
       }
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudieron cargar');
+      setError(errorMessage(problema, 'No se pudieron cargar'));
     } finally {
       setCargando(false);
     }

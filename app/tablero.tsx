@@ -20,6 +20,7 @@ import { AgregarParticipante } from './agregar-participante';
 import { CalendarioMes } from './calendario-mes';
 import { CancelarDialogo } from './cancelar-dialogo';
 import { TurnoDetalle } from './turno-detalle';
+import { errorMessage } from '@/lib/errors';
 
 type Vista = 'calendario' | 'lista';
 type RangoLista = '7d' | '14d';
@@ -81,7 +82,7 @@ export function Tablero({ locationId }: { locationId: string }) {
       setDatos(tablero);
       setMovimientos(actividad);
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo cargar el tablero');
+      setError(errorMessage(problema, 'No se pudo cargar el tablero'));
     } finally {
       setCargando(false);
     }

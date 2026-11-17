@@ -10,6 +10,7 @@ import { Tablero } from './tablero';
 import { CambiarContrasena } from './cambiar-contrasena';
 import { LoginForm } from './login-form';
 import { GRUPOS, Navegacion, type Pestana } from './navegacion';
+import { errorMessage } from '@/lib/errors';
 
 /** Lo que se ve el instante en que se descarga el código de una pestaña. */
 function TabLoading() {
@@ -129,7 +130,7 @@ export default function Page() {
         setSession(null);
         return;
       }
-      setError(problem instanceof Error ? problem.message : 'No se pudo cargar tu cuenta');
+      setError(errorMessage(problem, 'No se pudo cargar tu cuenta'));
     }
   }, []);
 
@@ -143,7 +144,7 @@ export default function Page() {
         setSession(null);
         return;
       }
-      setError(problem instanceof Error ? problem.message : 'No se pudieron cargar los puntos');
+      setError(errorMessage(problem, 'No se pudieron cargar los puntos'));
     }
   }, []);
 

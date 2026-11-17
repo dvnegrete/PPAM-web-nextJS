@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { ConfirmationRow } from '@/lib/types';
+import { errorMessage } from '@/lib/errors';
 
 /**
  * El paso que separa copiar de dar por notificado a alguien.
@@ -44,7 +45,7 @@ export function ConfirmarPublicado({
     try {
       await onConfirmar([...marcadas]);
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo guardar');
+      setError(errorMessage(problema, 'No se pudo guardar'));
       setOcupado(false);
     }
   }

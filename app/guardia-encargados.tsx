@@ -9,6 +9,7 @@ import {
 } from '@/lib/services/supervisors';
 import { rango12h } from '@/lib/horas';
 import { WEEKDAY_NAMES } from '@/lib/calendar-labels';
+import { errorMessage } from '@/lib/errors';
 
 // El `<input type="time">` siempre entrega «HH:mm» en 24 horas, al margen de
 // cómo lo pinte el navegador, así que esto no cambia con el formato que se lee.
@@ -34,7 +35,7 @@ export function GuardiaDeEncargados({ locationId }: { locationId: string }) {
     try {
       setSupervisores(await fetchSupervisors(locationId));
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudieron cargar los encargados');
+      setError(errorMessage(problem, 'No se pudieron cargar los encargados'));
     }
   }, [locationId]);
 
@@ -53,7 +54,7 @@ export function GuardiaDeEncargados({ locationId }: { locationId: string }) {
       });
       await cargar();
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudo agregar la franja');
+      setError(errorMessage(problem, 'No se pudo agregar la franja'));
     }
   }
 
@@ -62,7 +63,7 @@ export function GuardiaDeEncargados({ locationId }: { locationId: string }) {
       await removeSupervisorWindow(windowId);
       await cargar();
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudo quitar la franja');
+      setError(errorMessage(problem, 'No se pudo quitar la franja'));
     }
   }
 

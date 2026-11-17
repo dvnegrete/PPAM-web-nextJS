@@ -24,6 +24,7 @@ import {
 } from '@/lib/texto';
 import { EditarParticipante } from './editar-participante';
 import { TurnosDeParticipante } from './turnos-de-participante';
+import { errorMessage } from '@/lib/errors';
 
 export function Padron({ locationId }: { locationId: string }) {
   const [participantes, setParticipantes] = useState<Participant[]>([]);
@@ -63,7 +64,7 @@ export function Padron({ locationId }: { locationId: string }) {
       setParticipantes(padron);
       setValores(conocidos);
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudieron cargar los participantes');
+      setError(errorMessage(problem, 'No se pudieron cargar los participantes'));
     }
   }, [locationId]);
 
@@ -96,7 +97,7 @@ export function Padron({ locationId }: { locationId: string }) {
       setOrg({ congregation: '', circuit: '', city: '' });
       await cargar();
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudo dar de alta');
+      setError(errorMessage(problem, 'No se pudo dar de alta'));
     }
   }
 

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { importCsv } from '@/lib/services/participants';
 import type { ImportResult } from '@/lib/types';
 import { GuiaCampos, type GrupoCampos } from './guia-campos';
+import { errorMessage } from '@/lib/errors';
 
 type Tipo = 'participants' | 'assignments';
 
@@ -236,7 +237,7 @@ export function Importar({ locationId }: { locationId: string }) {
     try {
       setResultado(await importCsv(locationId, tipo, csv, dryRun));
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudo importar');
+      setError(errorMessage(problem, 'No se pudo importar'));
     } finally {
       setBusy(false);
     }

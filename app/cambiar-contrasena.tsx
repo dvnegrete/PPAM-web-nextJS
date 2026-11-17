@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { changeOwnPassword } from '@/lib/services/accounts';
+import { errorMessage } from '@/lib/errors';
 
 interface Props {
   /** Cuando la impuso un administrador, no hay forma de posponerlo. */
@@ -50,7 +51,7 @@ export function CambiarContrasena({ obligatorio, onListo, onCerrar }: Props) {
       await changeOwnPassword(actual, nueva);
       onListo();
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo cambiar');
+      setError(errorMessage(problema, 'No se pudo cambiar'));
       setOcupado(false);
     }
   }

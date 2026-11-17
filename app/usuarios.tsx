@@ -7,6 +7,7 @@ import { ADMIN_ROLE_LABELS } from '@/lib/types';
 import type { AdminRole, CuentaDelPanel, Participant } from '@/lib/types';
 import { EditarCuenta } from './editar-cuenta';
 import { GuardiaDeEncargados } from './guardia-encargados';
+import { errorMessage } from '@/lib/errors';
 
 /**
  * Cuentas del panel.
@@ -35,7 +36,7 @@ export function Usuarios({ locationId }: { locationId: string }) {
       setCuentas(lista);
       setPadron(gente);
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudieron cargar las cuentas');
+      setError(errorMessage(problema, 'No se pudieron cargar las cuentas'));
     } finally {
       setCargando(false);
     }

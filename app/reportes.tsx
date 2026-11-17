@@ -5,6 +5,7 @@ import { fetchAttendance, fetchMonthlySummary } from '@/lib/services/reports';
 import { clave } from '@/lib/texto';
 import type { AttendanceRow, MonthlySummary } from '@/lib/types';
 import { MONTH_NAMES } from '@/lib/calendar-labels';
+import { errorMessage } from '@/lib/errors';
 
 export function Reportes({ locationId }: { locationId: string }) {
   const hoy = new Date();
@@ -29,7 +30,7 @@ export function Reportes({ locationId }: { locationId: string }) {
       setResumen(resumenData);
       setAsistencia(asistenciaData);
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudieron cargar los reportes');
+      setError(errorMessage(problem, 'No se pudieron cargar los reportes'));
     }
   }, [locationId, year, month]);
 

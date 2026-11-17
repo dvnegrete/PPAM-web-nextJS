@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { errorMessage } from '@/lib/errors';
 
 interface Props {
   nombre: string;
@@ -42,7 +43,7 @@ export function CancelarDialogo({
     try {
       await onCancelar(codigo, detalle.trim(), tambienConyuge);
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo cancelar');
+      setError(errorMessage(problema, 'No se pudo cancelar'));
       setOcupado(false);
     }
   }

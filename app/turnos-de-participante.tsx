@@ -11,6 +11,7 @@ import {
 } from '@/lib/types';
 import { CancelarDialogo } from './cancelar-dialogo';
 import { MONTH_ABBREVIATIONS } from '@/lib/calendar-labels';
+import { errorMessage } from '@/lib/errors';
 
 interface Props {
   locationId: string;
@@ -83,7 +84,7 @@ export function TurnosDeParticipante({
         await fetchParticipantShifts(locationId, participanteId),
       );
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudieron cargar los turnos');
+      setError(errorMessage(problema, 'No se pudieron cargar los turnos'));
     }
   }, [locationId, participanteId]);
 
@@ -138,7 +139,7 @@ export function TurnosDeParticipante({
       onChanged();
       await cargar();
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo dar de baja');
+      setError(errorMessage(problema, 'No se pudo dar de baja'));
       setConfirmingRemoval(false);
     } finally {
       setRemoving(false);
