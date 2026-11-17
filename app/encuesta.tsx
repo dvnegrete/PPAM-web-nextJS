@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { fetchPollDraft } from '@/lib/services/group-messages';
 import type { PollDraft } from '@/lib/types';
 import { BotonCopiar } from './boton-copiar';
 
@@ -36,11 +36,7 @@ export function Encuesta({ locationId }: { locationId: string }) {
     try {
       const from = new Date(`${desde}T00:00:00`).toISOString();
       const to = new Date(`${hasta}T23:59:59`).toISOString();
-      setBorrador(
-        await api<PollDraft>(
-          `/locations/${locationId}/poll-draft?from=${from}&to=${to}&level=${nivel}`,
-        ),
-      );
+      setBorrador(await fetchPollDraft(locationId, from, to, nivel));
     } catch (problema) {
       setError(problema instanceof Error ? problema.message : 'No se pudo generar el texto');
     } finally {

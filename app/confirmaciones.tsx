@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { announceConfirmations, fetchConfirmationsDraft } from '@/lib/services/group-messages';
 import { fechaCorta } from '@/lib/horas';
-import type { AnnounceResult, ConfirmationRow, ConfirmationsDraft } from '@/lib/types';
+import type { ConfirmationRow, ConfirmationsDraft } from '@/lib/types';
 import { BotonCopiar } from './boton-copiar';
 import { ConfirmarPublicado } from './confirmar-publicado';
 
@@ -122,9 +122,7 @@ export function Confirmaciones({ locationId }: { locationId: string }) {
     setCargando(true);
     setError(null);
     try {
-      const datos = await api<ConfirmationsDraft>(
-        `/locations/${locationId}/confirmations-draft`,
-      );
+      const datos = await fetchConfirmationsDraft(locationId);
       setBorrador(datos);
       setQuitadas(new Set());
 
@@ -170,10 +168,7 @@ export function Confirmaciones({ locationId }: { locationId: string }) {
   }
 
   async function confirmar(keys: string[]) {
-    const resultado = await api<AnnounceResult>(
-      `/locations/${locationId}/confirmations/announced`,
-      { method: 'POST', body: { keys } },
-    );
+    const resultado = await announceConfirmations(locationId, keys);
 
     setEnDialogo(null);
     guardarPendiente(locationId, null);
