@@ -1,12 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api } from '@/lib/api';
-import type {
-  RecurringCandidate,
-  RecurringOverview,
-  RecurringSlot,
-} from '@/lib/types';
+import {
+  addRecurringHolder,
+  fetchRecurringCandidates,
+  fetchRecurringOverview,
+  removeRecurringHolder,
+  setRecurringCaptain,
+} from '@/lib/services/recurring';
+import type { RecurringCandidate, RecurringOverview, RecurringSlot } from '@/lib/types';
 import { rango12h } from '@/lib/horas';
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -53,7 +55,7 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
 
   const cargar = useCallback(async () => {
     try {
-      setDatos(await api<RecurringOverview>(`/locations/${locationId}/recurring`));
+      setDatos(await fetchRecurringOverview(locationId));
       setError(null);
     } catch (problema) {
       setError(problema instanceof Error ? problema.message : 'No se pudieron cargar los turnos fijos');
@@ -90,10 +92,7 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
   }, [bloques.semanasDisponibles, semana]);
 
   async function agregar(templateId: string, participantId: string) {
-    await api(`/locations/${locationId}/recurring/${templateId}/holders`, {
-      method: 'POST',
-      body: { participantId },
-    });
+    await addRecurringHolder(locationId, templateId, participantId);
     setEligiendo(null);
     await cargar();
   }
@@ -113,7 +112,7 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
     setQuitando(recurringId);
     setError(null);
     try {
-      await api(`/recurring/${recurringId}`, { method: 'DELETE' });
+      await removeRecurringHolder(recurringId);
       setPendingRemoval(null);
       await cargar();
     } catch (problema) {
@@ -128,7 +127,7 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
     setMarcando(recurringId);
     setError(null);
     try {
-      await api(`/recurring/${recurringId}/captain`, { method: 'PATCH', body: { isCaptain } });
+      await setRecurringCaptain(recurringId, isCaptain);
       await cargar();
     } catch (problema) {
       setError(problema instanceof Error ? problema.message : 'No se pudo marcar al capitán');
@@ -138,8 +137,7 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
   }
 
   const cargarCandidatos = useCallback(
-    (templateId: string) => () =>
-      api<RecurringCandidate[]>(`/locations/${locationId}/recurring/${templateId}/candidates`),
+    (templateId: string) => () => fetchRecurringCandidates(locationId, templateId),
     [locationId],
   );
 
