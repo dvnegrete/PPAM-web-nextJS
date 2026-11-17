@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { fetchAuditHistory, type AuditHistoryQuery } from '@/lib/services/reports';
 import { fechaLarga } from '@/lib/horas';
 import {
   CATEGORIAS_BITACORA,
   type AuditHistoryEntry,
-  type AuditHistoryPage,
   type CategoriaBitacora,
 } from '@/lib/types';
 
@@ -31,14 +30,16 @@ const FILTROS_INICIALES: Filtros = {
   persona: '',
 };
 
-function construirRuta(filtros: Filtros, cursor: string | null): string {
-  const params = new URLSearchParams({ limit: String(POR_PAGINA) });
-  if (filtros.desde) params.set('from', new Date(`${filtros.desde}T00:00:00`).toISOString());
-  if (filtros.hasta) params.set('to', new Date(`${filtros.hasta}T23:59:59`).toISOString());
-  if (filtros.categoria) params.set('categoria', filtros.categoria);
-  if (filtros.persona.trim()) params.set('persona', filtros.persona.trim());
-  if (cursor) params.set('cursor', cursor);
-  return `/audit?${params.toString()}`;
+/** Traduce lo capturado en los filtros a la consulta: los días, a instantes del día local. */
+function toQuery(filtros: Filtros, cursor: string | null): AuditHistoryQuery {
+  return {
+    limit: POR_PAGINA,
+    from: filtros.desde ? new Date(`${filtros.desde}T00:00:00`).toISOString() : undefined,
+    to: filtros.hasta ? new Date(`${filtros.hasta}T23:59:59`).toISOString() : undefined,
+    category: filtros.categoria || undefined,
+    person: filtros.persona.trim() || undefined,
+    cursor,
+  };
 }
 
 /**
@@ -78,7 +79,7 @@ export function Bitacora({ esAdmin }: { esAdmin: boolean }) {
     let vigente = true;
     setCargando(true);
     setError(null);
-    api<AuditHistoryPage>(construirRuta(filtros, null))
+    fetchAuditHistory(toQuery(filtros, null))
       .then((pagina) => {
         if (!vigente) return;
         setEntradas(pagina.entries);
@@ -103,7 +104,7 @@ export function Bitacora({ esAdmin }: { esAdmin: boolean }) {
     setCargando(true);
     setError(null);
     try {
-      const pagina = await api<AuditHistoryPage>(construirRuta(filtros, cursor));
+      const pagina = await fetchAuditHistory(toQuery(filtros, cursor));
       setEntradas((previas) => [...previas, ...pagina.entries]);
       setCursor(pagina.nextCursor);
     } catch (problema) {

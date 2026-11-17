@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { fetchMonthCalendar, generateMonth } from '@/lib/services/calendar';
 import type { CalendarShift } from '@/lib/types';
 import { rangoTurno } from '@/lib/horas';
 import { ocupacionTexto } from '@/lib/turnos';
@@ -48,11 +48,7 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
     setCargando(true);
     setError(null);
     try {
-      setShifts(
-        await api<CalendarShift[]>(
-          `/locations/${locationId}/calendar?year=${year}&month=${month}`,
-        ),
-      );
+      setShifts(await fetchMonthCalendar(locationId, year, month));
     } catch (problem) {
       setError(problem instanceof Error ? problem.message : 'No se pudo cargar el calendario');
     } finally {
@@ -84,12 +80,7 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
     setError(null);
     setAviso(null);
     try {
-      const resultado = await api<{
-        shiftsCreated: number;
-        shiftsExisting: number;
-        shiftsFilled: number;
-        assignmentsCreated: number;
-      }>(`/locations/${locationId}/calendar/generate`, { method: 'POST', body: { year, month } });
+      const resultado = await generateMonth(locationId, year, month);
 
       // Volver a generar un mes ya publicado no crea turnos, pero sí completa
       // los que les faltaba un titular. Decir solo «0 turnos creados» hacía

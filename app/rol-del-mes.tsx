@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { toBlob } from 'html-to-image';
-import { api } from '@/lib/api';
+import { fetchMonthRoster } from '@/lib/services/calendar';
 import type { DiaDelRol, PersonaDelRol, RolMensual } from '@/lib/types';
 
 const MESES = [
@@ -43,7 +43,7 @@ export function RolDelMes({ locationId }: { locationId: string }) {
     setCargando(true);
     setError(null);
     try {
-      setRol(await api<RolMensual>(`/locations/${locationId}/roster?year=${year}&month=${month}`));
+      setRol(await fetchMonthRoster(locationId, year, month));
     } catch (problem) {
       setError(problem instanceof Error ? problem.message : 'No se pudo cargar el rol del mes');
     } finally {

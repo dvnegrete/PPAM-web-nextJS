@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api } from '@/lib/api';
+import { fetchAttendance, fetchMonthlySummary } from '@/lib/services/reports';
 import { clave } from '@/lib/texto';
 import type { AttendanceRow, MonthlySummary } from '@/lib/types';
 
@@ -26,10 +26,8 @@ export function Reportes({ locationId }: { locationId: string }) {
       const hasta = new Date(Date.UTC(year, month, 0, 23, 59, 59)).toISOString();
 
       const [resumenData, asistenciaData] = await Promise.all([
-        api<MonthlySummary>(`/locations/${locationId}/reports/monthly?year=${year}&month=${month}`),
-        api<AttendanceRow[]>(
-          `/locations/${locationId}/reports/attendance?from=${desde}&to=${hasta}`,
-        ),
+        fetchMonthlySummary(locationId, year, month),
+        fetchAttendance(locationId, desde, hasta),
       ]);
 
       setResumen(resumenData);

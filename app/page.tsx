@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { api, clearSession, getSession, Session } from '@/lib/api';
+import { clearSession, getSession, Session } from '@/lib/api';
+import { fetchOwnAccount } from '@/lib/services/accounts';
+import { fetchLocations } from '@/lib/services/locations';
 import { ADMIN_ROLE_LABELS, type CuentaDelPanel, type Location } from '@/lib/types';
 import { Ajustes } from './ajustes';
 import { Bitacora } from './bitacora';
@@ -75,7 +77,7 @@ export default function Page() {
 
   const cargarCuenta = useCallback(async () => {
     try {
-      setCuenta(await api<CuentaDelPanel>('/me'));
+      setCuenta(await fetchOwnAccount());
     } catch (problem) {
       if (problem instanceof Error && problem.message.includes('sesión')) {
         setSession(null);
@@ -87,7 +89,7 @@ export default function Page() {
 
   const cargarLocations = useCallback(async () => {
     try {
-      const data = await api<Location[]>('/locations');
+      const data = await fetchLocations();
       setLocations(data);
       setLocationId((actual) => actual ?? data[0]?.id ?? null);
     } catch (problem) {

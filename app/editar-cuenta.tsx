@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { api } from '@/lib/api';
+import { createAccount, resetAccountPassword, updateAccount } from '@/lib/services/accounts';
 import { nombreFormal } from '@/lib/nombres';
 import { ADMIN_ROLE_LABELS } from '@/lib/types';
 import type { AdminRole, CuentaDelPanel, Participant } from '@/lib/types';
@@ -80,23 +80,23 @@ export function EditarCuenta({
           };
 
       if (esAlta) {
-        await api('/admin-users', {
-          method: 'POST',
-          body: {
-            email: email.trim(),
-            password,
-            role,
-            participantId: participantId || null,
-            ...propios,
-          },
+        await createAccount({
+          email: email.trim(),
+          password,
+          role,
+          participantId: participantId || null,
+          ...propios,
         });
         await onGuardado(
           `Cuenta creada. Pásale la contraseña: el sistema le pedirá cambiarla al entrar.`,
         );
       } else {
-        await api(`/admin-users/${cuenta.id}`, {
-          method: 'PATCH',
-          body: { email: email.trim(), role, active, participantId: participantId || null, ...propios },
+        await updateAccount(cuenta.id, {
+          email: email.trim(),
+          role,
+          active,
+          participantId: participantId || null,
+          ...propios,
         });
         await onGuardado('Cuenta actualizada.');
       }
@@ -118,10 +118,7 @@ export function EditarCuenta({
     setOcupado(true);
     setError(null);
     try {
-      await api(`/admin-users/${cuenta.id}/password`, {
-        method: 'POST',
-        body: { password: nueva },
-      });
+      await resetAccountPassword(cuenta.id, nueva);
       await onGuardado(`Contraseña de ${cuenta.email} restablecida.`);
       onCerrar();
     } catch (problema) {
