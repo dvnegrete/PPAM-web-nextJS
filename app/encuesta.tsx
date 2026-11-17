@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { fetchPollDraft } from '@/lib/services/group-messages';
 import type { PollDraft } from '@/lib/types';
 import { BotonCopiar } from './boton-copiar';
+import { MONTH_ABBREVIATIONS } from '@/lib/calendar-labels';
 
 type Nivel = 'cupo' | 'minimo';
 
@@ -17,10 +18,8 @@ function enDias(dias: number): string {
 /** «16 nov», a partir de AAAA-MM-DD, sin pasar por zonas horarias. */
 function diaCorto(fecha: string): string {
   const [, mes, dia] = fecha.split('-');
-  return `${Number(dia)} ${MESES[Number(mes) - 1] ?? ''}`;
+  return `${Number(dia)} ${MONTH_ABBREVIATIONS[Number(mes) - 1] ?? ''}`;
 }
-
-const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 export function Encuesta({ locationId }: { locationId: string }) {
   const [desde, setDesde] = useState(enDias(0));

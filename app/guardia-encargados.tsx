@@ -8,8 +8,7 @@ import {
   type Supervisor,
 } from '@/lib/services/supervisors';
 import { rango12h } from '@/lib/horas';
-
-const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+import { WEEKDAY_NAMES } from '@/lib/calendar-labels';
 
 // El `<input type="time">` siempre entrega «HH:mm» en 24 horas, al margen de
 // cómo lo pinte el navegador, así que esto no cambia con el formato que se lee.
@@ -104,7 +103,7 @@ export function GuardiaDeEncargados({ locationId }: { locationId: string }) {
                 <tbody>
                   {supervisor.windows.map((window) => (
                     <tr key={window.id}>
-                      <td style={{ textTransform: 'capitalize' }}>{DIAS[window.weekday]}</td>
+                      <td style={{ textTransform: 'capitalize' }}>{WEEKDAY_NAMES[window.weekday]}</td>
                       <td>{rango12h(window.startMinute, window.endMinute)}</td>
                       <td style={{ textAlign: 'right' }}>
                         <button onClick={() => void quitarFranja(window.id)}>Quitar</button>
@@ -131,7 +130,7 @@ export function GuardiaDeEncargados({ locationId }: { locationId: string }) {
                     })
                   }
                 >
-                  {DIAS.map((dia, indice) => (
+                  {WEEKDAY_NAMES.map((dia, indice) => (
                     <option key={dia} value={indice}>{dia}</option>
                   ))}
                 </select>

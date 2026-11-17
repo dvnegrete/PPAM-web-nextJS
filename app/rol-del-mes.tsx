@@ -4,19 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import { toBlob } from 'html-to-image';
 import { fetchMonthRoster } from '@/lib/services/calendar';
 import type { DiaDelRol, PersonaDelRol, RolMensual } from '@/lib/types';
-
-const MESES = [
-  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
-];
-
-const DIAS_HABILES = [
-  { numero: 1, nombre: 'Lunes' },
-  { numero: 2, nombre: 'Martes' },
-  { numero: 3, nombre: 'Miércoles' },
-  { numero: 4, nombre: 'Jueves' },
-  { numero: 5, nombre: 'Viernes' },
-];
+import { MONTH_NAMES } from '@/lib/calendar-labels';
 
 /**
  * Ancho real de cada imagen. WhatsApp reduce lo que pasa de ~1600 px, y por
@@ -64,7 +52,7 @@ export function RolDelMes({ locationId }: { locationId: string }) {
         <label style={{ marginBottom: 0, width: 130 }}>
           <span>Mes</span>
           <select value={month} onChange={(event) => setMonth(Number(event.target.value))}>
-            {MESES.map((nombre, indice) => (
+            {MONTH_NAMES.map((nombre, indice) => (
               <option key={nombre} value={indice + 1}>{nombre}</option>
             ))}
           </select>

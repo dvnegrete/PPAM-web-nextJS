@@ -4,11 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchAttendance, fetchMonthlySummary } from '@/lib/services/reports';
 import { clave } from '@/lib/texto';
 import type { AttendanceRow, MonthlySummary } from '@/lib/types';
-
-const MESES = [
-  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
-];
+import { MONTH_NAMES } from '@/lib/calendar-labels';
 
 export function Reportes({ locationId }: { locationId: string }) {
   const hoy = new Date();
@@ -53,7 +49,7 @@ export function Reportes({ locationId }: { locationId: string }) {
         <label style={{ marginBottom: 0, width: 130 }}>
           <span>Mes</span>
           <select value={month} onChange={(e) => setMonth(Number(e.target.value))}>
-            {MESES.map((nombre, indice) => (
+            {MONTH_NAMES.map((nombre, indice) => (
               <option key={nombre} value={indice + 1}>{nombre}</option>
             ))}
           </select>
@@ -69,7 +65,7 @@ export function Reportes({ locationId }: { locationId: string }) {
       {resumen && (
         <details className="tarjeta plegable seccion-color naranja">
           <summary>
-            Resumen de {MESES[resumen.month - 1]} de {resumen.year}
+            Resumen de {MONTH_NAMES[resumen.month - 1]} de {resumen.year}
             <span className="etiqueta completo">{resumen.totalShifts} turnos</span>
             {resumen.understaffedShifts > 0 && (
               <span className="etiqueta faltante">

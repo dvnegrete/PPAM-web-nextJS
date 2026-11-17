@@ -3,13 +3,9 @@
 import type { DashboardDay, NeedLevel } from '@/lib/types';
 import { rangoTurno } from '@/lib/horas';
 import { ocupacionTexto } from '@/lib/turnos';
+import { MONTH_NAMES } from '@/lib/calendar-labels';
 
 const DIAS_CABECERA = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-
-const MESES = [
-  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
-];
 
 /** Nombre del estado, para el texto que leen los lectores de pantalla. */
 const NOMBRE_ESTADO: Record<NeedLevel, string> = {
@@ -79,7 +75,7 @@ export function CalendarioMes({
           ‹
         </button>
         <h3>
-          {MESES[month]} {year}
+          {MONTH_NAMES[month]} {year}
         </h3>
         <button onClick={() => mover(1)} aria-label="Mes siguiente">
           ›
@@ -128,7 +124,7 @@ export function CalendarioMes({
               } ${turnos.length === 0 ? 'sin-turnos' : ''}`}
               onClick={() => onSeleccionar(celda.clave)}
               aria-pressed={seleccionado === celda.clave}
-              aria-label={`${celda.dia} de ${MESES[month]}: ${descripcion}`}
+              aria-label={`${celda.dia} de ${MONTH_NAMES[month]}: ${descripcion}`}
               disabled={turnos.length === 0}
             >
               <span className="numero">{celda.dia}</span>

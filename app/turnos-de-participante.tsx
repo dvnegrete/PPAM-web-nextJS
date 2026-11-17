@@ -10,6 +10,7 @@ import {
   type TurnosDeParticipante as Turnos,
 } from '@/lib/types';
 import { CancelarDialogo } from './cancelar-dialogo';
+import { MONTH_ABBREVIATIONS } from '@/lib/calendar-labels';
 
 interface Props {
   locationId: string;
@@ -32,8 +33,6 @@ const TIPO: Record<TurnoProximoDeParticipante['origin'], string> = {
 
 /** Hasta cuántas fechas se muestran abiertas; con más, la lista entra plegada. */
 const MAX_UPCOMING_OPEN = 4;
-
-const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 /** «1 turno fijo», «3 turnos fijos». */
 function countLabel(count: number, singular: string, plural: string): string {
@@ -226,7 +225,7 @@ export function TurnosDeParticipante({
                         <li key={turno.assignmentId} className={`turno-fecha ${tipo}`}>
                           <span className="turno-dia" aria-hidden="true">
                             <span className="numero">{Number(dia)}</span>
-                            <span className="mes">{MESES[Number(mes) - 1]}</span>
+                            <span className="mes">{MONTH_ABBREVIATIONS[Number(mes) - 1]}</span>
                           </span>
                           <div className="turno-cuerpo">
                             <div className="turno-titulo">

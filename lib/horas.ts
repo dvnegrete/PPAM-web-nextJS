@@ -13,20 +13,7 @@
  * otra a mano.
  */
 
-const MESES_CORTOS = [
-  'ene',
-  'feb',
-  'mar',
-  'abr',
-  'may',
-  'jun',
-  'jul',
-  'ago',
-  'sep',
-  'oct',
-  'nov',
-  'dic',
-] as const;
+import { MONTH_ABBREVIATIONS } from './calendar-labels';
 
 /**
  * «07:00» + «am» a partir de 420.
@@ -102,6 +89,6 @@ function marca(iso: string | null, conAnio: boolean): string {
   // Sin el cero a la izquierda: aquí la hora se lee en una frase, no en una
   // columna que tenga que alinearse.
   const hora = `${reloj.replace(/^0/, '')} ${meridiano}`;
-  const dia = `${fecha.getDate()} ${MESES_CORTOS[fecha.getMonth()]}`;
+  const dia = `${fecha.getDate()} ${MONTH_ABBREVIATIONS[fecha.getMonth()]}`;
   return conAnio ? `${dia} ${fecha.getFullYear()}, ${hora}` : `${dia}, ${hora}`;
 }

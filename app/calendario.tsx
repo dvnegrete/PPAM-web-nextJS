@@ -6,18 +6,12 @@ import type { CalendarShift } from '@/lib/types';
 import { rangoTurno } from '@/lib/horas';
 import { ocupacionTexto } from '@/lib/turnos';
 import { RegenerarDialogo } from './regenerar-dialogo';
-
-const MESES = [
-  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
-];
-
-const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+import { MONTH_NAMES, WEEKDAY_NAMES } from '@/lib/calendar-labels';
 
 function diaSemana(fecha: string): string {
   // La fecha viene como AAAA-MM-DD y representa el día local del punto.
   const [year, month, day] = fecha.split('-').map(Number);
-  return DIAS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
+  return WEEKDAY_NAMES[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
 }
 
 /** Sábado o domingo: llevan otro tono para ubicarlos de un vistazo en el mes. */
@@ -121,7 +115,7 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
         <label style={{ marginBottom: 0, width: 130 }}>
           <span>Mes</span>
           <select value={month} onChange={(event) => setMonth(Number(event.target.value))}>
-            {MESES.map((nombre, indice) => (
+            {MONTH_NAMES.map((nombre, indice) => (
               <option key={nombre} value={indice + 1}>{nombre}</option>
             ))}
           </select>
@@ -166,7 +160,7 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
           style={{ marginBottom: '0.75rem' }}
         >
           <h3 style={{ textTransform: 'capitalize' }}>
-            {diaSemana(fecha)} {Number(fecha.slice(8))} de {MESES[Number(fecha.slice(5, 7)) - 1]}
+            {diaSemana(fecha)} {Number(fecha.slice(8))} de {MONTH_NAMES[Number(fecha.slice(5, 7)) - 1]}
           </h3>
           {/* Lista y no tabla: tres columnas no caben en un teléfono sin
               desplazarse de lado, y aquí cada turno baja a dos renglones. */}
@@ -218,7 +212,7 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
 
       {confirmando && (
         <RegenerarDialogo
-          mes={`${MESES[month - 1]} de ${year}`}
+          mes={`${MONTH_NAMES[month - 1]} de ${year}`}
           shifts={shifts}
           onConfirmar={generar}
           onCerrar={() => setConfirmando(false)}

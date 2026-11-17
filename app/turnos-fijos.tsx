@@ -10,9 +10,8 @@ import {
 } from '@/lib/services/recurring';
 import type { RecurringCandidate, RecurringOverview, RecurringSlot } from '@/lib/types';
 import { rango12h } from '@/lib/horas';
+import { WEEKDAY_ABBREVIATIONS, WEEKDAY_TITLES } from '@/lib/calendar-labels';
 
-const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const ORDINALES = ['', '1.ª', '2.ª', '3.ª', '4.ª', '5.ª'];
 
 /** A quién se está por quitar y de qué franja, para decirlo en la confirmación. */
@@ -26,8 +25,8 @@ interface PendingRemoval {
 function describeSlot(slot: RecurringSlot): string {
   const range = rango12h(slot.startMinute, slot.endMinute);
   return slot.weekOfMonth === 0
-    ? `${DIAS[slot.weekday]} · ${range} · todas las semanas`
-    : `${DIAS[slot.weekday]} · ${range} · ${ORDINALES[slot.weekOfMonth]} semana del mes`;
+    ? `${WEEKDAY_TITLES[slot.weekday]} · ${range} · todas las semanas`
+    : `${WEEKDAY_TITLES[slot.weekday]} · ${range} · ${ORDINALES[slot.weekOfMonth]} semana del mes`;
 }
 
 /**
@@ -371,7 +370,7 @@ function Rejilla({
             <th style={{ width: '10.5rem' }}>Horario</th>
             {dias.map((dia) => (
               <th key={dia}>
-                <abbr title={DIAS[dia]}>{DIAS_CORTOS[dia]}</abbr>
+                <abbr title={WEEKDAY_TITLES[dia]}>{WEEKDAY_ABBREVIATIONS[dia]}</abbr>
               </th>
             ))}
           </tr>
@@ -395,7 +394,7 @@ function Rejilla({
                   <td key={dia} className="celda-fija">
                     <SlotHolders
                       slot={slot}
-                      label={`${DIAS[dia]} ${range}`}
+                      label={`${WEEKDAY_TITLES[dia]} ${range}`}
                       onAgregar={onAgregar}
                       onQuitar={onQuitar}
                       quitando={quitando}
@@ -526,7 +525,7 @@ function DayList({
               className={day === activeDay ? 'primario' : ''}
               onClick={() => setSelectedDay(day)}
             >
-              {DIAS_CORTOS[day]}
+              {WEEKDAY_ABBREVIATIONS[day]}
               {free > 0 && <span className="fixed-day-free">{free}</span>}
             </button>
           );
@@ -534,7 +533,7 @@ function DayList({
       </div>
 
       <p className="tenue fixed-day-title">
-        {DIAS[activeDay]}
+        {WEEKDAY_TITLES[activeDay]}
         {' · '}
         {daySlots.reduce((sum, slot) => sum + slot.freeSlots, 0) === 0
           ? 'todos los lugares con titular'
@@ -554,7 +553,7 @@ function DayList({
               </div>
               <SlotHolders
                 slot={slot}
-                label={`${DIAS[activeDay]} ${range}`}
+                label={`${WEEKDAY_TITLES[activeDay]} ${range}`}
                 showCapacity={false}
                 {...actions}
               />
