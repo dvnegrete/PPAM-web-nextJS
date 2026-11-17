@@ -34,6 +34,98 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * El servidor se duerme cuando pasa un rato sin peticiones y tarda unos
+ * segundos en volver. Mientras arranca, el proxy contesta con un error de
+ * pasarela o no contesta: eso no es un fallo que deba ver quien usa el panel,
+ * solo hay que esperar y volver a pedir.
+ */
+const WAKE_TIMEOUT_MS = 60_000;
+const WAKE_RETRY_DELAY_MS = 1_500;
+/** Pasado este rato sin respuestas se da por hecho que pudo dormirse. */
+const IDLE_BEFORE_WAKE_CHECK_MS = 5 * 60_000;
+
+const UNREACHABLE_MESSAGE =
+  'No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.';
+const UNCONFIRMED_WRITE_MESSAGE =
+  'Se perdió la conexión con el servidor antes de recibir respuesta. ' +
+  'Actualiza la pantalla y comprueba si el cambio se guardó antes de repetirlo.';
+
+let lastResponseAt = 0;
+let wakeInProgress: Promise<boolean> | null = null;
+
+/**
+ * Una respuesta que no viene del servidor sino de lo que hay delante: la
+ * plataforma (502, 503, 504) o el proxy de Next, que ante un destino caído
+ * devuelve un 500 de texto plano. Los errores propios del servidor son JSON.
+ */
+function isGatewayFailure(response: Response): boolean {
+  if ([502, 503, 504].includes(response.status)) return true;
+  const isJson = response.headers.get('content-type')?.includes('application/json') ?? false;
+  return response.status === 500 && !isJson;
+}
+
+/** Una petición; `null` si el servidor no llegó a contestar. */
+async function attempt(url: string, init: RequestInit): Promise<Response | null> {
+  try {
+    const response = await fetch(url, init);
+    if (isGatewayFailure(response)) return null;
+    lastResponseAt = Date.now();
+    return response;
+  } catch {
+    return null;
+  }
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Insiste hasta que el servidor contesta algo, lo que sea: sin token responde
+ * 401 de inmediato, y eso ya prueba que está despierto. Las llamadas
+ * simultáneas comparten la misma espera.
+ */
+function wakeServer(): Promise<boolean> {
+  wakeInProgress ??= (async () => {
+    const deadline = Date.now() + WAKE_TIMEOUT_MS;
+    while (Date.now() < deadline) {
+      if (await attempt('/api/admin/me', { method: 'GET' })) return true;
+      await wait(WAKE_RETRY_DELAY_MS);
+    }
+    return false;
+  })().finally(() => {
+    wakeInProgress = null;
+  });
+  return wakeInProgress;
+}
+
+/**
+ * `fetch` que espera a que el servidor despierte.
+ *
+ * Una lectura se puede repetir sin riesgo, así que si no hubo respuesta se
+ * espera al servidor y se vuelve a pedir. Un cambio no: si se perdió a medio
+ * camino no se sabe si llegó a aplicarse. Por eso, antes de enviar un cambio
+ * tras un rato de inactividad, primero se despierta al servidor, y el cambio se
+ * manda una sola vez.
+ */
+async function fetchWhenAwake(url: string, init: RequestInit): Promise<Response> {
+  const isRead = (init.method ?? 'GET') === 'GET';
+
+  if (!isRead && Date.now() - lastResponseAt > IDLE_BEFORE_WAKE_CHECK_MS) {
+    if (!(await wakeServer())) throw new ApiError(UNREACHABLE_MESSAGE, 503);
+  }
+
+  let response = await attempt(url, init);
+  if (!response && isRead && (await wakeServer())) {
+    response = await attempt(url, init);
+  }
+  if (!response) {
+    throw new ApiError(isRead ? UNREACHABLE_MESSAGE : UNCONFIRMED_WRITE_MESSAGE, 503);
+  }
+  return response;
+}
+
 /** Llama a la API del panel adjuntando el token de sesión. */
 export async function api<T>(
   path: string,
@@ -41,7 +133,7 @@ export async function api<T>(
 ): Promise<T> {
   const session = getSession();
 
-  const response = await fetch(`/api/admin${path}`, {
+  const response = await fetchWhenAwake(`/api/admin${path}`, {
     method: options.method ?? 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -81,7 +173,7 @@ export async function api<T>(
 }
 
 export async function login(email: string, password: string): Promise<Session> {
-  const response = await fetch('/api/admin/login', {
+  const response = await fetchWhenAwake('/api/admin/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),

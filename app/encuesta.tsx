@@ -1,9 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { fetchPollDraft } from '@/lib/services/group-messages';
 import type { PollDraft } from '@/lib/types';
 import { BotonCopiar } from './boton-copiar';
+import { MONTH_ABBREVIATIONS } from '@/lib/calendar-labels';
+import { errorMessage } from '@/lib/errors';
 
 type Nivel = 'cupo' | 'minimo';
 
@@ -17,10 +19,8 @@ function enDias(dias: number): string {
 /** «16 nov», a partir de AAAA-MM-DD, sin pasar por zonas horarias. */
 function diaCorto(fecha: string): string {
   const [, mes, dia] = fecha.split('-');
-  return `${Number(dia)} ${MESES[Number(mes) - 1] ?? ''}`;
+  return `${Number(dia)} ${MONTH_ABBREVIATIONS[Number(mes) - 1] ?? ''}`;
 }
-
-const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 export function Encuesta({ locationId }: { locationId: string }) {
   const [desde, setDesde] = useState(enDias(0));
@@ -36,13 +36,9 @@ export function Encuesta({ locationId }: { locationId: string }) {
     try {
       const from = new Date(`${desde}T00:00:00`).toISOString();
       const to = new Date(`${hasta}T23:59:59`).toISOString();
-      setBorrador(
-        await api<PollDraft>(
-          `/locations/${locationId}/poll-draft?from=${from}&to=${to}&level=${nivel}`,
-        ),
-      );
+      setBorrador(await fetchPollDraft(locationId, from, to, nivel));
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo generar el texto');
+      setError(errorMessage(problema, 'No se pudo generar el texto'));
     } finally {
       setCargando(false);
     }

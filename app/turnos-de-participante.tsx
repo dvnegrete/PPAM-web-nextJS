@@ -1,15 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { cancelAssignment } from '@/lib/services/assignments';
+import { fetchParticipantShifts, updateParticipant } from '@/lib/services/participants';
 import {
   CANCEL_REASONS,
   type ParticipantStatus,
   type TurnoProximoDeParticipante,
   type TurnosDeParticipante as Turnos,
-  type UpdateParticipantResult,
 } from '@/lib/types';
 import { CancelarDialogo } from './cancelar-dialogo';
+import { MONTH_ABBREVIATIONS } from '@/lib/calendar-labels';
+import { errorMessage } from '@/lib/errors';
 
 interface Props {
   locationId: string;
@@ -32,8 +34,6 @@ const TIPO: Record<TurnoProximoDeParticipante['origin'], string> = {
 
 /** Hasta cuántas fechas se muestran abiertas; con más, la lista entra plegada. */
 const MAX_UPCOMING_OPEN = 4;
-
-const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 /** «1 turno fijo», «3 turnos fijos». */
 function countLabel(count: number, singular: string, plural: string): string {
@@ -81,10 +81,10 @@ export function TurnosDeParticipante({
     setError(null);
     try {
       setTurnos(
-        await api<Turnos>(`/locations/${locationId}/participants/${participanteId}/shifts`),
+        await fetchParticipantShifts(locationId, participanteId),
       );
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudieron cargar los turnos');
+      setError(errorMessage(problema, 'No se pudieron cargar los turnos'));
     }
   }, [locationId, participanteId]);
 
@@ -105,13 +105,11 @@ export function TurnosDeParticipante({
 
   async function cancelar(reasonCode: string, reason: string, tambienConyuge: boolean) {
     if (!cancelando) return;
-    const { spouseCancelled } = await api<{ ok: true; spouseCancelled: string | null }>(
-      `/assignments/${cancelando.assignmentId}/cancel`,
-      {
-        method: 'POST',
-        body: { reasonCode, reason: reason || undefined, cancelSpouse: tambienConyuge },
-      },
-    );
+    const { spouseCancelled } = await cancelAssignment(cancelando.assignmentId, {
+      reasonCode,
+      reason: reason || undefined,
+      cancelSpouse: tambienConyuge,
+    });
     setAviso(
       spouseCancelled
         ? `Se cancelaron los turnos de ${nombre} y ${spouseCancelled} del ${cancelando.label}.`
@@ -129,10 +127,7 @@ export function TurnosDeParticipante({
     setRemoving(true);
     setError(null);
     try {
-      const result = await api<UpdateParticipantResult>(
-        `/locations/${locationId}/participants/${participanteId}`,
-        { method: 'PATCH', body: { status: 'INACTIVE' } },
-      );
+      const result = await updateParticipant(locationId, participanteId, { status: 'INACTIVE' });
       setCurrentStatus('INACTIVE');
       setConfirmingRemoval(false);
       setAviso(
@@ -144,7 +139,7 @@ export function TurnosDeParticipante({
       onChanged();
       await cargar();
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo dar de baja');
+      setError(errorMessage(problema, 'No se pudo dar de baja'));
       setConfirmingRemoval(false);
     } finally {
       setRemoving(false);
@@ -231,7 +226,7 @@ export function TurnosDeParticipante({
                         <li key={turno.assignmentId} className={`turno-fecha ${tipo}`}>
                           <span className="turno-dia" aria-hidden="true">
                             <span className="numero">{Number(dia)}</span>
-                            <span className="mes">{MESES[Number(mes) - 1]}</span>
+                            <span className="mes">{MONTH_ABBREVIATIONS[Number(mes) - 1]}</span>
                           </span>
                           <div className="turno-cuerpo">
                             <div className="turno-titulo">

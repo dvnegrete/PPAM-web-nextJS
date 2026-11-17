@@ -1,8 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import {
+  fetchLocationSettings,
+  updateLocationIdentity,
+  updateLocationSettings,
+} from '@/lib/services/locations';
 import type { Location, LocationSettings } from '@/lib/types';
+import { errorMessage } from '@/lib/errors';
 
 const CAMPOS: Array<{ clave: keyof LocationSettings; etiqueta: string; ayuda: string }> = [
   {
@@ -67,9 +72,9 @@ export function Ajustes({
   const cargar = useCallback(async () => {
     setError(null);
     try {
-      setSettings(await api<LocationSettings>(`/locations/${location.id}/settings`));
+      setSettings(await fetchLocationSettings(location.id));
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudieron cargar los ajustes');
+      setError(errorMessage(problem, 'No se pudieron cargar los ajustes'));
     }
   }, [location.id]);
 
@@ -84,15 +89,10 @@ export function Ajustes({
     setError(null);
     setAviso(null);
     try {
-      setSettings(
-        await api<LocationSettings>(`/locations/${location.id}/settings`, {
-          method: 'PATCH',
-          body: settings,
-        }),
-      );
+      setSettings(await updateLocationSettings(location.id, settings));
       setAviso('Ajustes guardados.');
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudieron guardar');
+      setError(errorMessage(problem, 'No se pudieron guardar'));
     } finally {
       setBusy(false);
     }
@@ -245,14 +245,14 @@ function IdentidadDelPunto({
     setError(null);
     setAviso(null);
     try {
-      await api<Location>(`/locations/${location.id}`, {
-        method: 'PATCH',
-        body: { name: nombre.trim(), address: direccion.trim() === '' ? null : direccion.trim() },
+      await updateLocationIdentity(location.id, {
+        name: nombre.trim(),
+        address: direccion.trim() === '' ? null : direccion.trim(),
       });
       setAviso('Datos del punto guardados.');
       onGuardado();
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudo guardar el punto');
+      setError(errorMessage(problem, 'No se pudo guardar el punto'));
     } finally {
       setBusy(false);
     }

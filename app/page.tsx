@@ -1,23 +1,76 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
-import { api, clearSession, getSession, Session } from '@/lib/api';
+import { clearSession, getSession, Session } from '@/lib/api';
+import { fetchOwnAccount } from '@/lib/services/accounts';
+import { fetchLocations } from '@/lib/services/locations';
 import { ADMIN_ROLE_LABELS, type CuentaDelPanel, type Location } from '@/lib/types';
-import { Ajustes } from './ajustes';
-import { Bitacora } from './bitacora';
-import { Calendario } from './calendario';
-import { Confirmaciones } from './confirmaciones';
-import { Encuesta } from './encuesta';
 import { Tablero } from './tablero';
-import { Usuarios } from './usuarios';
 import { CambiarContrasena } from './cambiar-contrasena';
-import { Importar } from './importar';
 import { LoginForm } from './login-form';
 import { GRUPOS, Navegacion, type Pestana } from './navegacion';
-import { Padron } from './padron';
-import { Reportes } from './reportes';
-import { RolDelMes } from './rol-del-mes';
-import { TurnosFijos } from './turnos-fijos';
+import { errorMessage } from '@/lib/errors';
+import { rememberTab, reloadOnStaleBuild, tabAfterReload } from '@/lib/stale-build';
+
+/** Lo que se ve el instante en que se descarga el código de una pestaña. */
+function TabLoading() {
+  return <p className="tenue">Cargando…</p>;
+}
+
+/**
+ * Las pestañas se descargan al abrirlas, no todas al entrar: casi siempre se
+ * llega al Tablero y se usan una o dos más, y cargar las doce de golpe hacía
+ * esperar por pantallas que no se iban a ver. El Tablero va en el paquete
+ * inicial porque es la primera que se pinta.
+ *
+ * Si la descarga falla es casi siempre porque hubo un despliegue con el panel
+ * abierto y esa versión ya no existe: `reloadOnStaleBuild` lo recarga solo.
+ */
+const Ajustes = dynamic(() => import('./ajustes').then((m) => m.Ajustes).catch(reloadOnStaleBuild), {
+  loading: TabLoading,
+  ssr: false,
+});
+const Bitacora = dynamic(() => import('./bitacora').then((m) => m.Bitacora).catch(reloadOnStaleBuild), {
+  loading: TabLoading,
+  ssr: false,
+});
+const Calendario = dynamic(() => import('./calendario').then((m) => m.Calendario).catch(reloadOnStaleBuild), {
+  loading: TabLoading,
+  ssr: false,
+});
+const Confirmaciones = dynamic(() => import('./confirmaciones').then((m) => m.Confirmaciones).catch(reloadOnStaleBuild), {
+  loading: TabLoading,
+  ssr: false,
+});
+const Encuesta = dynamic(() => import('./encuesta').then((m) => m.Encuesta).catch(reloadOnStaleBuild), {
+  loading: TabLoading,
+  ssr: false,
+});
+const Importar = dynamic(() => import('./importar').then((m) => m.Importar).catch(reloadOnStaleBuild), {
+  loading: TabLoading,
+  ssr: false,
+});
+const Padron = dynamic(() => import('./padron').then((m) => m.Padron).catch(reloadOnStaleBuild), {
+  loading: TabLoading,
+  ssr: false,
+});
+const Reportes = dynamic(() => import('./reportes').then((m) => m.Reportes).catch(reloadOnStaleBuild), {
+  loading: TabLoading,
+  ssr: false,
+});
+const RolDelMes = dynamic(() => import('./rol-del-mes').then((m) => m.RolDelMes).catch(reloadOnStaleBuild), {
+  loading: TabLoading,
+  ssr: false,
+});
+const TurnosFijos = dynamic(() => import('./turnos-fijos').then((m) => m.TurnosFijos).catch(reloadOnStaleBuild), {
+  loading: TabLoading,
+  ssr: false,
+});
+const Usuarios = dynamic(() => import('./usuarios').then((m) => m.Usuarios).catch(reloadOnStaleBuild), {
+  loading: TabLoading,
+  ssr: false,
+});
 
 /**
  * Las pestañas, con quién las ve.
@@ -70,24 +123,32 @@ export default function Page() {
 
   useEffect(() => {
     setSession(getSession());
+    // Si el panel se acaba de recargar solo por un despliegue, se vuelve a la
+    // sección que se estaba abriendo, para que la recarga no se note.
+    const pending = tabAfterReload();
+    if (PESTANAS.some((item) => item.id === pending)) setPestana(pending as PestanaId);
     setListo(true);
   }, []);
 
+  useEffect(() => {
+    rememberTab(pestana);
+  }, [pestana]);
+
   const cargarCuenta = useCallback(async () => {
     try {
-      setCuenta(await api<CuentaDelPanel>('/me'));
+      setCuenta(await fetchOwnAccount());
     } catch (problem) {
       if (problem instanceof Error && problem.message.includes('sesión')) {
         setSession(null);
         return;
       }
-      setError(problem instanceof Error ? problem.message : 'No se pudo cargar tu cuenta');
+      setError(errorMessage(problem, 'No se pudo cargar tu cuenta'));
     }
   }, []);
 
   const cargarLocations = useCallback(async () => {
     try {
-      const data = await api<Location[]>('/locations');
+      const data = await fetchLocations();
       setLocations(data);
       setLocationId((actual) => actual ?? data[0]?.id ?? null);
     } catch (problem) {
@@ -95,7 +156,7 @@ export default function Page() {
         setSession(null);
         return;
       }
-      setError(problem instanceof Error ? problem.message : 'No se pudieron cargar los puntos');
+      setError(errorMessage(problem, 'No se pudieron cargar los puntos'));
     }
   }, []);
 

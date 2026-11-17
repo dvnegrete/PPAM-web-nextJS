@@ -1,28 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import {
+  addSupervisorWindow,
+  fetchSupervisors,
+  removeSupervisorWindow,
+  type Supervisor,
+} from '@/lib/services/supervisors';
 import { rango12h } from '@/lib/horas';
-
-interface Window {
-  id: string;
-  weekday: number;
-  startMinute: number;
-  endMinute: number;
-}
-
-interface Supervisor {
-  id: string;
-  /** Nombre ya compuesto por el servidor, listo para mostrar. */
-  fullName: string;
-  phoneE164: string;
-  onDuty: boolean;
-  overrideActive: boolean;
-  available: boolean | null;
-  windows: Window[];
-}
-
-const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+import { WEEKDAY_NAMES } from '@/lib/calendar-labels';
+import { errorMessage } from '@/lib/errors';
 
 // El `<input type="time">` siempre entrega «HH:mm» en 24 horas, al margen de
 // cómo lo pinte el navegador, así que esto no cambia con el formato que se lee.
@@ -46,9 +33,9 @@ export function GuardiaDeEncargados({ locationId }: { locationId: string }) {
   const cargar = useCallback(async () => {
     setError(null);
     try {
-      setSupervisores(await api<Supervisor[]>(`/locations/${locationId}/supervisors`));
+      setSupervisores(await fetchSupervisors(locationId));
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudieron cargar los encargados');
+      setError(errorMessage(problem, 'No se pudieron cargar los encargados'));
     }
   }, [locationId]);
 
@@ -60,26 +47,23 @@ export function GuardiaDeEncargados({ locationId }: { locationId: string }) {
     const datos = nueva[supervisorId] ?? { weekday: 1, desde: '08:00', hasta: '14:00' };
     setError(null);
     try {
-      await api(`/locations/${locationId}/supervisors/${supervisorId}/windows`, {
-        method: 'POST',
-        body: {
-          weekday: datos.weekday,
-          startMinute: aMinutos(datos.desde),
-          endMinute: aMinutos(datos.hasta),
-        },
+      await addSupervisorWindow(locationId, supervisorId, {
+        weekday: datos.weekday,
+        startMinute: aMinutos(datos.desde),
+        endMinute: aMinutos(datos.hasta),
       });
       await cargar();
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudo agregar la franja');
+      setError(errorMessage(problem, 'No se pudo agregar la franja'));
     }
   }
 
   async function quitarFranja(windowId: string) {
     try {
-      await api(`/supervisors/windows/${windowId}`, { method: 'DELETE' });
+      await removeSupervisorWindow(windowId);
       await cargar();
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudo quitar la franja');
+      setError(errorMessage(problem, 'No se pudo quitar la franja'));
     }
   }
 
@@ -120,7 +104,7 @@ export function GuardiaDeEncargados({ locationId }: { locationId: string }) {
                 <tbody>
                   {supervisor.windows.map((window) => (
                     <tr key={window.id}>
-                      <td style={{ textTransform: 'capitalize' }}>{DIAS[window.weekday]}</td>
+                      <td style={{ textTransform: 'capitalize' }}>{WEEKDAY_NAMES[window.weekday]}</td>
                       <td>{rango12h(window.startMinute, window.endMinute)}</td>
                       <td style={{ textAlign: 'right' }}>
                         <button onClick={() => void quitarFranja(window.id)}>Quitar</button>
@@ -147,7 +131,7 @@ export function GuardiaDeEncargados({ locationId }: { locationId: string }) {
                     })
                   }
                 >
-                  {DIAS.map((dia, indice) => (
+                  {WEEKDAY_NAMES.map((dia, indice) => (
                     <option key={dia} value={indice}>{dia}</option>
                   ))}
                 </select>

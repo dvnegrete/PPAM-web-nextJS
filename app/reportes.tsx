@@ -1,14 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api } from '@/lib/api';
+import { fetchAttendance, fetchMonthlySummary } from '@/lib/services/reports';
 import { clave } from '@/lib/texto';
 import type { AttendanceRow, MonthlySummary } from '@/lib/types';
-
-const MESES = [
-  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
-];
+import { MONTH_NAMES } from '@/lib/calendar-labels';
+import { errorMessage } from '@/lib/errors';
 
 export function Reportes({ locationId }: { locationId: string }) {
   const hoy = new Date();
@@ -26,16 +23,14 @@ export function Reportes({ locationId }: { locationId: string }) {
       const hasta = new Date(Date.UTC(year, month, 0, 23, 59, 59)).toISOString();
 
       const [resumenData, asistenciaData] = await Promise.all([
-        api<MonthlySummary>(`/locations/${locationId}/reports/monthly?year=${year}&month=${month}`),
-        api<AttendanceRow[]>(
-          `/locations/${locationId}/reports/attendance?from=${desde}&to=${hasta}`,
-        ),
+        fetchMonthlySummary(locationId, year, month),
+        fetchAttendance(locationId, desde, hasta),
       ]);
 
       setResumen(resumenData);
       setAsistencia(asistenciaData);
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudieron cargar los reportes');
+      setError(errorMessage(problem, 'No se pudieron cargar los reportes'));
     }
   }, [locationId, year, month]);
 
@@ -55,7 +50,7 @@ export function Reportes({ locationId }: { locationId: string }) {
         <label style={{ marginBottom: 0, width: 130 }}>
           <span>Mes</span>
           <select value={month} onChange={(e) => setMonth(Number(e.target.value))}>
-            {MESES.map((nombre, indice) => (
+            {MONTH_NAMES.map((nombre, indice) => (
               <option key={nombre} value={indice + 1}>{nombre}</option>
             ))}
           </select>
@@ -71,7 +66,7 @@ export function Reportes({ locationId }: { locationId: string }) {
       {resumen && (
         <details className="tarjeta plegable seccion-color naranja">
           <summary>
-            Resumen de {MESES[resumen.month - 1]} de {resumen.year}
+            Resumen de {MONTH_NAMES[resumen.month - 1]} de {resumen.year}
             <span className="etiqueta completo">{resumen.totalShifts} turnos</span>
             {resumen.understaffedShifts > 0 && (
               <span className="etiqueta faltante">

@@ -1,11 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { fetchAccounts } from '@/lib/services/accounts';
+import { fetchParticipants } from '@/lib/services/participants';
 import { ADMIN_ROLE_LABELS } from '@/lib/types';
 import type { AdminRole, CuentaDelPanel, Participant } from '@/lib/types';
 import { EditarCuenta } from './editar-cuenta';
 import { GuardiaDeEncargados } from './guardia-encargados';
+import { errorMessage } from '@/lib/errors';
 
 /**
  * Cuentas del panel.
@@ -28,13 +30,13 @@ export function Usuarios({ locationId }: { locationId: string }) {
     setError(null);
     try {
       const [lista, gente] = await Promise.all([
-        api<CuentaDelPanel[]>('/admin-users'),
-        api<Participant[]>(`/locations/${locationId}/participants`),
+        fetchAccounts(),
+        fetchParticipants(locationId),
       ]);
       setCuentas(lista);
       setPadron(gente);
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudieron cargar las cuentas');
+      setError(errorMessage(problema, 'No se pudieron cargar las cuentas'));
     } finally {
       setCargando(false);
     }

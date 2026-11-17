@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { login, saveSession, Session } from '@/lib/api';
+import { errorMessage } from '@/lib/errors';
 
 export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) {
   const [email, setEmail] = useState('');
@@ -18,7 +19,7 @@ export function LoginForm({ onLogin }: { onLogin: (session: Session) => void }) 
       saveSession(session);
       onLogin(session);
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudo iniciar sesión');
+      setError(errorMessage(problem, 'No se pudo iniciar sesión'));
     } finally {
       setBusy(false);
     }

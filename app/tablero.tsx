@@ -1,9 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import {
+  cancelAssignment,
+  coverShift,
+  fetchAvailableParticipants,
+  type ShiftCover,
+} from '@/lib/services/assignments';
+import { fetchDashboard, fetchRecentMovements } from '@/lib/services/dashboard';
 import type {
-  AvailableParticipant,
   Dashboard,
   DashboardShift,
   ExternalCover,
@@ -15,6 +20,7 @@ import { AgregarParticipante } from './agregar-participante';
 import { CalendarioMes } from './calendario-mes';
 import { CancelarDialogo } from './cancelar-dialogo';
 import { TurnoDetalle } from './turno-detalle';
+import { errorMessage } from '@/lib/errors';
 
 type Vista = 'calendario' | 'lista';
 type RangoLista = '7d' | '14d';
@@ -70,15 +76,13 @@ export function Tablero({ locationId }: { locationId: string }) {
         vista === 'calendario' ? rangoDeMes(mes.year, mes.month) : rangoDeLista(rangoLista);
 
       const [tablero, actividad] = await Promise.all([
-        api<Dashboard>(
-          `/locations/${locationId}/dashboard?from=${from.toISOString()}&to=${to.toISOString()}`,
-        ),
-        api<Movement[]>(`/locations/${locationId}/movements?limit=8`),
+        fetchDashboard(locationId, from, to),
+        fetchRecentMovements(locationId, 8),
       ]);
       setDatos(tablero);
       setMovimientos(actividad);
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo cargar el tablero');
+      setError(errorMessage(problema, 'No se pudo cargar el tablero'));
     } finally {
       setCargando(false);
     }
@@ -101,13 +105,11 @@ export function Tablero({ locationId }: { locationId: string }) {
 
   async function cancelar(reasonCode: string, reason: string, tambienConyuge: boolean) {
     if (!cancelando) return;
-    const { spouseCancelled } = await api<{ ok: true; spouseCancelled: string | null }>(
-      `/assignments/${cancelando.assignmentId}/cancel`,
-      {
-        method: 'POST',
-        body: { reasonCode, reason: reason || undefined, cancelSpouse: tambienConyuge },
-      },
-    );
+    const { spouseCancelled } = await cancelAssignment(cancelando.assignmentId, {
+      reasonCode,
+      reason: reason || undefined,
+      cancelSpouse: tambienConyuge,
+    });
     // Se confirma a quién alcanzó la baja: el segundo nombre no se ve en el
     // diálogo, y sin decirlo quedaría la duda de si entró.
     setAviso(
@@ -128,9 +130,7 @@ export function Tablero({ locationId }: { locationId: string }) {
    */
   const cargarCandidatos = useCallback(async () => {
     if (!agregando) return [];
-    return api<AvailableParticipant[]>(
-      `/locations/${locationId}/shifts/${agregando.id}/available-participants`,
-    );
+    return fetchAvailableParticipants(locationId, agregando.id);
   }, [locationId, agregando]);
 
   async function agregar(participantId: string) {
@@ -156,12 +156,9 @@ export function Tablero({ locationId }: { locationId: string }) {
     });
   }
 
-  async function registrarCobertura(body: Record<string, unknown>) {
+  async function registrarCobertura(cover: ShiftCover) {
     if (!agregando) return;
-    await api(`/locations/${locationId}/shifts/${agregando.id}/assignments`, {
-      method: 'POST',
-      body,
-    });
+    await coverShift(locationId, agregando.id, cover);
     setAgregando(null);
     await cargar();
   }

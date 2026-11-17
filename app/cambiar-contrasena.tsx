@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { changeOwnPassword } from '@/lib/services/accounts';
+import { errorMessage } from '@/lib/errors';
 
 interface Props {
   /** Cuando la impuso un administrador, no hay forma de posponerlo. */
@@ -47,10 +48,10 @@ export function CambiarContrasena({ obligatorio, onListo, onCerrar }: Props) {
     setOcupado(true);
     setError(null);
     try {
-      await api('/me/password', { method: 'POST', body: { current: actual, password: nueva } });
+      await changeOwnPassword(actual, nueva);
       onListo();
     } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo cambiar');
+      setError(errorMessage(problema, 'No se pudo cambiar'));
       setOcupado(false);
     }
   }

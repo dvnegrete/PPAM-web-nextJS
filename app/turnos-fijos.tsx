@@ -1,32 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api } from '@/lib/api';
-import type {
-  RecurringCandidate,
-  RecurringOverview,
-  RecurringSlot,
-} from '@/lib/types';
-import { rango12h } from '@/lib/horas';
-
-const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-const ORDINALES = ['', '1.ª', '2.ª', '3.ª', '4.ª', '5.ª'];
-
-/** A quién se está por quitar y de qué franja, para decirlo en la confirmación. */
-interface PendingRemoval {
-  recurringId: string;
-  name: string;
-  when: string;
-}
-
-/** «Lunes · 7:00 a 9:00 am · todas las semanas». */
-function describeSlot(slot: RecurringSlot): string {
-  const range = rango12h(slot.startMinute, slot.endMinute);
-  return slot.weekOfMonth === 0
-    ? `${DIAS[slot.weekday]} · ${range} · todas las semanas`
-    : `${DIAS[slot.weekday]} · ${range} · ${ORDINALES[slot.weekOfMonth]} semana del mes`;
-}
+import { useEffect, useMemo, useState } from 'react';
+import { groupSlots, WEEK_ORDINALS } from '@/lib/recurring-slots';
+import { Rejilla } from './recurring-grid';
+import { ElegirTitular } from './recurring-holder-picker';
+import { RecurringRemovalDialog } from './recurring-removal-dialog';
+import { useRecurringSlots } from './use-recurring-slots';
 
 /**
  * Turnos fijos: quién atiende habitualmente cada franja.
@@ -40,108 +19,32 @@ function describeSlot(slot: RecurringSlot): string {
  * refleja sin tocarla.
  */
 export function TurnosFijos({ locationId }: { locationId: string }) {
-  const [datos, setDatos] = useState<RecurringOverview | null>(null);
+  const {
+    datos,
+    cargando,
+    error,
+    eligiendo,
+    setEligiendo,
+    quitando,
+    marcando,
+    pendingRemoval,
+    requestRemoval,
+    cancelRemoval,
+    quitar,
+    agregar,
+    marcarCapitan,
+    cargarCandidatos,
+  } = useRecurringSlots(locationId);
   const [semana, setSemana] = useState(0);
-  const [eligiendo, setEligiendo] = useState<RecurringSlot | null>(null);
-  const [quitando, setQuitando] = useState<string | null>(null);
-  // Quitar pide confirmación: la «×» queda junto a la casilla del capitán y un
-  // toque en falso dejaría a alguien sin su turno en los meses siguientes.
-  const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval | null>(null);
-  const [marcando, setMarcando] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [cargando, setCargando] = useState(true);
 
-  const cargar = useCallback(async () => {
-    try {
-      setDatos(await api<RecurringOverview>(`/locations/${locationId}/recurring`));
-      setError(null);
-    } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudieron cargar los turnos fijos');
-    } finally {
-      setCargando(false);
-    }
-  }, [locationId]);
-
-  useEffect(() => {
-    setCargando(true);
-    void cargar();
-  }, [cargar]);
-
-  /**
-   * Las franjas que se repiten todas las semanas van juntas; las que dependen
-   * del ordinal del mes —típicamente sábados y domingos— se separan, porque una
-   * sola rejilla con las cinco semanas sería ilegible.
-   */
-  const bloques = useMemo(() => {
-    const slots = datos?.slots ?? [];
-    const semanales = slots.filter((slot) => slot.weekOfMonth === 0);
-    const ordinales = slots.filter((slot) => slot.weekOfMonth > 0);
-    const semanasDisponibles = [...new Set(ordinales.map((slot) => slot.weekOfMonth))].sort(
-      (a, b) => a - b,
-    );
-    return { semanales, ordinales, semanasDisponibles };
-  }, [datos]);
+  const bloques = useMemo(() => groupSlots(datos?.slots ?? []), [datos]);
 
   // La primera pestaña de semana se elige sola: así la sección no arranca vacía.
   useEffect(() => {
-    if (semana === 0 && bloques.semanasDisponibles.length > 0) {
-      setSemana(bloques.semanasDisponibles[0]);
+    if (semana === 0 && bloques.weeksAvailable.length > 0) {
+      setSemana(bloques.weeksAvailable[0]);
     }
-  }, [bloques.semanasDisponibles, semana]);
-
-  async function agregar(templateId: string, participantId: string) {
-    await api(`/locations/${locationId}/recurring/${templateId}/holders`, {
-      method: 'POST',
-      body: { participantId },
-    });
-    setEligiendo(null);
-    await cargar();
-  }
-
-  /** Abre la confirmación con el nombre y la franja, para que se lea a quién se quita. */
-  function requestRemoval(recurringId: string) {
-    for (const slot of datos?.slots ?? []) {
-      const holder = slot.holders.find((item) => item.recurringId === recurringId);
-      if (holder) {
-        setPendingRemoval({ recurringId, name: holder.name, when: describeSlot(slot) });
-        return;
-      }
-    }
-  }
-
-  async function quitar(recurringId: string) {
-    setQuitando(recurringId);
-    setError(null);
-    try {
-      await api(`/recurring/${recurringId}`, { method: 'DELETE' });
-      setPendingRemoval(null);
-      await cargar();
-    } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo quitar');
-    } finally {
-      setQuitando(null);
-    }
-  }
-
-  /** Marcar a uno como capitán le quita la marca al anterior: lo resuelve el servidor. */
-  async function marcarCapitan(recurringId: string, isCaptain: boolean) {
-    setMarcando(recurringId);
-    setError(null);
-    try {
-      await api(`/recurring/${recurringId}/captain`, { method: 'PATCH', body: { isCaptain } });
-      await cargar();
-    } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo marcar al capitán');
-    } finally {
-      setMarcando(null);
-    }
-  }
-
-  const cargarCandidatos = useCallback(
-    (templateId: string) => () =>
-      api<RecurringCandidate[]>(`/locations/${locationId}/recurring/${templateId}/candidates`),
-    [locationId],
-  );
+  }, [bloques.weeksAvailable, semana]);
 
   if (cargando) return <p className="tenue">Cargando turnos fijos…</p>;
 
@@ -195,12 +98,12 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
         </p>
       </details>
 
-      {bloques.semanales.length > 0 && (
+      {bloques.weekly.length > 0 && (
         <div className="tarjeta seccion-color verde" style={{ marginBottom: '1rem' }}>
           <h3>Todas las semanas</h3>
           <p className="tenue">Se repiten cada semana del mes.</p>
           <Rejilla
-            slots={bloques.semanales}
+            slots={bloques.weekly}
             onAgregar={setEligiendo}
             onQuitar={requestRemoval}
             quitando={quitando}
@@ -210,23 +113,23 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
         </div>
       )}
 
-      {bloques.semanasDisponibles.length > 0 && (
+      {bloques.weeksAvailable.length > 0 && (
         <div className="tarjeta seccion-color azul" style={{ marginBottom: '1rem' }}>
           <h3>Por semana del mes</h3>
           <p className="tenue">El primer sábado puede tener otros titulares que el segundo.</p>
           <div className="segmentado" style={{ margin: '0.6rem 0 0.9rem' }}>
-            {bloques.semanasDisponibles.map((numero) => (
+            {bloques.weeksAvailable.map((numero) => (
               <button
                 key={numero}
                 className={semana === numero ? 'primario' : ''}
                 onClick={() => setSemana(numero)}
               >
-                {ORDINALES[numero] ?? `${numero}.ª`} semana
+                {WEEK_ORDINALS[numero] ?? `${numero}.ª`} semana
               </button>
             ))}
           </div>
           <Rejilla
-            slots={bloques.ordinales.filter((slot) => slot.weekOfMonth === semana)}
+            slots={bloques.byWeekOfMonth.filter((slot) => slot.weekOfMonth === semana)}
             onAgregar={setEligiendo}
             onQuitar={requestRemoval}
             quitando={quitando}
@@ -279,37 +182,13 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
       </details>
 
       {pendingRemoval && (
-        <div
-          className="telon"
-          role="alertdialog"
-          aria-modal="true"
-          aria-label="Quitar turno fijo"
-        >
-          <div className="dialogo">
-            <h3>¿Por favor confirma que deseas eliminar este turno fijo?</h3>
-            <p>
-              <strong>{pendingRemoval.name}</strong> dejará de ser titular de:
-            </p>
-            <p className="aviso atencion">{pendingRemoval.when}</p>
-            <p className="tenue">
-              Los turnos ya generados no cambian; solo deja de aparecer en los meses que se generen
-              después.
-            </p>
-            {error && <div className="aviso error">{error}</div>}
-            <div className="dialogo-acciones">
-              <button onClick={() => setPendingRemoval(null)} disabled={quitando !== null} autoFocus>
-                No, conservar
-              </button>
-              <button
-                className="danger"
-                onClick={() => void quitar(pendingRemoval.recurringId)}
-                disabled={quitando !== null}
-              >
-                {quitando ? 'Quitando…' : 'Sí, quitar'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <RecurringRemovalDialog
+          pending={pendingRemoval}
+          busy={quitando !== null}
+          error={error}
+          onCancel={cancelRemoval}
+          onConfirm={() => void quitar(pendingRemoval.recurringId)}
+        />
       )}
 
       {eligiendo && (
@@ -321,361 +200,5 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
         />
       )}
     </section>
-  );
-}
-
-/** La rejilla de franjas: filas por horario, columnas por día. */
-function Rejilla({
-  slots,
-  onAgregar,
-  onQuitar,
-  quitando,
-  onCapitan,
-  marcando,
-}: {
-  slots: RecurringSlot[];
-  onAgregar: (slot: RecurringSlot) => void;
-  onQuitar: (recurringId: string) => void;
-  quitando: string | null;
-  onCapitan: (recurringId: string, isCaptain: boolean) => void;
-  marcando: string | null;
-}) {
-  // Los días se ordenan empezando en lunes: es cómo se lee un horario, aunque en
-  // la base el domingo sea el día 0.
-  const dias = [...new Set(slots.map((slot) => slot.weekday))].sort(
-    (a, b) => ((a + 6) % 7) - ((b + 6) % 7),
-  );
-  const franjas = [
-    ...new Map(
-      slots.map((slot) => [slot.startMinute, rango12h(slot.startMinute, slot.endMinute)]),
-    ).entries(),
-  ].sort((a, b) => a[0] - b[0]);
-
-  if (slots.length === 0) {
-    return <p className="tenue">No hay franjas configuradas para esta semana.</p>;
-  }
-
-  return (
-    <>
-      <DayList
-        slots={slots}
-        days={dias}
-        onAgregar={onAgregar}
-        onQuitar={onQuitar}
-        quitando={quitando}
-        onCapitan={onCapitan}
-        marcando={marcando}
-      />
-      <div className="rejilla-fijos-envoltura fixed-grid-wide">
-      <table className="rejilla-fijos">
-        <thead>
-          <tr>
-            <th style={{ width: '10.5rem' }}>Horario</th>
-            {dias.map((dia) => (
-              <th key={dia}>
-                <abbr title={DIAS[dia]}>{DIAS_CORTOS[dia]}</abbr>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {franjas.map(([startMinute, range]) => (
-            <tr key={startMinute}>
-              <th scope="row" className="franja">{range}</th>
-              {dias.map((dia) => {
-                const slot = slots.find(
-                  (item) => item.weekday === dia && item.startMinute === startMinute,
-                );
-                if (!slot) {
-                  return (
-                    <td key={dia} className="celda-fija sin-franja">
-                      <span className="tenue">—</span>
-                    </td>
-                  );
-                }
-                return (
-                  <td key={dia} className="celda-fija">
-                    <SlotHolders
-                      slot={slot}
-                      label={`${DIAS[dia]} ${range}`}
-                      onAgregar={onAgregar}
-                      onQuitar={onQuitar}
-                      quitando={quitando}
-                      onCapitan={onCapitan}
-                      marcando={marcando}
-                    />
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      </div>
-    </>
-  );
-}
-
-interface SlotActions {
-  onAgregar: (slot: RecurringSlot) => void;
-  onQuitar: (recurringId: string) => void;
-  quitando: string | null;
-  onCapitan: (recurringId: string, isCaptain: boolean) => void;
-  marcando: string | null;
-}
-
-/** Clase de la etiqueta de cupo: completo, a medias o sin nadie. */
-function capacityClass(slot: RecurringSlot): string {
-  if (slot.freeSlots === 0) return 'completo';
-  return slot.holders.length === 0 ? 'critico' : 'faltante';
-}
-
-/**
- * Los titulares de una franja, con sus controles. Es el mismo contenido en la
- * rejilla ancha y en la lista por día, para que editar sea igual en ambas.
- */
-function SlotHolders({
-  slot,
-  label,
-  showCapacity = true,
-  onAgregar,
-  onQuitar,
-  quitando,
-  onCapitan,
-  marcando,
-}: SlotActions & { slot: RecurringSlot; label: string; showCapacity?: boolean }) {
-  return (
-    <>
-      {showCapacity && (
-        <div className="cupo">
-          <span className={`etiqueta ${capacityClass(slot)}`}>
-            {slot.holders.length}/{slot.capacity}
-          </span>
-        </div>
-      )}
-      <ul className="titulares">
-        {slot.holders.map((titular) => (
-          <li key={titular.recurringId}>
-            <label
-              className={`capitan ${titular.isCaptain ? 'activo' : ''}`}
-              title={titular.isCaptain ? 'Capitán del turno' : 'Marcar como capitán'}
-            >
-              <input
-                type="checkbox"
-                checked={titular.isCaptain}
-                disabled={marcando !== null}
-                onChange={(evento) => onCapitan(titular.recurringId, evento.target.checked)}
-                aria-label={`${titular.name} es capitán de ${label}`}
-              />
-            </label>
-            <span className="nombre">
-              {titular.name}
-              {titular.isCaptain && <span className="insignia-capitan">Capitán</span>}
-            </span>
-            <button
-              className="quitar"
-              onClick={() => onQuitar(titular.recurringId)}
-              disabled={quitando === titular.recurringId}
-              aria-label={`Quitar a ${titular.name} de ${label}`}
-              title={`Quitar a ${titular.name}`}
-            >
-              ×
-            </button>
-          </li>
-        ))}
-      </ul>
-      {slot.freeSlots > 0 && (
-        <button
-          className="agregar-titular"
-          onClick={() => onAgregar(slot)}
-          aria-label={`Agregar titular a ${label}`}
-        >
-          + Agregar
-        </button>
-      )}
-    </>
-  );
-}
-
-/**
- * La misma rejilla para pantallas angostas: se elige un día y sus franjas van
- * una debajo de otra. Cinco columnas con tres nombres cada una no caben sin
- * desplazarse de lado; un día a la vez, sí.
- */
-function DayList({
-  slots,
-  days,
-  ...actions
-}: SlotActions & { slots: RecurringSlot[]; days: number[] }) {
-  const [selectedDay, setSelectedDay] = useState(days[0]);
-  // Al cambiar de semana pueden cambiar los días disponibles.
-  const activeDay = days.includes(selectedDay) ? selectedDay : days[0];
-  const daySlots = slots
-    .filter((slot) => slot.weekday === activeDay)
-    .sort((a, b) => a.startMinute - b.startMinute);
-
-  return (
-    <div className="fixed-day-list">
-      <div className="fixed-day-tabs" role="tablist" aria-label="Día">
-        {days.map((day) => {
-          const ofDay = slots.filter((slot) => slot.weekday === day);
-          const free = ofDay.reduce((sum, slot) => sum + slot.freeSlots, 0);
-          return (
-            <button
-              key={day}
-              role="tab"
-              aria-selected={day === activeDay}
-              className={day === activeDay ? 'primario' : ''}
-              onClick={() => setSelectedDay(day)}
-            >
-              {DIAS_CORTOS[day]}
-              {free > 0 && <span className="fixed-day-free">{free}</span>}
-            </button>
-          );
-        })}
-      </div>
-
-      <p className="tenue fixed-day-title">
-        {DIAS[activeDay]}
-        {' · '}
-        {daySlots.reduce((sum, slot) => sum + slot.freeSlots, 0) === 0
-          ? 'todos los lugares con titular'
-          : 'el número indica lugares sin titular'}
-      </p>
-
-      <ul className="fixed-slots">
-        {daySlots.map((slot) => {
-          const range = rango12h(slot.startMinute, slot.endMinute);
-          return (
-            <li key={slot.templateId} className={`fixed-slot celda-fija ${capacityClass(slot)}`}>
-              <div className="fixed-slot-header">
-                <strong>{range}</strong>
-                <span className={`etiqueta ${capacityClass(slot)}`}>
-                  {slot.holders.length}/{slot.capacity}
-                </span>
-              </div>
-              <SlotHolders
-                slot={slot}
-                label={`${DIAS[activeDay]} ${range}`}
-                showCapacity={false}
-                {...actions}
-              />
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
-
-/** Quién toma la franja. Solo lista a quien puede: activo, del punto y no titular. */
-function ElegirTitular({
-  slot,
-  cargarCandidatos,
-  onAgregar,
-  onCerrar,
-}: {
-  slot: RecurringSlot;
-  cargarCandidatos: () => Promise<RecurringCandidate[]>;
-  onAgregar: (participantId: string) => Promise<void>;
-  onCerrar: () => void;
-}) {
-  const [candidatos, setCandidatos] = useState<RecurringCandidate[]>([]);
-  const [busqueda, setBusqueda] = useState('');
-  const [elegido, setElegido] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [ocupado, setOcupado] = useState(false);
-  const [cargando, setCargando] = useState(true);
-
-  useEffect(() => {
-    let vigente = true;
-    cargarCandidatos()
-      .then((lista) => {
-        if (vigente) setCandidatos(lista);
-      })
-      .catch((problema: unknown) => {
-        if (vigente) {
-          setError(problema instanceof Error ? problema.message : 'No se pudieron cargar los participantes');
-        }
-      })
-      .finally(() => {
-        if (vigente) setCargando(false);
-      });
-    return () => {
-      vigente = false;
-    };
-  }, [cargarCandidatos]);
-
-  const visibles = busqueda.trim()
-    ? candidatos.filter((persona) =>
-        persona.formalName.toLowerCase().includes(busqueda.trim().toLowerCase()),
-      )
-    : candidatos;
-
-  async function confirmar() {
-    if (!elegido) return;
-    setOcupado(true);
-    setError(null);
-    try {
-      await onAgregar(elegido);
-    } catch (problema) {
-      setError(problema instanceof Error ? problema.message : 'No se pudo asignar');
-      setOcupado(false);
-    }
-  }
-
-  const cuando = describeSlot(slot);
-
-  return (
-    <div className="telon" role="dialog" aria-modal="true" aria-label="Asignar turno fijo">
-      <div className="dialogo">
-        <h3>Titular habitual</h3>
-        <p className="tenue">
-          {cuando} · {slot.freeSlots === 1 ? 'queda 1 lugar' : `quedan ${slot.freeSlots} lugares`}
-        </p>
-
-        {error && <div className="aviso error">{error}</div>}
-
-        <label>
-          <span>Buscar</span>
-          <input
-            value={busqueda}
-            onChange={(evento) => setBusqueda(evento.target.value)}
-            placeholder="Nombre del participante"
-            autoFocus
-          />
-        </label>
-
-        <div className="lista-candidatos">
-          {cargando && <p className="tenue">Cargando participantes…</p>}
-          {!cargando && visibles.length === 0 && (
-            <p className="tenue">
-              {candidatos.length === 0
-                ? 'Todos los participantes ya son titulares de esta franja.'
-                : 'Nadie coincide con esa búsqueda.'}
-            </p>
-          )}
-          {visibles.map((persona) => (
-            <button
-              key={persona.id}
-              className={`candidato ${elegido === persona.id ? 'elegido' : ''}`}
-              onClick={() => setElegido(persona.id)}
-              aria-pressed={elegido === persona.id}
-            >
-              {persona.formalName}
-            </button>
-          ))}
-        </div>
-
-        <div className="dialogo-acciones">
-          <button onClick={onCerrar} disabled={ocupado}>
-            Volver
-          </button>
-          <button className="primario" onClick={() => void confirmar()} disabled={ocupado || !elegido}>
-            {ocupado ? 'Asignando…' : 'Asignar turno fijo'}
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }

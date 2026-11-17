@@ -2,21 +2,10 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { toBlob } from 'html-to-image';
-import { api } from '@/lib/api';
+import { fetchMonthRoster } from '@/lib/services/calendar';
 import type { DiaDelRol, PersonaDelRol, RolMensual } from '@/lib/types';
-
-const MESES = [
-  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
-];
-
-const DIAS_HABILES = [
-  { numero: 1, nombre: 'Lunes' },
-  { numero: 2, nombre: 'Martes' },
-  { numero: 3, nombre: 'Miércoles' },
-  { numero: 4, nombre: 'Jueves' },
-  { numero: 5, nombre: 'Viernes' },
-];
+import { MONTH_NAMES } from '@/lib/calendar-labels';
+import { errorMessage } from '@/lib/errors';
 
 /**
  * Ancho real de cada imagen. WhatsApp reduce lo que pasa de ~1600 px, y por
@@ -43,9 +32,9 @@ export function RolDelMes({ locationId }: { locationId: string }) {
     setCargando(true);
     setError(null);
     try {
-      setRol(await api<RolMensual>(`/locations/${locationId}/roster?year=${year}&month=${month}`));
+      setRol(await fetchMonthRoster(locationId, year, month));
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : 'No se pudo cargar el rol del mes');
+      setError(errorMessage(problem, 'No se pudo cargar el rol del mes'));
     } finally {
       setCargando(false);
     }
@@ -64,7 +53,7 @@ export function RolDelMes({ locationId }: { locationId: string }) {
         <label style={{ marginBottom: 0, width: 130 }}>
           <span>Mes</span>
           <select value={month} onChange={(event) => setMonth(Number(event.target.value))}>
-            {MESES.map((nombre, indice) => (
+            {MONTH_NAMES.map((nombre, indice) => (
               <option key={nombre} value={indice + 1}>{nombre}</option>
             ))}
           </select>
@@ -174,7 +163,7 @@ function Lienzo({
       enlace.click();
       URL.revokeObjectURL(url);
     } catch (problem) {
-      setFallo(problem instanceof Error ? problem.message : 'No se pudo generar la imagen');
+      setFallo(errorMessage(problem, 'No se pudo generar la imagen'));
     } finally {
       setTrabajando(false);
     }
@@ -195,7 +184,7 @@ function Lienzo({
     } catch (problem) {
       // Cerrar la hoja de compartir no es un error.
       if (problem instanceof DOMException && problem.name === 'AbortError') return;
-      setFallo(problem instanceof Error ? problem.message : 'No se pudo compartir la imagen');
+      setFallo(errorMessage(problem, 'No se pudo compartir la imagen'));
     } finally {
       setTrabajando(false);
     }
