@@ -85,11 +85,23 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
         partes.push(`${resultado.shiftsFilled} turno(s) ya publicado(s) completado(s)`);
       }
       partes.push(`${resultado.assignmentsCreated} asignación(es) fija(s)`);
+      if (resultado.formerHoldersReleased > 0) {
+        partes.push(
+          `${resultado.formerHoldersReleased} fecha(s) retirada(s) a quien ya no es titular`,
+        );
+      }
+      if (resultado.holdersNotSeated > 0) {
+        partes.push(
+          `${resultado.holdersNotSeated} titular(es) sin lugar por una cobertura ya registrada`,
+        );
+      }
+      const sinCambios =
+        resultado.assignmentsCreated === 0 &&
+        resultado.shiftsCreated === 0 &&
+        resultado.formerHoldersReleased === 0;
       setAviso(
         `${partes.join(' · ')}.` +
-          (resultado.assignmentsCreated === 0 && resultado.shiftsCreated === 0
-            ? ' Todo estaba al día: no había titulares pendientes de sentar.'
-            : ''),
+          (sinCambios ? ' Todo estaba al día con los turnos fijos.' : ''),
       );
       await cargar();
     } catch (problem) {
@@ -215,6 +227,9 @@ export function Calendario({ locationId, minCapacity }: { locationId: string; mi
         <RegenerarDialogo
           mes={`${MONTH_NAMES[month - 1]} de ${year}`}
           shifts={shifts}
+          releasesFormerHolders={
+            year * 12 + month > hoy.getFullYear() * 12 + hoy.getMonth() + 1
+          }
           onConfirmar={generar}
           onCerrar={() => setConfirmando(false)}
         />

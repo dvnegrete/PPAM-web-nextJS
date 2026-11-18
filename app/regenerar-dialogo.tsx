@@ -6,6 +6,11 @@ import type { CalendarShift } from '@/lib/types';
 interface Props {
   mes: string;
   shifts: CalendarShift[];
+  /**
+   * El mes es posterior al actual: además de añadir, se retira a quien ya no es
+   * titular. En el mes en curso solo se añade.
+   */
+  releasesFormerHolders: boolean;
   onConfirmar: () => Promise<void>;
   onCerrar: () => void;
 }
@@ -21,7 +26,13 @@ interface Props {
  * Lo que se afirma aquí está comprobado con pruebas de integración, no supuesto:
  * cada punto de la lista tiene su caso en `scheduling.int-spec.ts`.
  */
-export function RegenerarDialogo({ mes, shifts, onConfirmar, onCerrar }: Props) {
+export function RegenerarDialogo({
+  mes,
+  shifts,
+  releasesFormerHolders,
+  onConfirmar,
+  onCerrar,
+}: Props) {
   const [ocupado, setOcupado] = useState(false);
 
   const hoy = new Date().toISOString().slice(0, 10);
@@ -61,6 +72,14 @@ export function RegenerarDialogo({ mes, shifts, onConfirmar, onCerrar }: Props) 
             Sentar a los titulares fijos que falten en los{' '}
             <strong>{conHueco} turno(s) futuro(s) con hueco</strong>, hasta llenar su cupo.
           </li>
+          {releasesFormerHolders && (
+            <li>
+              <span className="marca resta">−</span>
+              <strong>Retirar de sus fechas a quien ya no es titular</strong> de ese turno fijo, para
+              que el rol del mes muestre a los titulares de hoy. Queda registrado en el historial de
+              cada turno y no cuenta como cancelación.
+            </li>
+          )}
           <li>
             <span className="marca suma">+</span>
             Crear los turnos que falten. Si agregaste franjas horarias al punto después de publicar
@@ -72,13 +91,14 @@ export function RegenerarDialogo({ mes, shifts, onConfirmar, onCerrar }: Props) 
         <ul className="consecuencias">
           <li>
             <span className="marca igual">=</span>
-            Las <strong>bajas</strong>: quien canceló un día concreto no vuelve a quedar sentado, y
-            el hueco sigue siendo un hueco.
+            Las <strong>cancelaciones</strong>: quien canceló un día concreto no vuelve a quedar
+            sentado ni se borra su cancelación, y el hueco sigue siendo un hueco.
           </li>
           <li>
             <span className="marca igual">=</span>
-            Quien ya está sentado, venga de su turno fijo o de una cobertura. No se duplica ni se
-            mueve a nadie.
+            {releasesFormerHolders
+              ? 'Quien entró a cubrir o se agregó a mano, ni el titular vigente. No se duplica ni se mueve a nadie.'
+              : 'Quien ya está sentado, venga de su turno fijo o de una cobertura. No se duplica ni se mueve a nadie.'}
           </li>
           <li>
             <span className="marca igual">=</span>
@@ -91,11 +111,14 @@ export function RegenerarDialogo({ mes, shifts, onConfirmar, onCerrar }: Props) 
           Lo que esto <em>no</em> resuelve
         </h4>
         <ul className="consecuencias">
-          <li>
-            <span className="marca resta">!</span>
-            Regenerar <strong>solo añade</strong>. Si le quitaste el turno fijo a alguien, seguirá
-            sentado en los turnos ya publicados: hay que quitarlo turno por turno desde el Tablero.
-          </li>
+          {!releasesFormerHolders && (
+            <li>
+              <span className="marca resta">!</span>
+              En el mes en curso regenerar <strong>solo añade</strong>. Si le quitaste el turno fijo
+              a alguien, seguirá sentado en las fechas que quedan: hay que quitarlo turno por turno
+              desde el Tablero.
+            </li>
+          )}
           <li>
             <span className="marca resta">!</span>
             Un <strong>cambio de cupo</strong> en la franja no se aplica a los turnos ya creados:
