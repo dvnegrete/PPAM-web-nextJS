@@ -5,6 +5,7 @@ import { groupSlots, WEEK_ORDINALS } from '@/lib/recurring-slots';
 import { Rejilla } from './recurring-grid';
 import { ElegirTitular } from './recurring-holder-picker';
 import { RecurringRemovalDialog } from './recurring-removal-dialog';
+import { RecurringSyncBanner } from './recurring-sync-banner';
 import { useRecurringSlots } from './use-recurring-slots';
 
 /**
@@ -34,6 +35,10 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
     agregar,
     marcarCapitan,
     cargarCandidatos,
+    aplicando,
+    applyError,
+    applySummary,
+    aplicar,
   } = useRecurringSlots(locationId);
   const [semana, setSemana] = useState(0);
 
@@ -55,6 +60,14 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
   return (
     <section>
       {error && <div className="aviso error">{error}</div>}
+
+      <RecurringSyncBanner
+        months={datos?.pendingMonths ?? []}
+        busy={aplicando}
+        error={applyError}
+        summary={applySummary}
+        onApply={aplicar}
+      />
 
       <details className="tarjeta resumen-plegable seccion-color naranja">
         <summary>
@@ -87,7 +100,9 @@ export function TurnosFijos({ locationId }: { locationId: string }) {
         <summary>Cómo funciona</summary>
         <p className="tenue">
           Al generar el calendario de un mes, cada titular queda en todas las fechas de su franja.
-          Quitar a alguien aquí no toca los turnos ya generados.
+          Los cambios de aquí no tocan el mes en curso. Si un mes próximo ya estaba generado,
+          aparece un aviso arriba para aplicarle los cambios; hasta entonces su rol del mes muestra
+          a los titulares anteriores.
         </p>
         <p className="aviso leyenda-capitan" style={{ marginBottom: 0 }}>
           <input type="checkbox" checked readOnly tabIndex={-1} aria-hidden="true" />

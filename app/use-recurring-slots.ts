@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { errorMessage } from '@/lib/errors';
 import { describeSlot } from '@/lib/recurring-slots';
+import { appliedSummary } from '@/lib/recurring-sync';
 import {
   addRecurringHolder,
+  applyRecurringToUpcomingMonths,
   fetchRecurringCandidates,
   fetchRecurringOverview,
   removeRecurringHolder,
@@ -27,6 +29,9 @@ export function useRecurringSlots(locationId: string) {
   const [marcando, setMarcando] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
+  const [aplicando, setAplicando] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
+  const [applySummary, setApplySummary] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     try {
@@ -46,6 +51,7 @@ export function useRecurringSlots(locationId: string) {
 
   async function agregar(templateId: string, participantId: string) {
     await addRecurringHolder(locationId, templateId, participantId);
+    setApplySummary(null);
     setEligiendo(null);
     await cargar();
   }
@@ -67,6 +73,7 @@ export function useRecurringSlots(locationId: string) {
     try {
       await removeRecurringHolder(recurringId);
       setPendingRemoval(null);
+      setApplySummary(null);
       await cargar();
     } catch (problema) {
       setError(errorMessage(problema, 'No se pudo quitar'));
@@ -86,6 +93,23 @@ export function useRecurringSlots(locationId: string) {
       setError(errorMessage(problema, 'No se pudo marcar al capitán'));
     } finally {
       setMarcando(null);
+    }
+  }
+
+  /** Pone al día los meses próximos ya generados; dice si salió bien. */
+  async function aplicar(): Promise<boolean> {
+    setAplicando(true);
+    setApplyError(null);
+    try {
+      const applied = await applyRecurringToUpcomingMonths(locationId);
+      setApplySummary(appliedSummary(applied));
+      await cargar();
+      return true;
+    } catch (problema) {
+      setApplyError(errorMessage(problema, 'No se pudieron aplicar los turnos fijos'));
+      return false;
+    } finally {
+      setAplicando(false);
     }
   }
 
@@ -109,5 +133,9 @@ export function useRecurringSlots(locationId: string) {
     agregar,
     marcarCapitan,
     cargarCandidatos,
+    aplicando,
+    applyError,
+    applySummary,
+    aplicar,
   };
 }
