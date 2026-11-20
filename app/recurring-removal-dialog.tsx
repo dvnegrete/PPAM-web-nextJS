@@ -30,8 +30,8 @@ export function RecurringRemovalDialog({ pending, busy, error, onCancel, onConfi
         </p>
         <p className="aviso atencion">{pending.when}</p>
         <p className="tenue">
-          Los turnos ya generados no cambian; solo deja de aparecer en los meses que se generen
-          después.
+          El mes en curso no cambia. Los meses próximos ya generados se ajustan al aplicar el aviso
+          que aparecerá arriba (o con «Generar» en Calendario).
         </p>
         {error && <div className="aviso error">{error}</div>}
         <div className="dialogo-acciones">

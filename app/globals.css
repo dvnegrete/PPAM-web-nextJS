@@ -80,6 +80,10 @@ label span { display: block; margin-bottom: 0.25rem; color: var(--texto-tenue); 
 .aviso.error { background: var(--alerta-suave); color: var(--alerta); }
 .aviso.exito { background: var(--acento-suave); color: var(--acento); }
 .aviso.atencion { background: var(--aviso-suave); color: var(--aviso); }
+/* Aviso con un botón al lado; en el teléfono el botón baja a su propia línea. */
+.aviso-con-accion { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+.aviso-con-accion > div { flex: 1 1 18rem; }
+.aviso-con-accion > button { flex: 0 0 auto; }
 
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--borde); }

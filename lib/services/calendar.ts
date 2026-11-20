@@ -9,6 +9,10 @@ export interface GenerationResult {
   /** Turnos que ya existían y a los que se sentó algún titular que faltaba. */
   shiftsFilled: number;
   assignmentsCreated: number;
+  /** Fechas de las que se retiró a quien ya no es titular (solo meses próximos). */
+  formerHoldersReleased: number;
+  /** Titulares que no se sentaron porque el turno ya estaba lleno. */
+  holdersNotSeated: number;
 }
 
 export function fetchMonthCalendar(

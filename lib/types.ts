@@ -459,6 +459,28 @@ export interface RecurringPadronRow {
 export interface RecurringOverview {
   slots: RecurringSlot[];
   padron: RecurringPadronRow[];
+  /** Meses próximos ya generados que todavía no reflejan los turnos fijos. */
+  pendingMonths: PendingMonth[];
+}
+
+/** Un mes posterior al actual que ya está generado. */
+export interface UpcomingMonth {
+  year: number;
+  month: number;
+  /** «diciembre 2026». */
+  label: string;
+}
+
+/** Lo que cambiaría en un mes próximo al aplicar los turnos fijos. */
+export interface PendingMonth extends UpcomingMonth {
+  /** Fechas de las que se retiraría a quien ya no es titular. */
+  toRelease: number;
+  /** Fechas en las que se sentaría a un titular nuevo. */
+  toSeat: number;
+  /** Titulares que no cabrían porque una cobertura ya llenó el lugar. */
+  notSeated: number;
+  /** Turnos de franjas agregadas después de generar el mes. */
+  shiftsToCreate: number;
 }
 
 export interface RecurringCandidate {
